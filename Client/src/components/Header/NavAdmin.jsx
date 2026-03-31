@@ -73,7 +73,7 @@ const NavAdmin = () => {
   const getIcon = (path) => {
     const icons = {
       "/dashboardAdmin": <LayoutDashboard className="w-5 h-5" />,
-      "/homePost": <Home className="w-5 h-5" />,
+      "/register-employee": <Home className="w-5 h-5" />,
       "/partnerPost": <Building2 className="w-5 h-5" />,
       "/teamMessage": <UsersRound className="w-5 h-5" />,
       "/missionPost": <Target className="w-5 h-5" />,
@@ -98,7 +98,7 @@ const NavAdmin = () => {
       title: "Contenu Site",
       color: "#fec603",
       items: [
-        { path: "/homePost", label: "Page d'accueil" }
+        { path: "/register-employee", label: "Register Employee" }
       ]
     },
     {

@@ -5,7 +5,7 @@ import NavAdmin from "./components/Header/NavAdmin";
 import { I18nextProvider } from "react-i18next";
 import i18n from "./i18n";
 import React from "react";
-import { trackAction } from "./utils/tracker";
+
 
 /**
  * 🎨 APP TEKACOM - COMPLET ET OPTIMISÉ
@@ -48,33 +48,7 @@ const App = () => {
     return () => clearTimeout(timer);
   }, [location.pathname]); // ← CRUCIAL: écoute les changements d'URL
 
-  /* =============================
-     TRACKING
-  ============================== */
-  React.useEffect(() => {
-    trackAction({
-      action_type: "visit",
-      page: location.pathname,
-    });
-  }, [location.pathname]);
-
-  React.useEffect(() => {
-    const handleClick = (e) => {
-      const target = e.target;
-      const label = target.id || target.innerText || target.alt || "unknown";
-
-      trackAction({
-        action_type: "click",
-        page: location.pathname,
-        label,
-        tag: target.tagName,
-      });
-    };
-
-    document.addEventListener("click", handleClick);
-    return () => document.removeEventListener("click", handleClick);
-  }, [location.pathname]);
-
+  
   /* =============================
      ROUTES
   ============================== */
@@ -83,7 +57,7 @@ const App = () => {
     "/listePostulantsCommunity", "/listPartners",
     "/listeAbonnement", "/platformPost", "/valeurPost",
     "/dashboardAdmin", "/teamMessage", "/missionPost",
-    "/activitiesPost", "/homePost", "/partnerPost",
+    "/register-employee", "/homePost", "/partnerPost",
     "/servicePost", "/portfolioPost",
   ];
 

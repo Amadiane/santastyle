@@ -41,9 +41,11 @@ INSTALLED_APPS = [
     'Base',
     'cloudinary',
     'cloudinary_storage',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -147,6 +149,30 @@ SIMPLE_JWT = {
 AUTHENTICATION_BACKENDS = (
     "django.contrib.auth.backends.ModelBackend",
 )
+
+
+CORS_ALLOW_CREDENTIALS = True   # ← OBLIGATOIRE
+CORS_ALLOW_ALL_ORIGINS = False  # ← PAS DE TRUE ici sinon erreur
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+  
+
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+ 
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'content-type',
+    'authorization',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 
 # https://docs.djangoproject.com/en/5.2/topics/i18n/

@@ -64,7 +64,7 @@ import PhotoPost from './components/Admin/PhotoPost.jsx';
 import DocumentPost from './components/Admin/DocumentPost.jsx';
 // import HomePost from './components/Admin/HomePost.jsx';
 import ProgramPost from './components/Admin/ProgramPost.jsx';
-import ActivitiesPost from './components/Admin/ActivitiesPost.jsx';
+import RegisterEmployee from './components/Admin/RegisterEmployee.jsx';
 import Activities from './components/HeaderSection/Activities.jsx';
 import PartnerPost from './components/Admin/PartnerPost.jsx';
 import NewsPost from './components/Admin/NewsPost.jsx';
@@ -138,7 +138,7 @@ const router = createBrowserRouter(
         <Route path="documentPost" element={<DocumentPost />} />
         {/* <Route path="homePost" element={<HomePost />} /> */}
         <Route path="programPost" element={<ProgramPost />} />
-        <Route path="activitiesPost" element={<ActivitiesPost />} />
+        <Route path="register-employee" element={<RegisterEmployee />} />
         <Route path="partnerPost" element={<PartnerPost />} />
         <Route path="newsPost" element={<NewsPost />} />
         <Route path="professionalAreaPost" element={<ProfessionalAreaPost />} />

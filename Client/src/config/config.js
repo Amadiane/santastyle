@@ -6,7 +6,8 @@ const BASE_URL =
 
 const CONFIG = {
   BASE_URL,
-  API_LOGIN: `/api/login/`,
+  API_LOGIN: `${BASE_URL}/api/login/`,
+  API_REGISTER: `${BASE_URL}/api/users/`,
 
 
 
