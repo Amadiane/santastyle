@@ -42,3 +42,20 @@ class CategorieRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Categorie.objects.all()
     serializer_class = CategorieSerializers
     permission_classes = [permissions.IsAuthenticated]
+
+
+
+
+from .models import Produit
+from .serializers import ProduitSerializer
+
+class ProduitListCreateView(generics.ListCreateAPIView):
+    queryset = Produit.objects.all()
+    serializer_class = ProduitSerializer
+    permission_class = [permissions.IsAuthenticated]
+
+
+class ProduitRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset =  Produit.objects.all()
+    serializer_class = ProduitSerializer
+    permission_class = [permissions.IsAuthenticated]

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User
+from .models import User, Categorie
 
 class UserSerializer(serializers.ModelSerializer):
 
@@ -32,11 +32,22 @@ class LoginSerializer(TokenObtainPairSerializer):
         return token
 
 
-from rest_framework import serializers
-from .models import Categorie
+
+
 
 class CategorieSerializers(serializers.ModelSerializer):
 
     class Meta:
         model = Categorie
         fields = ['id', 'nom']
+
+
+
+
+from rest_framework import serializers
+from .models import Produit
+
+class ProduitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Produit
+        fields = '__all__'
