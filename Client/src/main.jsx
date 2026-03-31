@@ -17,7 +17,7 @@ import App from './Layout.jsx';
 
 // Pages principales
 import Home from './components/HeaderSection/Home.jsx';
-import Categories from './components/Categories/Categories.jsx';
+// import Categories from './components/Categories/Categories.jsx';
 import Createpost from './components/Createpost/Createpost.jsx';
 import Login from './components/Login/Login.jsx';
 import Forgetpassword from './components/Forgotpassword/Forgotpassword.jsx';
@@ -32,7 +32,6 @@ import Quisommesnous from './components/Footer/Quisommesnous.jsx';
 import Contacternous from './components/Footer/Contacternous.jsx';
 import NousRejoindre from './components/Footer/Nousrejoindre.jsx';
 import MotPresident from './components/HeaderSection/MotPresident.jsx';
-import Fondation from './components/HeaderSection/Fondation.jsx';
 import NosValeurs from './components/HeaderSection/NosValeurs.jsx';
 import NosMissions from './components/HeaderSection/NosMissions.jsx';
 import NotreEquipe from './components/HeaderSection/NotreEquipe.jsx';
@@ -48,6 +47,7 @@ import Actualites from './components/HeaderSection/Actualites.jsx';
 import NousRejoindreHeader from './components/HeaderSection/NousRejoindreHeader.jsx';
 
 // Admin Posts
+import Categories from './components/Admin/Categories.jsx';
 import TeamMessage from './components/Admin/TeamPost.jsx';
 import MissionPost from './components/Admin/MissionPost.jsx';
 import ListeRejoindre from './components/Admin/ListeRejoindre.jsx';
@@ -57,7 +57,6 @@ import ListPartners from './components/Admin/ListePartner.jsx';
 import ListeAbonnement from './components/Admin/ListeAbonnement.jsx';
 import PlatformPost from './components/Admin/PlatformPost.jsx';
 import ValeurPost from './components/Admin/ValeurPost.jsx';
-import FondationPost from './components/Admin/FondationPost.jsx';
 import MotPresidentPost from './components/Admin/MotPresidentPost.jsx';
 import VideoPost from './components/Admin/VideoPost.jsx';
 import PhotoPost from './components/Admin/PhotoPost.jsx';
@@ -80,6 +79,9 @@ import ThonProduct from './components/HeaderSection/ThonProduct.jsx';
 import ThonProductPost from './components/Admin/ThonProductPost.jsx';
 
 
+
+
+
 // ✅ Définition du routeur
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -98,7 +100,7 @@ const router = createBrowserRouter(
       <Route path="contacternous" element={<Contacternous />} />
       <Route path="nous-rejoindre" element={<NousRejoindre />} />
       <Route path="motPresident" element={<MotPresident />} />
-      <Route path="fondation" element={<Fondation />} />
+      {/* <Route path="categories" element={<Categories />} /> */}
       <Route path="nosValeurs" element={<NosValeurs />} />
       <Route path="nosMissions" element={<NosMissions />} />
       <Route path="notreEquipe" element={<NotreEquipe />} />
@@ -131,11 +133,11 @@ const router = createBrowserRouter(
         <Route path="listeAbonnement" element={<ListeAbonnement />} />
         <Route path="platformPost" element={<PlatformPost />} />
         <Route path="valeurPost" element={<ValeurPost />} />
-        <Route path="fondationPost" element={<FondationPost />} />
         <Route path="motPresidentPost" element={<MotPresidentPost />} />
         <Route path="videoPost" element={<VideoPost />} />
         <Route path="photoPost" element={<PhotoPost />} />
         <Route path="documentPost" element={<DocumentPost />} />
+        <Route path="categories" element={<Categories />} />
         {/* <Route path="homePost" element={<HomePost />} /> */}
         <Route path="programPost" element={<ProgramPost />} />
         <Route path="register-employee" element={<RegisterEmployee />} />
@@ -146,6 +148,7 @@ const router = createBrowserRouter(
         <Route path="portfolioPost" element={<PortfolioPost />} />
         <Route path="servicePost" element={<ServicePost />} />
         <Route path="thonProductPost" element={<ThonProductPost />} />
+        
         
 
       </Route>

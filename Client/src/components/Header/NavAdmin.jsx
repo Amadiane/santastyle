@@ -105,27 +105,27 @@ const NavAdmin = () => {
       title: "Agence",
       color: "#7828a8",
       items: [
-        { path: "/partnerPost", label: "Partenaires" },
-        { path: "/teamMessage", label: "Notre Équipe" },
-        { path: "/missionPost", label: "Valeurs & Missions" }
+        { path: "/categories", label: "Categories" },
+        // { path: "/teamMessage", label: "Notre Équipe" },
+        // { path: "/missionPost", label: "Valeurs & Missions" }
       ]
     },
-    {
-      title: "Créations",
-      color: "#a34ee5",
-      items: [
-        { path: "/portfolioPost", label: "Portfolio" },
-        { path: "/servicePost", label: "Services" }
-      ]
-    },
-    {
-      title: "Clients",
-      color: "#fec603",
-      items: [
-        { path: "/listeContacts", label: "Messages", count: counts.contacts },
-        { path: "/listeAbonnement", label: "Abonnements", count: counts.newsletter }
-      ]
-    }
+    // {
+    //   title: "Créations",
+    //   color: "#a34ee5",
+    //   items: [
+    //     { path: "/portfolioPost", label: "Portfolio" },
+    //     { path: "/servicePost", label: "Services" }
+    //   ]
+    // },
+    // {
+    //   title: "Clients",
+    //   color: "#fec603",
+    //   items: [
+    //     { path: "/listeContacts", label: "Messages", count: counts.contacts },
+    //     { path: "/listeAbonnement", label: "Abonnements", count: counts.newsletter }
+    //   ]
+    // }
   ];
 
   // Quick access items
