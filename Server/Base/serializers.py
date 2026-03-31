@@ -30,3 +30,13 @@ class LoginSerializer(TokenObtainPairSerializer):
         token["role"] = user.role
 
         return token
+
+
+from rest_framework import serializers
+from .models import Categorie
+
+class CategorieSerializers(serializers.ModelSerializer):
+
+    class Meta:
+        model = Categorie
+        fields = ['id', 'nom']

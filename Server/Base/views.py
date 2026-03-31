@@ -25,4 +25,20 @@ class UserViewSet(viewsets.ModelViewSet):
 # LOGIN JWT
 class LoginView(TokenObtainPairView):
     serializer_class = LoginSerializer
-    permission_classes = [AllowAny]  # tout le monde peut se connecter
+    permission_classes = [AllowAny]  
+
+
+# Categorie View
+from rest_framework import generics, permissions
+from .models import Categorie
+from .serializers import CategorieSerializers
+
+class CategorieListCreateView(generics.ListCreateAPIView):
+    queryset = Categorie.objects.all()
+    serializer_class = CategorieSerializers
+    permission_classes = [permissions.IsAuthenticated]
+
+class CategorieRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Categorie.objects.all()
+    serializer_class = CategorieSerializers
+    permission_classes = [permissions.IsAuthenticated]
