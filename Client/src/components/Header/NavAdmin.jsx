@@ -106,7 +106,7 @@ const NavAdmin = () => {
       color: "#7828a8",
       items: [
         { path: "/categories", label: "Categories" },
-        // { path: "/teamMessage", label: "Notre Équipe" },
+        { path: "/produits", label: "Produits" },
         // { path: "/missionPost", label: "Valeurs & Missions" }
       ]
     },

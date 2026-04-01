@@ -9,6 +9,7 @@ const CONFIG = {
   API_LOGIN: `${BASE_URL}/api/login/`,
   API_REGISTER: `${BASE_URL}/api/users/`,
   API_CATEGORIE :  `${BASE_URL}/api/categories/`,
+  API_PRODUIT: `${BASE_URL}/api/produits/`,
 
 
 

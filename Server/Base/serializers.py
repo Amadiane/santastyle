@@ -47,7 +47,17 @@ class CategorieSerializers(serializers.ModelSerializer):
 from rest_framework import serializers
 from .models import Produit
 
+from cloudinary.utils import cloudinary_url
+
 class ProduitSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Produit
         fields = '__all__'
+
+    def get_image_url(self, obj):
+        if obj.image:
+            url, _ = cloudinary_url(str(obj.image))
+            return url
+        return None
