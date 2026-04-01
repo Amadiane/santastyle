@@ -61,3 +61,13 @@ class ProduitSerializer(serializers.ModelSerializer):
             url, _ = cloudinary_url(str(obj.image))
             return url
         return None
+
+
+from .models import Stock
+
+class StockSerializer(serializers.ModelSerializer):
+
+    produit_nom=serializers.CharField(source="produit.nom", read_only=True)
+    class Meta:
+        model = Stock
+        fields = ["id", "produit","produit_nom", "taille", "couleur", "quantite"]

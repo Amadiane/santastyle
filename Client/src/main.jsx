@@ -59,7 +59,7 @@ import PlatformPost from './components/Admin/PlatformPost.jsx';
 import ValeurPost from './components/Admin/ValeurPost.jsx';
 import MotPresidentPost from './components/Admin/MotPresidentPost.jsx';
 import VideoPost from './components/Admin/VideoPost.jsx';
-import PhotoPost from './components/Admin/PhotoPost.jsx';
+import Stocks from './components/Admin/Stocks.jsx';
 import Produits from './components/Admin/Produits.jsx';
 // import HomePost from './components/Admin/HomePost.jsx';
 import ProgramPost from './components/Admin/ProgramPost.jsx';
@@ -135,7 +135,7 @@ const router = createBrowserRouter(
         <Route path="valeurPost" element={<ValeurPost />} />
         <Route path="motPresidentPost" element={<MotPresidentPost />} />
         <Route path="videoPost" element={<VideoPost />} />
-        <Route path="photoPost" element={<PhotoPost />} />
+        <Route path="stocks" element={<Stocks />} />
         <Route path="produits" element={<Produits />} />
         <Route path="categories" element={<Categories />} />
         {/* <Route path="homePost" element={<HomePost />} /> */}

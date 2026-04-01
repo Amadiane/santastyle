@@ -57,7 +57,7 @@ const App = () => {
     "/listePostulantsCommunity", "/listPartners",
     "/listeAbonnement", "/platformPost", "/valeurPost",
     "/dashboardAdmin", "/teamMessage", "/missionPost",
-    "/register-employee", "/homePost", "/partnerPost",
+    "/register-employee", "/homePost", "/stocks",
     "/servicePost", "/categories", "/produits",
   ];
 

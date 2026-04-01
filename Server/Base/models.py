@@ -35,3 +35,21 @@ class Produit(models.Model):
 
     def __str__(self):
         return self.nom
+
+
+
+class Stock (models.Model):
+    produit = models.ForeignKey(
+        Produit,
+        on_delete=models.CASCADE,
+        related_name="stocks"
+    )
+    taille = models.CharField(max_length=10)
+    couleur = models.CharField(max_length=30)
+    quantite = models.IntegerField(default=0)
+
+    class Meta:
+        unique_together = ('produit', 'taille', 'couleur')
+
+    def __str__(self):
+        return f"{self.produit.nom} - {self.taille}"

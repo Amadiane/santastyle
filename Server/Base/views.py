@@ -59,3 +59,15 @@ class ProduitRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset =  Produit.objects.all()
     serializer_class = ProduitSerializer
     permission_class = [permissions.IsAuthenticated]
+
+
+from rest_framework import viewsets
+from .models import Stock
+from .serializers import StockSerializer
+
+
+class StockViewSet(viewsets.ModelViewSet):
+
+    queryset = Stock.objects.all()
+    serializer_class = StockSerializer
+    permission_class = [permissions.IsAuthenticated]
