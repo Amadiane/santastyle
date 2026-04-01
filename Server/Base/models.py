@@ -53,3 +53,19 @@ class Stock (models.Model):
 
     def __str__(self):
         return f"{self.produit.nom} - {self.taille}"
+
+
+
+class Vente(models.Model):
+
+    produit = models.ForeignKey(Produit, on_delete=models.CASCADE)
+    taille = models.CharField(max_length=10)
+    couleur = models.CharField(max_length=20)
+
+    quantite = models.IntegerField()
+
+    prix_total = models.DecimalField(max_digits=10, decimal_places=2)
+
+    date_vente = models.DateTimeField(auto_now_add=True)
+
+    vendeur = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)

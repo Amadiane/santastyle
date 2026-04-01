@@ -66,7 +66,7 @@ import ProgramPost from './components/Admin/ProgramPost.jsx';
 import RegisterEmployee from './components/Admin/RegisterEmployee.jsx';
 import Activities from './components/HeaderSection/Activities.jsx';
 import PartnerPost from './components/Admin/PartnerPost.jsx';
-import NewsPost from './components/Admin/NewsPost.jsx';
+import Ventes from './components/Admin/Ventes.jsx';
 import ProfessionalAreaPost from './components/Admin/ProfessionalAreaPost.jsx';
 import ProfessionalArea from './components/HeaderSection/ProfessionalArea.jsx';
 import PortfolioPost from './components/Admin/PortfolioPost.jsx';
@@ -142,7 +142,7 @@ const router = createBrowserRouter(
         <Route path="programPost" element={<ProgramPost />} />
         <Route path="register-employee" element={<RegisterEmployee />} />
         <Route path="partnerPost" element={<PartnerPost />} />
-        <Route path="newsPost" element={<NewsPost />} />
+        <Route path="ventes" element={<Ventes />} />
         <Route path="professionalAreaPost" element={<ProfessionalAreaPost />} />
         <Route path="thonRecipesPost" element={<ThonRecipesPost />} />
         <Route path="portfolioPost" element={<PortfolioPost />} />

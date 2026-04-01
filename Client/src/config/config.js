@@ -11,7 +11,8 @@ const CONFIG = {
   API_CATEGORIE :  `${BASE_URL}/api/categories/`,
   API_PRODUIT: `${BASE_URL}/api/produits/`,
   API_STOCK: `${BASE_URL}/api/stocks/`,
-
+  API_VENTE: `${BASE_URL}/api/ventes/`,
+  
 
 
 

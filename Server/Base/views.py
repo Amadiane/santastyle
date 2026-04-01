@@ -71,3 +71,19 @@ class StockViewSet(viewsets.ModelViewSet):
     queryset = Stock.objects.all()
     serializer_class = StockSerializer
     permission_class = [permissions.IsAuthenticated]
+
+
+
+from rest_framework import viewsets
+from .models import Vente
+from .serializers import VenteSerializer
+
+
+class VenteViewSet(viewsets.ModelViewSet):
+    
+    queryset = Vente.objects.all()
+    serializer_class = VenteSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(vendeur=self.request.user)

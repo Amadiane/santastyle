@@ -107,7 +107,8 @@ const NavAdmin = () => {
       items: [
         { path: "/categories", label: "Categories" },
         { path: "/produits", label: "Produits" },
-        { path: "/stocks", label: "Stocks" }
+        { path: "/stocks", label: "Stocks" },
+        { path: "/ventes", label: "Ventes" }
       ]
     },
     // {

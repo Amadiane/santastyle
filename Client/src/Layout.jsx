@@ -53,7 +53,7 @@ const App = () => {
      ROUTES
   ============================== */
   const adminPaths = [
-    "/newsPost", "/listeContacts", "/listeRejoindre",
+    "/ventes", "/listeContacts", "/listeRejoindre",
     "/listePostulantsCommunity", "/listPartners",
     "/listeAbonnement", "/platformPost", "/valeurPost",
     "/dashboardAdmin", "/teamMessage", "/missionPost",
