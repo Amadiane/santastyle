@@ -33,15 +33,15 @@ from rest_framework import generics, permissions
 from .models import Categorie
 from .serializers import CategorieSerializers
 
-class CategorieListCreateView(generics.ListCreateAPIView):
-    queryset = Categorie.objects.all()
-    serializer_class = CategorieSerializers
-    permission_classes = [permissions.IsAuthenticated]
+# class CategorieListCreateView(generics.ListCreateAPIView):
+#     queryset = Categorie.objects.all()
+#     serializer_class = CategorieSerializers
+#     permission_classes = [permissions.IsAuthenticated]
 
-class CategorieRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Categorie.objects.all()
-    serializer_class = CategorieSerializers
-    permission_classes = [permissions.IsAuthenticated]
+# class CategorieRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+#     queryset = Categorie.objects.all()
+#     serializer_class = CategorieSerializers
+#     permission_classes = [permissions.IsAuthenticated]
 
 
 
@@ -49,16 +49,56 @@ class CategorieRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 from .models import Produit
 from .serializers import ProduitSerializer
 
+# class ProduitListCreateView(generics.ListCreateAPIView):
+#     queryset = Produit.objects.all()
+#     serializer_class = ProduitSerializer
+#     permission_class = [permissions.IsAuthenticated]
+
+
+# class ProduitRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+#     queryset =  Produit.objects.all()
+#     serializer_class = ProduitSerializer
+#     permission_class = [permissions.IsAuthenticated]
+
+
+# Catégories — lecture publique
+class CategorieListCreateView(generics.ListCreateAPIView):
+    queryset = Categorie.objects.all()
+    serializer_class = CategorieSerializers
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [permissions.AllowAny()]  # ✅ lecture publique
+        return [permissions.IsAuthenticated()]  # écriture protégée
+
+class CategorieRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Categorie.objects.all()
+    serializer_class = CategorieSerializers
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
+
+
+# Produits — lecture publique
 class ProduitListCreateView(generics.ListCreateAPIView):
     queryset = Produit.objects.all()
     serializer_class = ProduitSerializer
-    permission_class = [permissions.IsAuthenticated]
 
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
 
 class ProduitRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-    queryset =  Produit.objects.all()
+    queryset = Produit.objects.all()
     serializer_class = ProduitSerializer
-    permission_class = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
 
 
 from rest_framework import viewsets
@@ -67,10 +107,13 @@ from .serializers import StockSerializer
 
 
 class StockViewSet(viewsets.ModelViewSet):
-
     queryset = Stock.objects.all()
     serializer_class = StockSerializer
-    permission_class = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [permissions.AllowAny()]  # ✅ lecture publique
+        return [permissions.IsAuthenticated()]
 
 
 

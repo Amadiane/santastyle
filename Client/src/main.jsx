@@ -79,6 +79,8 @@ import Services from './components/HeaderSection/Services.jsx';
 import ThonProduct from './components/HeaderSection/ThonProduct.jsx';
 import ThonProductPost from './components/Admin/ThonProductPost.jsx';
 
+import BoutiquePage from './components/HeaderSection/BoutiquePage.jsx';
+import ProduitDetail from './components/HeaderSection/ProduitDetail.jsx';
 
 
 
@@ -121,6 +123,8 @@ const router = createBrowserRouter(
       <Route path="thonRecipes" element={<ThonRecipes />} />
       <Route path="services" element={<Services />} />
       <Route path="thonProduct" element={<ThonProduct />} />
+      <Route path="boutique" element={<BoutiquePage />} />
+      <Route path="boutique/:id" element={<ProduitDetail />} />
 
       {/* Routes Admin protégées */}
       <Route element={<PrivateRoute />}>
