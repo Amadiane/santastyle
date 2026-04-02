@@ -2,25 +2,24 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Pencil, Trash2, Tag, X, Check } from "lucide-react";
 import CONFIG from "../../config/config";
+import { useTheme } from "../../context/ThemeContext";
 
 const Categories = () => {
   const navigate = useNavigate();
+  const { tokens: SS } = useTheme();
 
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Création
   const [newNom, setNewNom] = useState("");
   const [creating, setCreating] = useState(false);
 
-  // Édition
   const [editingId, setEditingId] = useState(null);
   const [editNom, setEditNom] = useState("");
   const [updating, setUpdating] = useState(false);
 
-  // Suppression
   const [deletingId, setDeletingId] = useState(null);
 
   const token = localStorage.getItem("access");
@@ -37,184 +36,187 @@ const Categories = () => {
       const data = await res.json();
       if (res.ok) setCategories(data);
       else setError("Erreur lors du chargement");
-    } catch {
-      setError("Erreur serveur");
-    } finally {
-      setLoading(false);
-    }
+    } catch { setError("Erreur serveur"); }
+    finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+  useEffect(() => { fetchCategories(); }, []);
 
   // --- CREATE ---
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!newNom.trim()) return;
-    setCreating(true);
-    setError("");
-    setSuccess("");
+    setCreating(true); setError(""); setSuccess("");
     try {
       const res = await fetch(CONFIG.API_CATEGORIE, {
-        method: "POST",
-        headers,
+        method: "POST", headers,
         body: JSON.stringify({ nom: newNom.trim() }),
       });
       const data = await res.json();
       if (res.ok) {
-        setCategories((prev) => [...prev, data]);
+        setCategories(prev => [...prev, data]);
         setNewNom("");
         setSuccess("Catégorie créée !");
         setTimeout(() => setSuccess(""), 3000);
-      } else {
-        setError(data.nom?.[0] || "Erreur lors de la création");
-      }
-    } catch {
-      setError("Erreur serveur");
-    } finally {
-      setCreating(false);
-    }
+      } else { setError(data.nom?.[0] || "Erreur lors de la création"); }
+    } catch { setError("Erreur serveur"); }
+    finally { setCreating(false); }
   };
 
   // --- UPDATE ---
   const handleUpdate = async (id) => {
     if (!editNom.trim()) return;
-    setUpdating(true);
-    setError("");
-    setSuccess("");
+    setUpdating(true); setError(""); setSuccess("");
     try {
       const res = await fetch(`${CONFIG.API_CATEGORIE}${id}/`, {
-        method: "PUT",
-        headers,
+        method: "PUT", headers,
         body: JSON.stringify({ nom: editNom.trim() }),
       });
       const data = await res.json();
       if (res.ok) {
-        setCategories((prev) =>
-          prev.map((cat) => (cat.id === id ? data : cat))
-        );
+        setCategories(prev => prev.map(cat => cat.id === id ? data : cat));
         setEditingId(null);
         setSuccess("Catégorie modifiée !");
         setTimeout(() => setSuccess(""), 3000);
-      } else {
-        setError(data.nom?.[0] || "Erreur lors de la modification");
-      }
-    } catch {
-      setError("Erreur serveur");
-    } finally {
-      setUpdating(false);
-    }
+      } else { setError(data.nom?.[0] || "Erreur lors de la modification"); }
+    } catch { setError("Erreur serveur"); }
+    finally { setUpdating(false); }
   };
 
   // --- DELETE ---
   const handleDelete = async (id) => {
-    setDeletingId(id);
-    setError("");
-    setSuccess("");
+    setDeletingId(id); setError(""); setSuccess("");
     try {
-      const res = await fetch(`${CONFIG.API_CATEGORIE}${id}/`, {
-        method: "DELETE",
-        headers,
-      });
+      const res = await fetch(`${CONFIG.API_CATEGORIE}${id}/`, { method: "DELETE", headers });
       if (res.ok || res.status === 204) {
-        setCategories((prev) => prev.filter((cat) => cat.id !== id));
+        setCategories(prev => prev.filter(cat => cat.id !== id));
         setSuccess("Catégorie supprimée !");
         setTimeout(() => setSuccess(""), 3000);
-      } else {
-        setError("Erreur lors de la suppression");
-      }
-    } catch {
-      setError("Erreur serveur");
-    } finally {
-      setDeletingId(null);
-    }
+      } else { setError("Erreur lors de la suppression"); }
+    } catch { setError("Erreur serveur"); }
+    finally { setDeletingId(null); }
   };
 
+  // ── Styles partagés ──────────────────────────────────────────────
+  const cardStyle = {
+    background: SS.surface,
+    border: `1px solid ${SS.border}`,
+    borderRadius: "14px",
+    padding: "20px",
+  };
+
+  const inputStyle = {
+    flex: 1, padding: "10px 14px", borderRadius: "8px",
+    background: SS.card, border: `1px solid ${SS.border}`,
+    color: SS.text, fontSize: "14px", outline: "none",
+  };
+
+  const iconBtnStyle = (color, bg) => ({
+    padding: "7px", borderRadius: "7px",
+    background: bg, border: `1px solid ${color}40`,
+    color, cursor: "pointer", display: "flex",
+    alignItems: "center", transition: "opacity 0.15s",
+  });
+
   return (
-    <div className="min-h-screen bg-[#0a0a0a] p-4 md:p-8">
-      <div className="max-w-2xl mx-auto">
+    <div style={{ minHeight: "100vh", background: SS.bg, padding: "2rem", color: SS.text, fontFamily: "var(--font-sans, sans-serif)" }}>
+      <div style={{ maxWidth: "680px", margin: "0 auto" }}>
+
+        {/* Fil d'Ariane */}
+        <div style={{ display: "flex", gap: "6px", alignItems: "center", marginBottom: "6px" }}>
+          <span style={{ fontSize: "12px", color: SS.textDim }}>Gestion</span>
+          <span style={{ fontSize: "12px", color: SS.textDim }}>/</span>
+          <span style={{ fontSize: "12px", color: SS.gold }}>Catégories</span>
+        </div>
 
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "1.5rem" }}>
           <button
             onClick={() => navigate("/dashboardAdmin")}
-            className="p-2 rounded-xl bg-[#41124f]/30 text-gray-400 hover:text-white transition-colors"
+            style={{ padding: "8px 10px", borderRadius: "8px", border: `1px solid ${SS.border}`, background: SS.card, cursor: "pointer", display: "flex", alignItems: "center", color: SS.textMuted }}
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={18} />
           </button>
-          <div className="flex items-center gap-3">
-            <Tag className="w-7 h-7 text-[#a34ee5]" />
-            <h1 className="text-2xl font-bold text-white">Catégories</h1>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: `${SS.gold}20`, border: `1px solid ${SS.gold}50`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Tag size={19} color={SS.gold} />
+            </div>
+            <div>
+              <div style={{ fontSize: "20px", fontWeight: "600", color: SS.goldLight, lineHeight: 1.2 }}>Catégories</div>
+              <div style={{ fontSize: "12px", color: SS.textDim }}>{categories.length} catégorie{categories.length > 1 ? "s" : ""}</div>
+            </div>
           </div>
         </div>
 
         {/* Alerts */}
         {error && (
-          <div className="mb-4 p-3 bg-red-500/20 text-red-400 rounded-xl flex justify-between items-center">
+          <div style={{ padding: "12px 16px", borderRadius: "10px", background: `${SS.danger}18`, border: `1px solid ${SS.danger}40`, color: SS.danger, fontSize: "14px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
             <span>{error}</span>
-            <button onClick={() => setError("")}><X size={16} /></button>
+            <button onClick={() => setError("")} style={{ background: "none", border: "none", cursor: "pointer", color: SS.danger }}><X size={15} /></button>
           </div>
         )}
         {success && (
-          <div className="mb-4 p-3 bg-green-500/20 text-green-400 rounded-xl flex justify-between items-center">
+          <div style={{ padding: "12px 16px", borderRadius: "10px", background: `${SS.success}18`, border: `1px solid ${SS.success}40`, color: SS.success, fontSize: "14px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
             <span>{success}</span>
-            <button onClick={() => setSuccess("")}><X size={16} /></button>
+            <button onClick={() => setSuccess("")} style={{ background: "none", border: "none", cursor: "pointer", color: SS.success }}><X size={15} /></button>
           </div>
         )}
 
         {/* Formulaire création */}
-        <div className="bg-[#0a0a0a]/90 backdrop-blur-2xl rounded-3xl p-6 shadow-2xl border border-[#a34ee5]/30 mb-6">
-          <h2 className="text-white font-semibold mb-4">Nouvelle catégorie</h2>
-          <form onSubmit={handleCreate} className="flex gap-3">
+        <div style={{ ...cardStyle, border: `1px solid ${SS.gold}50`, boxShadow: `0 4px 24px ${SS.gold}10`, marginBottom: "16px" }}>
+          <div style={{ fontSize: "15px", fontWeight: "600", color: SS.goldLight, marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
+            <Tag size={16} color={SS.gold} />
+            Nouvelle catégorie
+          </div>
+          <form onSubmit={handleCreate} style={{ display: "flex", gap: "10px" }}>
             <input
               type="text"
               placeholder="Nom de la catégorie"
-              className="flex-1 p-3 rounded-xl bg-[#41124f]/30 text-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#a34ee5]"
+              style={inputStyle}
               value={newNom}
-              onChange={(e) => setNewNom(e.target.value)}
+              onChange={e => setNewNom(e.target.value)}
               required
             />
             <button
               type="submit"
               disabled={creating}
-              className="px-4 py-3 rounded-xl bg-gradient-to-r from-[#a34ee5] to-[#fec603] text-white font-bold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
+              style={{ padding: "10px 18px", borderRadius: "8px", background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`, border: "none", color: "#1A1208", fontWeight: "600", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", opacity: creating ? 0.5 : 1, boxShadow: `0 2px 12px ${SS.gold}30`, whiteSpace: "nowrap" }}
             >
-              <Plus size={18} />
+              <Plus size={16} />
               {creating ? "..." : "Ajouter"}
             </button>
           </form>
         </div>
 
         {/* Liste */}
-        <div className="bg-[#0a0a0a]/90 backdrop-blur-2xl rounded-3xl p-6 shadow-2xl border border-[#a34ee5]/30">
-          <h2 className="text-white font-semibold mb-4">
+        <div style={cardStyle}>
+          <div style={{ fontSize: "15px", fontWeight: "600", color: SS.goldLight, marginBottom: "14px" }}>
             Liste ({categories.length})
-          </h2>
+          </div>
 
           {loading ? (
-            <div className="text-center py-8 text-gray-500">Chargement...</div>
+            <div style={{ textAlign: "center", padding: "2rem", color: SS.textDim }}>Chargement...</div>
           ) : categories.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              Aucune catégorie pour le moment
-            </div>
+            <div style={{ textAlign: "center", padding: "2rem", color: SS.textDim }}>Aucune catégorie pour le moment</div>
           ) : (
-            <ul className="space-y-3">
-              {categories.map((cat) => (
-                <li
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {categories.map(cat => (
+                <div
                   key={cat.id}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-[#41124f]/20 border border-[#a34ee5]/10 hover:border-[#a34ee5]/30 transition-colors"
+                  style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", borderRadius: "10px", background: SS.card, border: `1px solid ${SS.border}`, transition: "border-color 0.15s" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = SS.borderHover}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = SS.border}
                 >
                   {editingId === cat.id ? (
-                    // Mode édition
+                    /* Mode édition */
                     <>
                       <input
                         type="text"
-                        className="flex-1 p-2 rounded-lg bg-[#41124f]/40 text-white outline-none focus:ring-2 focus:ring-[#a34ee5]"
+                        style={{ ...inputStyle, flex: 1, padding: "7px 12px", fontSize: "13px" }}
                         value={editNom}
-                        onChange={(e) => setEditNom(e.target.value)}
+                        onChange={e => setEditNom(e.target.value)}
                         autoFocus
-                        onKeyDown={(e) => {
+                        onKeyDown={e => {
                           if (e.key === "Enter") handleUpdate(cat.id);
                           if (e.key === "Escape") setEditingId(null);
                         }}
@@ -222,43 +224,40 @@ const Categories = () => {
                       <button
                         onClick={() => handleUpdate(cat.id)}
                         disabled={updating}
-                        className="p-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors"
+                        style={{ ...iconBtnStyle(SS.success, `${SS.success}20`), opacity: updating ? 0.5 : 1 }}
                       >
-                        <Check size={16} />
+                        <Check size={15} />
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="p-2 rounded-lg bg-gray-500/20 text-gray-400 hover:bg-gray-500/30 transition-colors"
+                        style={iconBtnStyle(SS.textMuted, SS.surface)}
                       >
-                        <X size={16} />
+                        <X size={15} />
                       </button>
                     </>
                   ) : (
-                    // Mode affichage
+                    /* Mode affichage */
                     <>
-                      <Tag size={16} className="text-[#a34ee5] shrink-0" />
-                      <span className="flex-1 text-white">{cat.nom}</span>
+                      <Tag size={15} color={SS.gold} style={{ flexShrink: 0 }} />
+                      <span style={{ flex: 1, fontSize: "14px", color: SS.text }}>{cat.nom}</span>
                       <button
-                        onClick={() => {
-                          setEditingId(cat.id);
-                          setEditNom(cat.nom);
-                        }}
-                        className="p-2 rounded-lg bg-[#a34ee5]/20 text-[#a34ee5] hover:bg-[#a34ee5]/30 transition-colors"
+                        onClick={() => { setEditingId(cat.id); setEditNom(cat.nom); }}
+                        style={iconBtnStyle(SS.gold, `${SS.gold}18`)}
                       >
-                        <Pencil size={16} />
+                        <Pencil size={14} />
                       </button>
                       <button
                         onClick={() => handleDelete(cat.id)}
                         disabled={deletingId === cat.id}
-                        className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors disabled:opacity-50"
+                        style={{ ...iconBtnStyle(SS.danger, `${SS.danger}18`), opacity: deletingId === cat.id ? 0.5 : 1 }}
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={14} />
                       </button>
                     </>
                   )}
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           )}
         </div>
 

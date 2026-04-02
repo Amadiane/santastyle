@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Plus, Trash2, X, ShoppingBag,
-  Search, ChevronDown, User, Calendar, TrendingUp
+  Search, ChevronDown, User, TrendingUp, Package
 } from "lucide-react";
 import CONFIG from "../../config/config";
+import { useTheme } from "../../context/ThemeContext";
 
 const Ventes = () => {
   const navigate = useNavigate();
+  const { tokens: SS } = useTheme();
 
   const [ventes, setVentes] = useState([]);
   const [produits, setProduits] = useState([]);
@@ -43,11 +45,8 @@ const Ventes = () => {
       const data = await res.json();
       if (res.ok) setVentes(data);
       else setError("Erreur lors du chargement des ventes");
-    } catch {
-      setError("Erreur serveur");
-    } finally {
-      setLoading(false);
-    }
+    } catch { setError("Erreur serveur"); }
+    finally { setLoading(false); }
   };
 
   const fetchProduits = async () => {
@@ -72,59 +71,41 @@ const Ventes = () => {
     fetchStocks();
   }, []);
 
-  // --- Tailles dispo selon produit ---
+  // --- Tailles dispo ---
   useEffect(() => {
     if (!form.produit) {
-      setTaillesDisponibles([]);
-      setCouleursDisponibles([]);
-      setStockDisponible(null);
-      return;
+      setTaillesDisponibles([]); setCouleursDisponibles([]); setStockDisponible(null); return;
     }
-    const stocksProduit = stocks.filter(
-      (s) => String(s.produit) === String(form.produit)
-    );
-    const tailles = [...new Set(stocksProduit.map((s) => s.taille))];
-    setTaillesDisponibles(tailles);
-    setForm((prev) => ({ ...prev, taille: "", couleur: "" }));
-    setCouleursDisponibles([]);
-    setStockDisponible(null);
+    const sp = stocks.filter(s => String(s.produit) === String(form.produit));
+    setTaillesDisponibles([...new Set(sp.map(s => s.taille))]);
+    setForm(prev => ({ ...prev, taille: "", couleur: "" }));
+    setCouleursDisponibles([]); setStockDisponible(null);
   }, [form.produit]);
 
-  // --- Couleurs dispo selon taille ---
+  // --- Couleurs dispo ---
   useEffect(() => {
     if (!form.produit || !form.taille) {
-      setCouleursDisponibles([]);
-      setStockDisponible(null);
-      return;
+      setCouleursDisponibles([]); setStockDisponible(null); return;
     }
-    const stocksFiltres = stocks.filter(
-      (s) =>
-        String(s.produit) === String(form.produit) &&
-        s.taille === form.taille
+    const sf = stocks.filter(s =>
+      String(s.produit) === String(form.produit) && s.taille === form.taille
     );
-    setCouleursDisponibles(stocksFiltres.map((s) => s.couleur));
-    setForm((prev) => ({ ...prev, couleur: "" }));
-    setStockDisponible(null);
+    setCouleursDisponibles(sf.map(s => s.couleur));
+    setForm(prev => ({ ...prev, couleur: "" })); setStockDisponible(null);
   }, [form.taille]);
 
-  // --- Stock dispo selon couleur ---
+  // --- Stock dispo ---
   useEffect(() => {
-    if (!form.produit || !form.taille || !form.couleur) {
-      setStockDisponible(null);
-      return;
-    }
-    const s = stocks.find(
-      (s) =>
-        String(s.produit) === String(form.produit) &&
-        s.taille === form.taille &&
-        s.couleur === form.couleur
+    if (!form.produit || !form.taille || !form.couleur) { setStockDisponible(null); return; }
+    const s = stocks.find(s =>
+      String(s.produit) === String(form.produit) &&
+      s.taille === form.taille && s.couleur === form.couleur
     );
     setStockDisponible(s ? s.quantite : 0);
   }, [form.couleur]);
 
-  // --- Prix estimé ---
   const getProduitPrix = () =>
-    produits.find((p) => String(p.id) === String(form.produit))?.prix || null;
+    produits.find(p => String(p.id) === String(form.produit))?.prix || null;
 
   const prixEstime = getProduitPrix()
     ? (parseFloat(getProduitPrix()) * parseInt(form.quantite || 0)).toLocaleString("fr-FR")
@@ -134,16 +115,12 @@ const Ventes = () => {
   const handleCreate = async (e) => {
     e.preventDefault();
     if (stockDisponible !== null && parseInt(form.quantite) > stockDisponible) {
-      setError(`Stock insuffisant. Disponible : ${stockDisponible}`);
-      return;
+      setError(`Stock insuffisant. Disponible : ${stockDisponible}`); return;
     }
-    setSubmitting(true);
-    setError("");
-    setSuccess("");
+    setSubmitting(true); setError(""); setSuccess("");
     try {
       const res = await fetch(`${CONFIG.BASE_URL}/api/ventes/`, {
-        method: "POST",
-        headers,
+        method: "POST", headers,
         body: JSON.stringify({
           produit: parseInt(form.produit),
           taille: form.taille,
@@ -153,262 +130,226 @@ const Ventes = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        setVentes((prev) => [data, ...prev]);
-        setForm(emptyForm);
-        setShowForm(false);
+        setVentes(prev => [data, ...prev]);
+        setForm(emptyForm); setShowForm(false);
         setSuccess("Vente enregistrée avec succès !");
-        await fetchStocks(); // ✅ Refresh stock après vente
+        await fetchStocks();
         setTimeout(() => setSuccess(""), 3000);
       } else {
-        const msg = Object.entries(data)
-          .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`)
-          .join(" | ");
-        setError(msg || "Erreur lors de la création");
+        setError(Object.entries(data).map(([k, v]) =>
+          `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join(" | ") || "Erreur");
       }
-    } catch {
-      setError("Erreur serveur");
-    } finally {
-      setSubmitting(false);
-    }
+    } catch { setError("Erreur serveur"); }
+    finally { setSubmitting(false); }
   };
 
   // --- DELETE ---
   const handleDelete = async (id) => {
-    setDeletingId(id);
-    setError("");
+    setDeletingId(id); setError("");
     try {
-      const res = await fetch(`${CONFIG.BASE_URL}/api/ventes/${id}/`, {
-        method: "DELETE",
-        headers,
-      });
+      const res = await fetch(`${CONFIG.BASE_URL}/api/ventes/${id}/`, { method: "DELETE", headers });
       if (res.ok || res.status === 204) {
-        setVentes((prev) => prev.filter((v) => v.id !== id));
+        setVentes(prev => prev.filter(v => v.id !== id));
         setConfirmDeleteId(null);
         setSuccess("Vente supprimée !");
         setTimeout(() => setSuccess(""), 3000);
-      } else {
-        setError("Erreur lors de la suppression");
-      }
-    } catch {
-      setError("Erreur serveur");
-    } finally {
-      setDeletingId(null);
-    }
+      } else { setError("Erreur lors de la suppression"); }
+    } catch { setError("Erreur serveur"); }
+    finally { setDeletingId(null); }
   };
 
   // --- FILTER ---
-  const filtered = ventes.filter((v) => {
-    const produitNom = (v.produit_nom || "").toLowerCase();
-    const matchSearch =
-      produitNom.includes(search.toLowerCase()) ||
+  const filtered = ventes.filter(v => {
+    const nom = (v.produit_nom || "").toLowerCase();
+    const ms = nom.includes(search.toLowerCase()) ||
       v.taille?.toLowerCase().includes(search.toLowerCase()) ||
       v.couleur?.toLowerCase().includes(search.toLowerCase()) ||
       (v.vendeur_nom || "").toLowerCase().includes(search.toLowerCase());
-    const matchProduit = filterProduit
-      ? String(v.produit) === filterProduit
-      : true;
-    return matchSearch && matchProduit;
+    const mp = filterProduit ? String(v.produit) === filterProduit : true;
+    return ms && mp;
   });
 
-  // --- STATS ---
-  const totalCA = ventes.reduce((acc, v) => acc + parseFloat(v.prix_total || 0), 0);
-  const totalUnites = ventes.reduce((acc, v) => acc + (v.quantite || 0), 0);
+  const totalCA = ventes.reduce((a, v) => a + parseFloat(v.prix_total || 0), 0);
+  const totalUnites = ventes.reduce((a, v) => a + (v.quantite || 0), 0);
 
-  // --- Stock restant après une vente ---
   const getStockRestant = (vente) => {
-    const s = stocks.find(
-      (s) =>
-        String(s.produit) === String(vente.produit) &&
-        s.taille === vente.taille &&
-        s.couleur === vente.couleur
+    const s = stocks.find(s =>
+      String(s.produit) === String(vente.produit) &&
+      s.taille === vente.taille && s.couleur === vente.couleur
     );
     return s ? s.quantite : null;
   };
 
-  const formatDate = (dateStr) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("fr-FR", {
-      day: "2-digit", month: "short", year: "numeric",
-      hour: "2-digit", minute: "2-digit",
-    });
+  // ── Styles partagés ──────────────────────────────────────────────
+  const inputStyle = {
+    width: "100%", padding: "10px 14px", borderRadius: "8px",
+    background: SS.card, border: `1px solid ${SS.border}`,
+    color: SS.text, fontSize: "14px", outline: "none",
   };
 
+  const labelStyle = {
+    fontSize: "11px", color: SS.textMuted,
+    textTransform: "uppercase", letterSpacing: "0.07em",
+    marginBottom: "6px", display: "block",
+  };
+
+  const stockBadgeStyle = (q) => ({
+    padding: "3px 10px", borderRadius: "20px",
+    fontSize: "11px", fontWeight: "500", display: "inline-block",
+    background: q === 0 ? SS.dangerBg : q <= 5 ? SS.warningBg : SS.successBg,
+    color: q === 0 ? SS.danger : q <= 5 ? SS.warning : SS.success,
+    border: `1px solid ${(q === 0 ? SS.danger : q <= 5 ? SS.warning : SS.success)}40`,
+  });
+
   return (
-    <div className="min-h-screen bg-[#0a0a0a] p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
+    <div style={{ minHeight: "100vh", background: SS.bg, padding: "2rem", color: SS.text, fontFamily: "var(--font-sans, sans-serif)" }}>
+      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+
+        {/* Fil d'Ariane */}
+        <div style={{ display: "flex", gap: "6px", alignItems: "center", marginBottom: "6px" }}>
+          <span style={{ fontSize: "12px", color: SS.textDim }}>Gestion</span>
+          <span style={{ fontSize: "12px", color: SS.textDim }}>/</span>
+          <span style={{ fontSize: "12px", color: SS.gold }}>Ventes</span>
+        </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
-          <div className="flex items-center gap-4">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem", flexWrap: "wrap", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <button
               onClick={() => navigate("/dashboardAdmin")}
-              className="p-2 rounded-xl bg-[#41124f]/30 text-gray-400 hover:text-white transition-colors"
+              style={{ padding: "8px 10px", borderRadius: "8px", border: `1px solid ${SS.border}`, background: SS.card, cursor: "pointer", display: "flex", alignItems: "center", color: SS.textMuted }}
             >
-              <ArrowLeft size={20} />
+              <ArrowLeft size={18} />
             </button>
-            <div className="flex items-center gap-3">
-              <ShoppingBag className="w-7 h-7 text-[#a34ee5]" />
-              <h1 className="text-2xl font-bold text-white">Ventes</h1>
-              <span className="px-2 py-0.5 rounded-full bg-[#a34ee5]/20 text-[#a34ee5] text-sm">
-                {ventes.length}
-              </span>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: `${SS.gold}20`, border: `1px solid ${SS.gold}50`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <ShoppingBag size={19} color={SS.gold} />
+              </div>
+              <div>
+                <div style={{ fontSize: "20px", fontWeight: "600", color: SS.goldLight, lineHeight: 1.2 }}>Ventes</div>
+                <div style={{ fontSize: "12px", color: SS.textDim }}>{ventes.length} transaction{ventes.length > 1 ? "s" : ""}</div>
+              </div>
             </div>
           </div>
+
           <button
             onClick={() => { setShowForm(!showForm); setError(""); }}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#a34ee5] to-[#fec603] text-white font-bold hover:opacity-90 transition-opacity"
+            style={{ background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`, border: "none", borderRadius: "8px", padding: "10px 20px", color: "#1A1208", fontWeight: "600", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", boxShadow: `0 2px 12px ${SS.gold}30` }}
           >
-            <Plus size={18} />
+            <Plus size={16} />
             Nouvelle vente
           </button>
         </div>
 
         {/* Stats */}
         {!loading && ventes.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-[#0a0a0a]/90 rounded-2xl p-4 border border-[#a34ee5]/20 flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-[#a34ee5]/20">
-                <TrendingUp size={20} className="text-[#a34ee5]" />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px", marginBottom: "20px" }}>
+            {[
+              { label: "Chiffre d'affaires", value: `${totalCA.toLocaleString("fr-FR")} GNF`, icon: <TrendingUp size={20} />, color: SS.gold },
+              { label: "Transactions", value: ventes.length, icon: <ShoppingBag size={20} />, color: SS.goldLight },
+              { label: "Unités vendues", value: totalUnites, icon: <Package size={20} />, color: SS.success },
+            ].map((s, i) => (
+              <div key={i} style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "14px", padding: "16px 20px", display: "flex", alignItems: "center", gap: "14px" }}>
+                <div style={{ width: "42px", height: "42px", borderRadius: "10px", background: `${s.color}20`, border: `1px solid ${s.color}40`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <span style={{ color: s.color }}>{s.icon}</span>
+                </div>
+                <div>
+                  <div style={{ fontSize: "11px", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "4px" }}>{s.label}</div>
+                  <div style={{ fontSize: "18px", fontWeight: "600", color: SS.goldLight }}>{s.value}</div>
+                </div>
               </div>
-              <div>
-                <p className="text-gray-500 text-xs">Chiffre d'affaires</p>
-                <p className="text-white font-bold text-lg">
-                  {totalCA.toLocaleString("fr-FR")} GNF
-                </p>
-              </div>
-            </div>
-            <div className="bg-[#0a0a0a]/90 rounded-2xl p-4 border border-[#a34ee5]/20 flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-[#fec603]/20">
-                <ShoppingBag size={20} className="text-[#fec603]" />
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs">Total ventes</p>
-                <p className="text-white font-bold text-lg">{ventes.length}</p>
-              </div>
-            </div>
-            <div className="bg-[#0a0a0a]/90 rounded-2xl p-4 border border-[#a34ee5]/20 flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-green-500/20">
-                <TrendingUp size={20} className="text-green-400" />
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs">Unités vendues</p>
-                <p className="text-white font-bold text-lg">{totalUnites}</p>
-              </div>
-            </div>
+            ))}
           </div>
         )}
 
         {/* Alerts */}
         {error && (
-          <div className="mb-4 p-3 bg-red-500/20 text-red-400 rounded-xl flex justify-between items-center">
+          <div style={{ padding: "12px 16px", borderRadius: "10px", background: `${SS.danger}18`, border: `1px solid ${SS.danger}40`, color: SS.danger, fontSize: "14px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
             <span>{error}</span>
-            <button onClick={() => setError("")}><X size={16} /></button>
+            <button onClick={() => setError("")} style={{ background: "none", border: "none", cursor: "pointer", color: SS.danger }}><X size={15} /></button>
           </div>
         )}
         {success && (
-          <div className="mb-4 p-3 bg-green-500/20 text-green-400 rounded-xl flex justify-between items-center">
+          <div style={{ padding: "12px 16px", borderRadius: "10px", background: `${SS.success}18`, border: `1px solid ${SS.success}40`, color: SS.success, fontSize: "14px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
             <span>{success}</span>
-            <button onClick={() => setSuccess("")}><X size={16} /></button>
+            <button onClick={() => setSuccess("")} style={{ background: "none", border: "none", cursor: "pointer", color: SS.success }}><X size={15} /></button>
           </div>
         )}
 
         {/* Formulaire nouvelle vente */}
         {showForm && (
-          <div className="bg-[#0a0a0a]/90 backdrop-blur-2xl rounded-3xl p-6 shadow-2xl border border-[#a34ee5]/30 mb-6">
-            <h2 className="text-white font-semibold mb-4">Nouvelle vente</h2>
-            <form onSubmit={handleCreate} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div style={{ background: SS.surface, border: `1px solid ${SS.gold}50`, borderRadius: "14px", padding: "20px", marginBottom: "20px", boxShadow: `0 4px 24px ${SS.gold}10` }}>
+            <div style={{ fontSize: "15px", fontWeight: "600", color: SS.goldLight, marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+              <ShoppingBag size={16} color={SS.gold} />
+              Nouvelle vente
+            </div>
+
+            <form onSubmit={handleCreate}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
 
                 <div>
-                  <label className="text-gray-500 text-xs mb-1 block">Produit</label>
-                  <select
-                    className="w-full p-3 rounded-xl bg-[#41124f]/30 text-white outline-none focus:ring-2 focus:ring-[#a34ee5]"
-                    value={form.produit}
-                    onChange={(e) => setForm({ ...form, produit: e.target.value })}
-                    required
-                  >
+                  <label style={labelStyle}>Produit</label>
+                  <select style={inputStyle} value={form.produit}
+                    onChange={e => setForm({ ...form, produit: e.target.value })} required>
                     <option value="">— Sélectionner —</option>
-                    {produits.map((p) => (
-                      <option key={p.id} value={p.id}>{p.nom}</option>
-                    ))}
+                    {produits.map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}
                   </select>
                 </div>
 
                 <div>
-                  <label className="text-gray-500 text-xs mb-1 block">
+                  <label style={labelStyle}>
                     Quantité
                     {stockDisponible !== null && (
-                      <span className={`ml-2 font-semibold ${stockDisponible === 0 ? "text-red-400" : "text-green-400"}`}>
-                        (stock disponible : {stockDisponible})
+                      <span style={{ marginLeft: "8px", fontWeight: "600", color: stockDisponible === 0 ? SS.danger : SS.success }}>
+                        (stock : {stockDisponible})
                       </span>
                     )}
                   </label>
                   <input
-                    type="number"
-                    min="1"
-                    max={stockDisponible ?? undefined}
-                    placeholder="Quantité"
-                    className="w-full p-3 rounded-xl bg-[#41124f]/30 text-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#a34ee5]"
-                    value={form.quantite}
-                    onChange={(e) => setForm({ ...form, quantite: e.target.value })}
-                    required
+                    type="number" min="1" max={stockDisponible ?? undefined}
+                    placeholder="Quantité" style={inputStyle}
+                    value={form.quantite} onChange={e => setForm({ ...form, quantite: e.target.value })} required
                   />
                 </div>
 
                 <div>
-                  <label className="text-gray-500 text-xs mb-1 block">Taille</label>
-                  <select
-                    className="w-full p-3 rounded-xl bg-[#41124f]/30 text-white outline-none focus:ring-2 focus:ring-[#a34ee5] disabled:opacity-40"
-                    value={form.taille}
-                    onChange={(e) => setForm({ ...form, taille: e.target.value })}
-                    disabled={!form.produit}
-                    required
-                  >
+                  <label style={labelStyle}>Taille</label>
+                  <select style={{ ...inputStyle, opacity: !form.produit ? 0.45 : 1 }}
+                    value={form.taille} onChange={e => setForm({ ...form, taille: e.target.value })}
+                    disabled={!form.produit} required>
                     <option value="">— Taille —</option>
-                    {taillesDisponibles.map((t) => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
+                    {taillesDisponibles.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
 
                 <div>
-                  <label className="text-gray-500 text-xs mb-1 block">Couleur</label>
-                  <select
-                    className="w-full p-3 rounded-xl bg-[#41124f]/30 text-white outline-none focus:ring-2 focus:ring-[#a34ee5] disabled:opacity-40"
-                    value={form.couleur}
-                    onChange={(e) => setForm({ ...form, couleur: e.target.value })}
-                    disabled={!form.taille}
-                    required
-                  >
+                  <label style={labelStyle}>Couleur</label>
+                  <select style={{ ...inputStyle, opacity: !form.taille ? 0.45 : 1 }}
+                    value={form.couleur} onChange={e => setForm({ ...form, couleur: e.target.value })}
+                    disabled={!form.taille} required>
                     <option value="">— Couleur —</option>
-                    {couleursDisponibles.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
+                    {couleursDisponibles.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
               </div>
 
               {/* Prix estimé */}
               {prixEstime && (
-                <div className="p-3 rounded-xl bg-[#fec603]/10 border border-[#fec603]/20 flex items-center justify-between">
-                  <span className="text-gray-400 text-sm">Prix total estimé</span>
-                  <span className="text-[#fec603] font-bold text-lg">{prixEstime} GNF</span>
+                <div style={{ padding: "12px 16px", borderRadius: "8px", background: `${SS.gold}12`, border: `1px solid ${SS.gold}35`, display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                  <span style={{ fontSize: "13px", color: SS.textMuted }}>Prix total estimé</span>
+                  <span style={{ fontSize: "18px", fontWeight: "700", color: SS.goldLight }}>{prixEstime} GNF</span>
                 </div>
               )}
 
-              <div className="flex gap-3 justify-end">
-                <button
-                  type="button"
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                <button type="button"
                   onClick={() => { setShowForm(false); setForm(emptyForm); }}
-                  className="px-4 py-2 rounded-xl bg-gray-700/40 text-gray-400 hover:text-white transition-colors"
-                >
+                  style={{ padding: "10px 20px", borderRadius: "8px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.textMuted, cursor: "pointer", fontSize: "14px" }}>
                   Annuler
                 </button>
-                <button
-                  type="submit"
+                <button type="submit"
                   disabled={submitting || stockDisponible === 0}
-                  className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#a34ee5] to-[#fec603] text-white font-bold hover:opacity-90 disabled:opacity-50"
-                >
+                  style={{ padding: "10px 20px", borderRadius: "8px", background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`, border: "none", color: "#1A1208", fontWeight: "600", fontSize: "14px", cursor: "pointer", opacity: submitting || stockDisponible === 0 ? 0.5 : 1 }}>
                   {submitting ? "Enregistrement..." : "Enregistrer la vente"}
                 </button>
               </div>
@@ -417,159 +358,134 @@ const Ventes = () => {
         )}
 
         {/* Filtres */}
-        <div className="flex gap-3 mb-6 flex-wrap">
-          <div className="flex-1 min-w-48 flex items-center gap-2 px-3 rounded-xl bg-[#41124f]/20 border border-[#a34ee5]/10">
-            <Search size={16} className="text-gray-500" />
+        <div style={{ display: "flex", gap: "10px", marginBottom: "14px", flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: "200px", display: "flex", alignItems: "center", gap: "10px", background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "8px", padding: "0 14px" }}>
+            <Search size={15} color={SS.textDim} />
             <input
-              type="text"
               placeholder="Rechercher (produit, taille, couleur, vendeur)..."
-              className="flex-1 py-3 bg-transparent text-white placeholder-gray-500 outline-none"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              style={{ flex: 1, background: "none", border: "none", outline: "none", color: SS.text, fontSize: "14px", padding: "10px 0" }}
+              value={search} onChange={e => setSearch(e.target.value)}
             />
           </div>
-          <div className="flex items-center gap-2 px-3 rounded-xl bg-[#41124f]/20 border border-[#a34ee5]/10">
-            <ChevronDown size={16} className="text-gray-500" />
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "8px", padding: "0 14px" }}>
+            <ChevronDown size={14} color={SS.textDim} />
             <select
-              className="py-3 bg-transparent text-white outline-none"
-              value={filterProduit}
-              onChange={(e) => setFilterProduit(e.target.value)}
-            >
+              style={{ background: "none", border: "none", outline: "none", color: SS.text, fontSize: "14px", padding: "10px 0" }}
+              value={filterProduit} onChange={e => setFilterProduit(e.target.value)}>
               <option value="">Tous les produits</option>
-              {produits.map((p) => (
-                <option key={p.id} value={String(p.id)}>{p.nom}</option>
-              ))}
+              {produits.map(p => <option key={p.id} value={String(p.id)}>{p.nom}</option>)}
             </select>
           </div>
         </div>
 
-        {/* Liste ventes */}
+        {/* Tableau */}
         {loading ? (
-          <div className="text-center py-16 text-gray-500">Chargement...</div>
+          <div style={{ textAlign: "center", padding: "4rem", color: SS.textDim }}>Chargement...</div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">Aucune vente trouvée</div>
+          <div style={{ textAlign: "center", padding: "4rem", color: SS.textDim }}>Aucune vente trouvée</div>
         ) : (
-          <div className="bg-[#0a0a0a]/90 backdrop-blur-2xl rounded-3xl border border-[#a34ee5]/30 overflow-hidden">
+          <div style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "14px", overflow: "hidden" }}>
 
-            {/* Header tableau */}
-            <div className="hidden md:grid grid-cols-12 gap-2 px-4 py-3 border-b border-[#a34ee5]/10 text-gray-500 text-xs uppercase tracking-wider">
-              <div className="col-span-2">Produit</div>
-              <div className="col-span-2">Taille / Couleur</div>
-              <div className="col-span-1">Qté</div>
-              <div className="col-span-2">Prix total</div>
-              <div className="col-span-2">Stock restant</div>
-              <div className="col-span-2">Vendeur</div>
-              <div className="col-span-1">Date</div>
+            {/* Header colonnes */}
+            <div style={{ display: "grid", gridTemplateColumns: "2fr 1.6fr 0.7fr 1.6fr 1.4fr 1.6fr 1.2fr", padding: "12px 20px", borderBottom: `1px solid ${SS.border}`, background: SS.card }}>
+              {["Produit", "Taille / Couleur", "Qté", "Prix total", "Stock restant", "Vendeur", "Date"].map((h, i) => (
+                <div key={i} style={{ fontSize: "11px", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", textAlign: i === 6 ? "right" : "left" }}>
+                  {h}
+                </div>
+              ))}
             </div>
 
-            <ul className="divide-y divide-[#a34ee5]/10">
-              {filtered.map((vente) => {
-                const stockRestant = getStockRestant(vente);
-                return (
-                  <li key={vente.id} className="px-4 py-4 hover:bg-[#41124f]/10 transition-colors">
-                    <div className="grid grid-cols-12 gap-2 items-center">
+            {/* Lignes */}
+            {filtered.map((vente, i) => {
+              const stockRestant = getStockRestant(vente);
+              const isLast = i === filtered.length - 1;
+              return (
+                <div
+                  key={vente.id}
+                  style={{ display: "grid", gridTemplateColumns: "2fr 1.6fr 0.7fr 1.6fr 1.4fr 1.6fr 1.2fr", padding: "14px 20px", borderBottom: isLast ? "none" : `1px solid ${SS.border}`, alignItems: "center", transition: "background 0.15s", cursor: "default" }}
+                  onMouseEnter={e => e.currentTarget.style.background = SS.card}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                >
+                  {/* Produit */}
+                  <div style={{ fontSize: "14px", color: SS.text, fontWeight: "500", paddingRight: "8px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {vente.produit_nom || `#${vente.produit}`}
+                  </div>
 
-                      {/* Produit */}
-                      <div className="col-span-2">
-                        <p className="text-white text-sm font-medium truncate">
-                          {vente.produit_nom || `#${vente.produit}`}
-                        </p>
-                      </div>
+                  {/* Taille / Couleur */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                    <span style={{ padding: "2px 8px", borderRadius: "5px", background: `${SS.gold}18`, border: `1px solid ${SS.gold}35`, fontSize: "12px", color: SS.gold, fontWeight: "500" }}>
+                      {vente.taille}
+                    </span>
+                    <span style={{ fontSize: "12px", color: SS.textMuted }}>{vente.couleur}</span>
+                  </div>
 
-                      {/* Taille / Couleur */}
-                      <div className="col-span-2 flex flex-wrap gap-1 items-center">
-                        <span className="px-2 py-0.5 rounded-md bg-[#41124f]/40 text-gray-300 text-xs">
-                          {vente.taille}
-                        </span>
-                        <span className="text-gray-400 text-xs">{vente.couleur}</span>
-                      </div>
+                  {/* Quantité */}
+                  <div style={{ fontSize: "15px", fontWeight: "600", color: SS.text }}>
+                    {vente.quantite}
+                  </div>
 
-                      {/* Quantité vendue */}
-                      <div className="col-span-1">
-                        <span className="text-white text-sm font-semibold">{vente.quantite}</span>
-                      </div>
+                  {/* Prix total */}
+                  <div style={{ fontSize: "14px", fontWeight: "700", color: SS.goldLight }}>
+                    {Number(vente.prix_total).toLocaleString("fr-FR")} GNF
+                  </div>
 
-                      {/* Prix total */}
-                      <div className="col-span-2">
-                        <span className="text-[#fec603] font-bold text-sm">
-                          {Number(vente.prix_total).toLocaleString("fr-FR")} GNF
-                        </span>
-                      </div>
+                  {/* Stock restant */}
+                  <div>
+                    {stockRestant === null
+                      ? <span style={{ color: SS.textDim, fontSize: "12px" }}>—</span>
+                      : <span style={stockBadgeStyle(stockRestant)}>{stockRestant} restant{stockRestant > 1 ? "s" : ""}</span>
+                    }
+                  </div>
 
-                      {/* ✅ Stock restant */}
-                      <div className="col-span-2">
-                        {stockRestant === null ? (
-                          <span className="text-gray-600 text-xs">—</span>
-                        ) : (
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                            stockRestant === 0
-                              ? "bg-red-500/20 text-red-400"
-                              : stockRestant <= 5
-                              ? "bg-orange-500/20 text-orange-400"
-                              : "bg-green-500/20 text-green-400"
-                          }`}>
-                            {stockRestant} restant{stockRestant > 1 ? "s" : ""}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* ✅ Vendeur nom */}
-                      <div className="col-span-2 flex items-center gap-1">
-                        <User size={12} className="text-gray-600 shrink-0" />
-                        <span className="text-gray-300 text-xs truncate">
-                          {vente.vendeur_nom || "—"}
-                        </span>
-                      </div>
-
-                      {/* ✅ Date complète */}
-                      <div className="col-span-1">
-                        <div className="flex flex-col">
-                          <span className="text-gray-400 text-xs">
-                            {new Date(vente.date_vente).toLocaleDateString("fr-FR", {
-                              day: "2-digit", month: "short", year: "numeric"
-                            })}
-                          </span>
-                          <span className="text-gray-600 text-xs">
-                            {new Date(vente.date_vente).toLocaleTimeString("fr-FR", {
-                              hour: "2-digit", minute: "2-digit"
-                            })}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Supprimer */}
-                      <div className="col-span-12 md:col-span-1 flex justify-end mt-2 md:mt-0">
-                        {confirmDeleteId === vente.id ? (
-                          <div className="flex gap-1">
-                            <button
-                              onClick={() => handleDelete(vente.id)}
-                              disabled={deletingId === vente.id}
-                              className="px-2 py-1 rounded-lg bg-red-500/30 text-red-400 text-xs font-semibold disabled:opacity-50"
-                            >
-                              {deletingId === vente.id ? "..." : "Oui"}
-                            </button>
-                            <button
-                              onClick={() => setConfirmDeleteId(null)}
-                              className="px-2 py-1 rounded-lg bg-gray-500/20 text-gray-400 text-xs"
-                            >
-                              Non
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => setConfirmDeleteId(vente.id)}
-                            className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        )}
-                      </div>
-
+                  {/* Vendeur */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+                    <div style={{ width: "26px", height: "26px", borderRadius: "50%", background: `${SS.gold}18`, border: `1px solid ${SS.gold}35`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <User size={13} color={SS.gold} />
                     </div>
-                  </li>
-                );
-              })}
-            </ul>
+                    <span style={{ fontSize: "13px", color: SS.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {vente.vendeur_nom || "—"}
+                    </span>
+                  </div>
+
+                  {/* Date + Actions */}
+                  <div style={{ textAlign: "right" }}>
+                    {confirmDeleteId === vente.id ? (
+                      <div style={{ display: "flex", gap: "6px", justifyContent: "flex-end" }}>
+                        <button
+                          onClick={() => handleDelete(vente.id)}
+                          disabled={deletingId === vente.id}
+                          style={{ padding: "4px 10px", borderRadius: "6px", background: `${SS.danger}25`, border: `1px solid ${SS.danger}50`, color: SS.danger, fontSize: "12px", cursor: "pointer" }}
+                        >
+                          {deletingId === vente.id ? "..." : "Confirmer"}
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteId(null)}
+                          style={{ padding: "4px 10px", borderRadius: "6px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.textMuted, fontSize: "12px", cursor: "pointer" }}
+                        >
+                          Non
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <div style={{ fontSize: "12px", color: SS.textMuted, fontWeight: "500" }}>
+                          {new Date(vente.date_vente).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })}
+                        </div>
+                        <div style={{ fontSize: "11px", color: SS.textDim, marginBottom: "5px" }}>
+                          {new Date(vente.date_vente).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                        </div>
+                        <button
+                          onClick={() => setConfirmDeleteId(vente.id)}
+                          style={{ padding: "4px 8px", borderRadius: "6px", background: `${SS.danger}18`, border: `1px solid ${SS.danger}35`, color: SS.danger, cursor: "pointer", display: "inline-flex", alignItems: "center" }}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

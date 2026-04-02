@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { I18nextProvider } from 'react-i18next';
 import i18next from './i18n.js';
 import './index.css';
+import { ThemeProvider } from './context/ThemeContext.jsx';
 
 import {
   createBrowserRouter,
@@ -160,7 +161,9 @@ const router = createBrowserRouter(
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <I18nextProvider i18n={i18next}>
-      <RouterProvider router={router} />
+      <ThemeProvider> 
+        <RouterProvider router={router} />
+      </ThemeProvider>  
     </I18nextProvider>
   </StrictMode>
 );

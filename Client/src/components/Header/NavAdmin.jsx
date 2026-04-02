@@ -3,65 +3,42 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Home, Building2, UsersRound, Target, Mail,
   UserPlus, Users, Package, Briefcase, LogOut, Menu, X,
-  ChevronDown, Sparkles, Zap, Grid3x3, FileText, Search,
-  Bell, Settings, User
+  ChevronDown, Zap, Grid3x3, FileText, Search, Bell, User,
+  Sun, Moon
 } from "lucide-react";
 import CONFIG from "../../config/config.js";
-
-/**
- * 🎨 NAVADMIN V2 - TOP BAR ULTRA MODERNE
- * Layout: Horizontal top bar + Floating quick menu
- * Charte: violet #a34ee5, or #fec603, violet foncé #7828a8, noir #0a0a0a
- * FIX: Mobile menu avec bouton de fermeture visible
- */
+import { useTheme } from "../../context/ThemeContext";
 
 const NavAdmin = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [counts, setCounts] = useState({
-    contacts: 0,
-    community: 0,
-    newsletter: 0
-  });
+  const { toggleTheme, isLight, tokens } = useTheme();
+
+  const [counts, setCounts] = useState({ contacts: 0, community: 0, newsletter: 0 });
   const [showQuickMenu, setShowQuickMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
 
-  // Fetch counts
   useEffect(() => {
     const fetchCounts = async () => {
       try {
         const contactsRes = await fetch(CONFIG.API_CONTACT_LIST);
         if (contactsRes.ok) {
-          const contactsData = await contactsRes.json();
-          const contactsList = Array.isArray(contactsData) 
-            ? contactsData 
-            : contactsData.results || [];
-          setCounts(prev => ({ ...prev, contacts: contactsList.length }));
+          const d = await contactsRes.json();
+          setCounts(prev => ({ ...prev, contacts: (Array.isArray(d) ? d : d.results || []).length }));
         }
-
         const communityRes = await fetch(CONFIG.API_POSTULANT_LIST);
         if (communityRes.ok) {
-          const communityData = await communityRes.json();
-          const communityList = Array.isArray(communityData)
-            ? communityData
-            : communityData.results || [];
-          setCounts(prev => ({ ...prev, community: communityList.length }));
+          const d = await communityRes.json();
+          setCounts(prev => ({ ...prev, community: (Array.isArray(d) ? d : d.results || []).length }));
         }
-
         const newsletterRes = await fetch(CONFIG.API_ABONNEMENT_LIST);
         if (newsletterRes.ok) {
-          const newsletterData = await newsletterRes.json();
-          const newsletterList = Array.isArray(newsletterData)
-            ? newsletterData
-            : newsletterData.results || [];
-          setCounts(prev => ({ ...prev, newsletter: newsletterList.length }));
+          const d = await newsletterRes.json();
+          setCounts(prev => ({ ...prev, newsletter: (Array.isArray(d) ? d : d.results || []).length }));
         }
-      } catch (err) {
-        console.error("Erreur fetch counts:", err);
-      }
+      } catch (err) { console.error(err); }
     };
-    
     fetchCounts();
   }, []);
 
@@ -72,127 +49,212 @@ const NavAdmin = () => {
 
   const getIcon = (path) => {
     const icons = {
-      "/dashboardAdmin": <LayoutDashboard className="w-5 h-5" />,
-      "/register-employee": <Home className="w-5 h-5" />,
-      "/partnerPost": <Building2 className="w-5 h-5" />,
-      "/teamMessage": <UsersRound className="w-5 h-5" />,
-      "/missionPost": <Target className="w-5 h-5" />,
-      "/listeContacts": <Mail className="w-5 h-5" />,
-      "/listePostulantsCommunity": <UserPlus className="w-5 h-5" />,
-      "/listeAbonnement": <Users className="w-5 h-5" />,
-      "/servicePost": <Package className="w-5 h-5" />,
-      "/portfolioPost": <Briefcase className="w-5 h-5" />,
+      "/dashboardAdmin": <LayoutDashboard size={18} />,
+      "/register-employee": <Home size={18} />,
+      "/partnerPost": <Building2 size={18} />,
+      "/teamMessage": <UsersRound size={18} />,
+      "/missionPost": <Target size={18} />,
+      "/listeContacts": <Mail size={18} />,
+      "/listePostulantsCommunity": <UserPlus size={18} />,
+      "/listeAbonnement": <Users size={18} />,
+      "/servicePost": <Package size={18} />,
+      "/portfolioPost": <Briefcase size={18} />,
     };
-    return icons[path] || <FileText className="w-5 h-5" />;
+    return icons[path] || <FileText size={18} />;
   };
 
   const navCategories = [
     {
       title: "Dashboard",
-      color: "#a34ee5",
-      items: [
-        { path: "/dashboardAdmin", label: "Tableau de bord" }
-      ]
+      color: tokens.gold,
+      items: [{ path: "/dashboardAdmin", label: "Tableau de bord" }]
     },
     {
       title: "Contenu Site",
-      color: "#fec603",
-      items: [
-        { path: "/register-employee", label: "Register Employee" }
-      ]
+      color: tokens.gold,
+      items: [{ path: "/register-employee", label: "Register Employee" }]
     },
     {
-      title: "Agence",
-      color: "#7828a8",
+      title: "Boutique",
+      color: tokens.gold,
       items: [
-        { path: "/categories", label: "Categories" },
+        { path: "/categories", label: "Catégories" },
         { path: "/produits", label: "Produits" },
         { path: "/stocks", label: "Stocks" },
-        { path: "/ventes", label: "Ventes" }
+        { path: "/ventes", label: "Ventes" },
       ]
     },
-    // {
-    //   title: "Créations",
-    //   color: "#a34ee5",
-    //   items: [
-    //     { path: "/portfolioPost", label: "Portfolio" },
-    //     { path: "/servicePost", label: "Services" }
-    //   ]
-    // },
-    // {
-    //   title: "Clients",
-    //   color: "#fec603",
-    //   items: [
-    //     { path: "/listeContacts", label: "Messages", count: counts.contacts },
-    //     { path: "/listeAbonnement", label: "Abonnements", count: counts.newsletter }
-    //   ]
-    // }
   ];
 
-  // Quick access items
   const quickAccess = [
-    { path: "/dashboardAdmin", label: "Dashboard", icon: <LayoutDashboard /> },
-    { path: "/portfolioPost", label: "Portfolio", icon: <Briefcase /> },
-    { path: "/listeContacts", label: "Messages", icon: <Mail />, badge: counts.contacts },
-    { path: "/servicePost", label: "Services", icon: <Package /> },
+    { path: "/dashboardAdmin", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
+    { path: "/produits", label: "Produits", icon: <Package size={20} /> },
+    { path: "/ventes", label: "Ventes", icon: <Briefcase size={20} /> },
+    { path: "/stocks", label: "Stocks", icon: <Grid3x3 size={20} /> },
   ];
+
+  const totalNotifs = counts.contacts + counts.community + counts.newsletter;
+
+  // ── Styles inline basés sur tokens ──────────────────────────────
+  const navStyle = {
+    position: "fixed", top: 0, left: 0, right: 0,
+    height: "72px",
+    background: tokens.navBg,
+    borderBottom: `1px solid ${tokens.border}`,
+    backdropFilter: "blur(16px)",
+    zIndex: 200,
+    transition: "background 0.3s, border-color 0.3s",
+  };
+
+  const btnNavStyle = (isActive) => ({
+    display: "flex", alignItems: "center", gap: "6px",
+    padding: "8px 14px", borderRadius: "10px",
+    fontSize: "14px", fontWeight: "600",
+    color: isActive ? tokens.gold : tokens.navText,
+    background: isActive ? `${tokens.gold}15` : "transparent",
+    border: "none", cursor: "pointer",
+    transition: "all 0.15s",
+  });
+
+  const dropdownStyle = {
+    position: "absolute", top: "calc(100% + 8px)", left: 0,
+    minWidth: "220px",
+    background: tokens.dropdownBg,
+    border: `1px solid ${tokens.border}`,
+    borderRadius: "14px",
+    boxShadow: `0 8px 32px ${tokens.gold}15`,
+    overflow: "hidden",
+    zIndex: 300,
+  };
+
+  const dropdownItemStyle = (isActive) => ({
+    display: "flex", alignItems: "center", justifyContent: "space-between",
+    padding: "10px 16px",
+    color: isActive ? "#fff" : tokens.navText,
+    background: isActive
+      ? `linear-gradient(135deg, ${tokens.gold}, ${tokens.goldDark})`
+      : "transparent",
+    textDecoration: "none", fontSize: "14px", fontWeight: "500",
+    transition: "background 0.15s",
+    cursor: "pointer",
+  });
+
+  const iconBtnStyle = {
+    padding: "9px", borderRadius: "10px",
+    border: `1px solid ${tokens.border}`,
+    background: tokens.card,
+    cursor: "pointer", display: "flex",
+    alignItems: "center", justifyContent: "center",
+    transition: "all 0.2s",
+  };
+
+  const searchStyle = {
+    display: "flex", alignItems: "center", gap: "8px",
+    padding: "8px 14px",
+    background: tokens.card,
+    border: `1px solid ${tokens.border}`,
+    borderRadius: "10px",
+  };
+
+  const quickMenuStyle = {
+    position: "fixed", top: "82px", right: "20px",
+    width: "320px",
+    background: tokens.dropdownBg,
+    border: `1px solid ${tokens.border}`,
+    borderRadius: "18px",
+    boxShadow: `0 16px 48px ${tokens.gold}20`,
+    zIndex: 300,
+    overflow: "hidden",
+  };
+
+  const mobileMenuStyle = {
+    position: "fixed", top: "72px", left: 0, right: 0, bottom: 0,
+    background: tokens.navBg,
+    overflowY: "auto",
+    zIndex: 300,
+  };
 
   return (
     <>
-      {/* TOP BAR */}
-      <nav className="fixed top-0 left-0 right-0 h-20 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-[#a34ee5]/20 z-[200]">
-        <div className="h-full max-w-[1920px] mx-auto px-4 sm:px-6 flex items-center justify-between gap-3 sm:gap-6">
-          
-          {/* Left: Logo + Brand */}
-          <div className="flex items-center gap-3 sm:gap-6">
+      {/* ── TOP BAR ── */}
+      <nav style={navStyle}>
+        <div style={{
+          height: "100%", maxWidth: "1920px", margin: "0 auto",
+          padding: "0 20px", display: "flex",
+          alignItems: "center", justifyContent: "space-between", gap: "16px",
+        }}>
+
+          {/* Gauche : Logo + Nav */}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             {/* Logo */}
-            <Link to="/dashboardAdmin" className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-[#a34ee5] to-[#fec603] opacity-0 group-hover:opacity-30 blur-xl transition-opacity duration-500 rounded-xl"></div>
-              <div className="relative w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-[#a34ee5] via-[#fec603] to-[#7828a8] rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white text-xl sm:text-2xl font-black">T</span>
+            <Link to="/dashboardAdmin" style={{ textDecoration: "none" }}>
+              <div style={{
+                width: "42px", height: "42px", borderRadius: "10px",
+                background: `linear-gradient(135deg, ${tokens.goldDark}, ${tokens.gold})`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: `0 2px 12px ${tokens.gold}40`,
+              }}>
+                <span style={{ color: "#fff", fontSize: "20px", fontWeight: "900" }}>S</span>
               </div>
             </Link>
 
-            {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center gap-2">
-              {navCategories.map((category, idx) => (
-                <div key={idx} className="relative">
+            {/* Desktop nav */}
+            <div style={{ display: "flex", alignItems: "center", gap: "4px", marginLeft: "8px" }}
+              className="hidden lg:flex">
+              {navCategories.map((cat, idx) => (
+                <div key={idx} style={{ position: "relative" }}>
                   <button
+                    style={btnNavStyle(activeDropdown === idx)}
                     onClick={() => setActiveDropdown(activeDropdown === idx ? null : idx)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-[#41124f]/40 transition-all font-semibold text-sm"
+                    onMouseEnter={e => {
+                      if (activeDropdown !== idx) {
+                        e.currentTarget.style.background = `${tokens.gold}10`;
+                        e.currentTarget.style.color = tokens.gold;
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (activeDropdown !== idx) {
+                        e.currentTarget.style.background = "transparent";
+                        e.currentTarget.style.color = tokens.navText;
+                      }
+                    }}
                   >
-                    <span>{category.title}</span>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === idx ? 'rotate-180' : ''}`} />
+                    {cat.title}
+                    <ChevronDown size={14} style={{
+                      transition: "transform 0.2s",
+                      transform: activeDropdown === idx ? "rotate(180deg)" : "rotate(0deg)",
+                    }} />
                   </button>
 
-                  {/* Dropdown */}
                   {activeDropdown === idx && (
-                    <div className="absolute top-full left-0 mt-2 min-w-[220px] bg-[#0a0a0a]/95 backdrop-blur-xl border border-[#a34ee5]/30 rounded-2xl shadow-2xl overflow-hidden">
-                      {category.items.map((item, itemIdx) => {
+                    <div style={dropdownStyle}>
+                      {cat.items.map((item, iIdx) => {
                         const isActive = location.pathname === item.path;
                         return (
                           <Link
-                            key={itemIdx}
+                            key={iIdx}
                             to={item.path}
                             onClick={() => setActiveDropdown(null)}
-                            className={`flex items-center justify-between px-4 py-3 transition-all ${
-                              isActive
-                                ? 'bg-gradient-to-r from-[#a34ee5] to-[#7828a8] text-white'
-                                : 'text-gray-300 hover:bg-[#41124f]/40 hover:text-white'
-                            }`}
+                            style={dropdownItemStyle(isActive)}
+                            onMouseEnter={e => {
+                              if (!isActive) e.currentTarget.style.background = `${tokens.gold}12`;
+                            }}
+                            onMouseLeave={e => {
+                              if (!isActive) e.currentTarget.style.background = "transparent";
+                            }}
                           >
-                            <div className="flex items-center gap-3">
-                              <div style={{ color: isActive ? '#fff' : category.color }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                              <span style={{ color: isActive ? "#fff" : tokens.gold }}>
                                 {getIcon(item.path)}
-                              </div>
-                              <span className="font-medium text-sm">{item.label}</span>
+                              </span>
+                              {item.label}
                             </div>
                             {item.count > 0 && (
-                              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                                isActive
-                                  ? 'bg-white/20 text-white'
-                                  : 'bg-[#fec603]/20 text-[#fec603]'
-                              }`}>
+                              <span style={{
+                                padding: "1px 8px", borderRadius: "20px", fontSize: "11px",
+                                background: isActive ? "rgba(255,255,255,0.2)" : `${tokens.gold}20`,
+                                color: isActive ? "#fff" : tokens.gold,
+                              }}>
                                 {item.count}
                               </span>
                             )}
@@ -206,100 +268,136 @@ const NavAdmin = () => {
             </div>
           </div>
 
-          {/* Right: Actions */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            
-            {/* Search - Hidden on mobile */}
-            <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-[#41124f]/30 border border-[#a34ee5]/20 rounded-xl">
-              <Search className="w-4 h-4 text-gray-500" />
+          {/* Droite : Actions */}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+
+            {/* Search */}
+            <div style={searchStyle} className="hidden md:flex">
+              <Search size={15} color={tokens.textDim} />
               <input
-                type="text"
                 placeholder="Rechercher..."
-                className="bg-transparent border-none outline-none text-white placeholder-gray-500 text-sm w-40 lg:w-64"
+                style={{
+                  background: "none", border: "none", outline: "none",
+                  color: tokens.text, fontSize: "14px", width: "160px",
+                }}
               />
             </div>
 
             {/* Notifications */}
-            <button className="relative p-2.5 sm:p-3 bg-[#41124f]/30 hover:bg-[#41124f]/50 border border-[#a34ee5]/20 hover:border-[#a34ee5]/40 rounded-xl transition-all">
-              <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
-              {(counts.contacts + counts.community + counts.newsletter) > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-[#fec603] rounded-full text-[#0a0a0a] text-[10px] sm:text-xs font-bold flex items-center justify-center">
-                  {counts.contacts + counts.community + counts.newsletter}
+            <button style={{ ...iconBtnStyle, position: "relative" }}>
+              <Bell size={18} color={tokens.textMuted} />
+              {totalNotifs > 0 && (
+                <span style={{
+                  position: "absolute", top: "-4px", right: "-4px",
+                  width: "18px", height: "18px", borderRadius: "50%",
+                  background: tokens.gold, color: "#1A1208",
+                  fontSize: "10px", fontWeight: "700",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  {totalNotifs}
                 </span>
               )}
             </button>
 
-            {/* Quick Menu Button - Hidden on mobile */}
+            {/* Quick menu */}
             <button
+              style={{
+                ...iconBtnStyle,
+                background: `linear-gradient(135deg, ${tokens.goldDark}, ${tokens.gold})`,
+                border: "none",
+              }}
               onClick={() => setShowQuickMenu(!showQuickMenu)}
-              className="hidden sm:flex p-3 bg-gradient-to-r from-[#a34ee5] to-[#7828a8] hover:from-[#7828a8] hover:to-[#a34ee5] rounded-xl transition-all shadow-lg"
+              className="hidden sm:flex"
             >
-              <Grid3x3 className="w-5 h-5 text-white" />
+              <Grid3x3 size={18} color="#fff" />
             </button>
 
-            {/* Admin Profile - Hidden on small screens */}
-            <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-[#41124f]/30 border border-[#a34ee5]/20 rounded-xl">
-              <div className="w-8 h-8 bg-gradient-to-br from-[#a34ee5] to-[#fec603] rounded-lg flex items-center justify-center">
-                <User className="w-5 h-5 text-white" />
+            {/* Profil */}
+            <div style={{
+              display: "flex", alignItems: "center", gap: "10px",
+              padding: "6px 12px",
+              background: tokens.card,
+              border: `1px solid ${tokens.border}`,
+              borderRadius: "10px",
+            }} className="hidden md:flex">
+              <div style={{
+                width: "30px", height: "30px", borderRadius: "8px",
+                background: `linear-gradient(135deg, ${tokens.goldDark}, ${tokens.gold})`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <User size={16} color="#fff" />
               </div>
               <div className="hidden lg:block">
-                <div className="text-white text-sm font-bold">Admin</div>
-                <div className="text-gray-500 text-xs">admin@tekacom.gn</div>
+                <div style={{ fontSize: "13px", fontWeight: "600", color: tokens.text }}>Admin</div>
+                <div style={{ fontSize: "11px", color: tokens.textDim }}>Santa'Style</div>
               </div>
             </div>
 
-            {/* Logout - Hidden on mobile */}
+            {/* Toggle thème */}
             <button
-              onClick={handleLogout}
-              className="hidden sm:flex p-3 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 hover:border-red-500/60 rounded-xl transition-all"
-              title="Déconnexion"
+              onClick={toggleTheme}
+              title={isLight ? "Mode sombre" : "Mode clair"}
+              style={iconBtnStyle}
             >
-              <LogOut className="w-5 h-5 text-red-400" />
+              {isLight
+                ? <Moon size={17} color={tokens.gold} />
+                : <Sun  size={17} color={tokens.gold} />
+              }
             </button>
 
-            {/* Mobile Menu Toggle */}
+            {/* Logout */}
             <button
-              onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="lg:hidden p-2.5 sm:p-3 bg-[#41124f]/30 border border-[#a34ee5]/20 rounded-xl"
+              onClick={handleLogout}
+              style={{
+                ...iconBtnStyle,
+                background: `${tokens.danger}15`,
+                border: `1px solid ${tokens.danger}40`,
+              }}
+              className="hidden sm:flex"
+              title="Déconnexion"
             >
-              {showMobileMenu ? (
-                <X className="w-5 h-5 text-white" />
-              ) : (
-                <Menu className="w-5 h-5 text-white" />
-              )}
+              <LogOut size={17} color={tokens.danger} />
+            </button>
+
+            {/* Mobile toggle */}
+            <button
+              style={iconBtnStyle}
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="lg:hidden"
+            >
+              {showMobileMenu
+                ? <X size={18} color={tokens.text} />
+                : <Menu size={18} color={tokens.text} />
+              }
             </button>
           </div>
         </div>
       </nav>
 
-      {/* FLOATING QUICK MENU (Desktop only) */}
+      {/* ── QUICK MENU ── */}
       {showQuickMenu && (
         <>
-          <div 
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[250]"
+          <div
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 250 }}
             onClick={() => setShowQuickMenu(false)}
-          ></div>
-          
-          <div className="fixed top-24 right-6 w-80 bg-[#0a0a0a]/95 backdrop-blur-xl border border-[#a34ee5]/30 rounded-3xl shadow-2xl z-[300] overflow-hidden">
-            {/* Header */}
-            <div className="p-6 border-b border-[#a34ee5]/20">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-white font-black text-lg flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-[#fec603]" />
-                  Accès Rapide
-                </h3>
-                <button
-                  onClick={() => setShowQuickMenu(false)}
-                  className="p-2 hover:bg-[#41124f]/40 rounded-lg transition-all"
-                >
-                  <X className="w-5 h-5 text-gray-400" />
-                </button>
+          />
+          <div style={quickMenuStyle}>
+            <div style={{
+              padding: "16px 20px",
+              borderBottom: `1px solid ${tokens.border}`,
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <Zap size={16} color={tokens.gold} />
+                <span style={{ fontSize: "15px", fontWeight: "700", color: tokens.text }}>Accès rapide</span>
               </div>
-              <p className="text-gray-500 text-xs">Vos pages les plus utilisées</p>
+              <button style={{ background: "none", border: "none", cursor: "pointer" }}
+                onClick={() => setShowQuickMenu(false)}>
+                <X size={16} color={tokens.textMuted} />
+              </button>
             </div>
 
-            {/* Quick Links Grid */}
-            <div className="p-4 grid grid-cols-2 gap-3">
+            <div style={{ padding: "14px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
               {quickAccess.map((item, idx) => {
                 const isActive = location.pathname === item.path;
                 return (
@@ -307,193 +405,161 @@ const NavAdmin = () => {
                     key={idx}
                     to={item.path}
                     onClick={() => setShowQuickMenu(false)}
-                    className={`relative p-4 rounded-2xl transition-all ${
-                      isActive
-                        ? 'bg-gradient-to-br from-[#a34ee5] to-[#7828a8] text-white'
-                        : 'bg-[#41124f]/30 hover:bg-[#41124f]/50 text-gray-300 hover:text-white'
-                    }`}
+                    style={{
+                      padding: "14px", borderRadius: "12px",
+                      background: isActive
+                        ? `linear-gradient(135deg, ${tokens.goldDark}, ${tokens.gold})`
+                        : tokens.card,
+                      border: `1px solid ${isActive ? tokens.gold : tokens.border}`,
+                      textDecoration: "none",
+                      display: "flex", flexDirection: "column",
+                      alignItems: "center", gap: "8px",
+                      transition: "all 0.15s",
+                    }}
                   >
-                    <div className="flex flex-col items-center gap-2 text-center">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                        isActive 
-                          ? 'bg-white/20' 
-                          : 'bg-[#a34ee5]/20'
-                      }`}>
-                        {item.icon}
-                      </div>
-                      <span className="text-sm font-bold">{item.label}</span>
-                      {item.badge > 0 && (
-                        <span className="absolute top-2 right-2 px-2 py-0.5 bg-[#fec603] text-[#0a0a0a] rounded-full text-xs font-bold">
-                          {item.badge}
-                        </span>
-                      )}
+                    <div style={{
+                      width: "40px", height: "40px", borderRadius: "10px",
+                      background: isActive ? "rgba(255,255,255,0.2)" : `${tokens.gold}18`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                      <span style={{ color: isActive ? "#fff" : tokens.gold }}>{item.icon}</span>
                     </div>
+                    <span style={{ fontSize: "12px", fontWeight: "600", color: isActive ? "#fff" : tokens.text }}>
+                      {item.label}
+                    </span>
                   </Link>
                 );
               })}
             </div>
 
-            {/* All Categories */}
-            <div className="p-4 border-t border-[#a34ee5]/20">
-              <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
-                Toutes les catégories
+            <div style={{ padding: "14px", borderTop: `1px solid ${tokens.border}` }}>
+              <div style={{ fontSize: "11px", color: tokens.textDim, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "10px" }}>
+                Navigation
               </div>
-              <div className="space-y-1">
-                {navCategories.map((category, idx) => (
-                  <div key={idx}>
-                    <div className="text-xs font-bold text-gray-400 px-3 py-2 uppercase tracking-wider">
-                      {category.title}
-                    </div>
-                    {category.items.map((item, itemIdx) => {
-                      const isActive = location.pathname === item.path;
-                      return (
-                        <Link
-                          key={itemIdx}
-                          to={item.path}
-                          onClick={() => setShowQuickMenu(false)}
-                          className={`flex items-center justify-between px-3 py-2 rounded-xl transition-all ${
-                            isActive
-                              ? 'bg-gradient-to-r from-[#a34ee5] to-[#7828a8] text-white'
-                              : 'text-gray-400 hover:bg-[#41124f]/30 hover:text-white'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            {getIcon(item.path)}
-                            <span className="text-sm font-medium">{item.label}</span>
-                          </div>
-                          {item.count > 0 && (
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                              isActive
-                                ? 'bg-white/20 text-white'
-                                : 'bg-[#fec603]/20 text-[#fec603]'
-                            }`}>
-                              {item.count}
-                            </span>
-                          )}
-                        </Link>
-                      );
-                    })}
+              {navCategories.map((cat, idx) => (
+                <div key={idx}>
+                  <div style={{ fontSize: "11px", color: tokens.gold, fontWeight: "700", padding: "6px 10px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    {cat.title}
                   </div>
-                ))}
-              </div>
+                  {cat.items.map((item, iIdx) => {
+                    const isActive = location.pathname === item.path;
+                    return (
+                      <Link
+                        key={iIdx}
+                        to={item.path}
+                        onClick={() => setShowQuickMenu(false)}
+                        style={{
+                          display: "flex", alignItems: "center", gap: "10px",
+                          padding: "8px 10px", borderRadius: "8px",
+                          textDecoration: "none",
+                          color: isActive ? tokens.gold : tokens.textMuted,
+                          background: isActive ? `${tokens.gold}12` : "transparent",
+                          fontSize: "13px", fontWeight: "500",
+                          transition: "all 0.15s",
+                        }}
+                      >
+                        <span style={{ color: tokens.gold }}>{getIcon(item.path)}</span>
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           </div>
         </>
       )}
 
-      {/* MOBILE MENU - AMÉLIORÉ */}
+      {/* ── MOBILE MENU ── */}
       {showMobileMenu && (
         <>
-          <div 
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[250] lg:hidden"
+          <div
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 250 }}
             onClick={() => setShowMobileMenu(false)}
-          ></div>
-          
-          <div className="fixed inset-0 top-20 bg-[#0a0a0a]/98 backdrop-blur-xl z-[300] overflow-y-auto lg:hidden">
-            {/* Header Mobile avec bouton fermeture */}
-            <div className="sticky top-0 bg-[#0a0a0a]/95 backdrop-blur-xl border-b border-[#a34ee5]/20 p-4 flex items-center justify-between z-10">
-              <h2 className="text-white font-black text-lg flex items-center gap-2">
-                <Menu className="w-5 h-5 text-[#fec603]" />
-                Menu Navigation
-              </h2>
-              <button
-                onClick={() => setShowMobileMenu(false)}
-                className="p-2.5 bg-[#41124f]/40 hover:bg-[#41124f]/60 border border-[#a34ee5]/30 rounded-xl transition-all"
-              >
-                <X className="w-6 h-6 text-white" />
+          />
+          <div style={mobileMenuStyle} className="lg:hidden">
+
+            {/* Header mobile */}
+            <div style={{
+              position: "sticky", top: 0,
+              background: tokens.navBg,
+              borderBottom: `1px solid ${tokens.border}`,
+              padding: "14px 20px",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              zIndex: 10,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <Menu size={18} color={tokens.gold} />
+                <span style={{ fontSize: "16px", fontWeight: "700", color: tokens.text }}>Menu</span>
+              </div>
+              <button style={iconBtnStyle} onClick={() => setShowMobileMenu(false)}>
+                <X size={18} color={tokens.text} />
               </button>
             </div>
 
-            {/* Content */}
-            <div className="p-4 space-y-6 pb-32">
-              {/* User Info Mobile */}
-              <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-[#a34ee5]/20 to-[#fec603]/20 border border-[#a34ee5]/30 rounded-2xl">
-                <div className="w-12 h-12 bg-gradient-to-br from-[#a34ee5] to-[#fec603] rounded-xl flex items-center justify-center shadow-lg">
-                  <User className="w-6 h-6 text-white" />
+            <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "20px", paddingBottom: "80px" }}>
+
+              {/* User card */}
+              <div style={{
+                display: "flex", alignItems: "center", gap: "12px",
+                padding: "14px 16px", borderRadius: "12px",
+                background: `${tokens.gold}12`,
+                border: `1px solid ${tokens.gold}30`,
+              }}>
+                <div style={{
+                  width: "44px", height: "44px", borderRadius: "10px",
+                  background: `linear-gradient(135deg, ${tokens.goldDark}, ${tokens.gold})`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <User size={22} color="#fff" />
                 </div>
-                <div className="flex-1">
-                  <div className="text-white font-bold">Admin</div>
-                  <div className="text-gray-400 text-sm">admin@tekacom.gn</div>
+                <div>
+                  <div style={{ fontSize: "14px", fontWeight: "700", color: tokens.text }}>Admin</div>
+                  <div style={{ fontSize: "12px", color: tokens.textMuted }}>Santa'Style</div>
                 </div>
+                {/* Toggle thème dans mobile */}
+                <button onClick={toggleTheme} style={{ ...iconBtnStyle, marginLeft: "auto" }}>
+                  {isLight ? <Moon size={16} color={tokens.gold} /> : <Sun size={16} color={tokens.gold} />}
+                </button>
               </div>
 
-              {/* Notifications Mobile */}
-              {(counts.contacts + counts.newsletter) > 0 && (
-                <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-2xl">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Bell className="w-5 h-5 text-blue-400" />
-                    <span className="text-white font-bold">Notifications</span>
-                    <span className="ml-auto px-3 py-1 bg-[#fec603] text-[#0a0a0a] rounded-full text-sm font-black">
-                      {counts.contacts + counts.newsletter}
+              {/* Nav categories */}
+              {navCategories.map((cat, idx) => (
+                <div key={idx}>
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: "8px",
+                    padding: "6px 10px", marginBottom: "8px",
+                  }}>
+                    <div style={{ width: "3px", height: "18px", borderRadius: "2px", background: tokens.gold }} />
+                    <span style={{ fontSize: "11px", fontWeight: "800", color: tokens.gold, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                      {cat.title}
                     </span>
                   </div>
-                  <div className="space-y-2">
-                    {counts.contacts > 0 && (
-                      <Link
-                        to="/listeContacts"
-                        onClick={() => setShowMobileMenu(false)}
-                        className="flex items-center justify-between px-3 py-2 bg-white/10 rounded-xl"
-                      >
-                        <span className="text-gray-300 text-sm">Messages</span>
-                        <span className="px-2 py-1 bg-[#fec603]/20 text-[#fec603] rounded-full text-xs font-bold">
-                          {counts.contacts}
-                        </span>
-                      </Link>
-                    )}
-                    {counts.newsletter > 0 && (
-                      <Link
-                        to="/listeAbonnement"
-                        onClick={() => setShowMobileMenu(false)}
-                        className="flex items-center justify-between px-3 py-2 bg-white/10 rounded-xl"
-                      >
-                        <span className="text-gray-300 text-sm">Abonnements</span>
-                        <span className="px-2 py-1 bg-[#fec603]/20 text-[#fec603] rounded-full text-xs font-bold">
-                          {counts.newsletter}
-                        </span>
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Navigation Categories */}
-              {navCategories.map((category, idx) => (
-                <div key={idx}>
-                  <div className="flex items-center gap-2 px-3 py-2 mb-3">
-                    <div className="w-1 h-6 rounded-full" style={{ backgroundColor: category.color }}></div>
-                    <div className="text-sm font-black uppercase tracking-wider" style={{ color: category.color }}>
-                      {category.title}
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    {category.items.map((item, itemIdx) => {
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    {cat.items.map((item, iIdx) => {
                       const isActive = location.pathname === item.path;
                       return (
                         <Link
-                          key={itemIdx}
+                          key={iIdx}
                           to={item.path}
                           onClick={() => setShowMobileMenu(false)}
-                          className={`flex items-center justify-between px-4 py-3.5 rounded-xl transition-all ${
-                            isActive
-                              ? 'bg-gradient-to-r from-[#a34ee5] to-[#7828a8] text-white shadow-lg'
-                              : 'bg-[#41124f]/20 text-gray-300 hover:bg-[#41124f]/40 hover:text-white'
-                          }`}
+                          style={{
+                            display: "flex", alignItems: "center", gap: "12px",
+                            padding: "12px 16px", borderRadius: "10px",
+                            textDecoration: "none",
+                            background: isActive
+                              ? `linear-gradient(135deg, ${tokens.goldDark}, ${tokens.gold})`
+                              : tokens.card,
+                            border: `1px solid ${isActive ? tokens.gold : tokens.border}`,
+                            color: isActive ? "#fff" : tokens.text,
+                            fontSize: "14px", fontWeight: "600",
+                            transition: "all 0.15s",
+                          }}
                         >
-                          <div className="flex items-center gap-3">
-                            <div className={`${isActive ? 'text-white' : ''}`} style={{ color: !isActive ? category.color : undefined }}>
-                              {getIcon(item.path)}
-                            </div>
-                            <span className="font-bold">{item.label}</span>
-                          </div>
-                          {item.count > 0 && (
-                            <span className={`px-3 py-1.5 rounded-full text-xs font-black ${
-                              isActive
-                                ? 'bg-white/20 text-white'
-                                : 'bg-[#fec603]/20 text-[#fec603]'
-                            }`}>
-                              {item.count}
-                            </span>
-                          )}
+                          <span style={{ color: isActive ? "#fff" : tokens.gold }}>
+                            {getIcon(item.path)}
+                          </span>
+                          {item.label}
                         </Link>
                       );
                     })}
@@ -501,36 +567,47 @@ const NavAdmin = () => {
                 </div>
               ))}
 
-              {/* Logout Mobile */}
+              {/* Logout */}
               <button
-                onClick={() => {
-                  setShowMobileMenu(false);
-                  handleLogout();
+                onClick={() => { setShowMobileMenu(false); handleLogout(); }}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: "10px",
+                  padding: "14px", borderRadius: "12px",
+                  background: `${tokens.danger}15`,
+                  border: `1px solid ${tokens.danger}40`,
+                  color: tokens.danger, fontSize: "14px", fontWeight: "700",
+                  cursor: "pointer",
                 }}
-                className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-red-500/20 hover:bg-red-500/30 border-2 border-red-500/40 hover:border-red-500/60 rounded-2xl transition-all text-red-400 hover:text-red-300 font-bold"
               >
-                <LogOut className="w-5 h-5" />
+                <LogOut size={18} />
                 Déconnexion
               </button>
             </div>
 
-            {/* Floating close button - Toujours visible */}
+            {/* Bouton fermeture flottant */}
             <button
               onClick={() => setShowMobileMenu(false)}
-              className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-[#a34ee5] to-[#7828a8] hover:from-[#7828a8] hover:to-[#a34ee5] rounded-full shadow-2xl flex items-center justify-center z-20 border-2 border-white/20"
+              style={{
+                position: "fixed", bottom: "24px", right: "24px",
+                width: "52px", height: "52px", borderRadius: "50%",
+                background: `linear-gradient(135deg, ${tokens.goldDark}, ${tokens.gold})`,
+                border: "none", cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: `0 4px 20px ${tokens.gold}40`,
+                zIndex: 20,
+              }}
             >
-              <X className="w-7 h-7 text-white" />
+              <X size={24} color="#fff" />
             </button>
           </div>
         </>
       )}
 
-      {/* Click outside to close dropdowns */}
       {activeDropdown !== null && (
-        <div 
-          className="fixed inset-0 z-[150]"
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 150 }}
           onClick={() => setActiveDropdown(null)}
-        ></div>
+        />
       )}
     </>
   );

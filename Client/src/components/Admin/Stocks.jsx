@@ -5,9 +5,11 @@ import {
   Layers, Search, ChevronDown, Package
 } from "lucide-react";
 import CONFIG from "../../config/config";
+import { useTheme } from "../../context/ThemeContext";
 
 const Stocks = () => {
   const navigate = useNavigate();
+  const { tokens: SS } = useTheme();
 
   const [stocks, setStocks] = useState([]);
   const [produits, setProduits] = useState([]);
@@ -43,11 +45,8 @@ const Stocks = () => {
       const data = await res.json();
       if (res.ok) setStocks(data);
       else setError("Erreur lors du chargement des stocks");
-    } catch {
-      setError("Erreur serveur");
-    } finally {
-      setLoading(false);
-    }
+    } catch { setError("Erreur serveur"); }
+    finally { setLoading(false); }
   };
 
   const fetchProduits = async () => {
@@ -66,13 +65,10 @@ const Stocks = () => {
   // --- CREATE ---
   const handleCreate = async (e) => {
     e.preventDefault();
-    setSubmitting(true);
-    setError("");
-    setSuccess("");
+    setSubmitting(true); setError(""); setSuccess("");
     try {
       const res = await fetch(`${CONFIG.BASE_URL}/api/stocks/`, {
-        method: "POST",
-        headers,
+        method: "POST", headers,
         body: JSON.stringify({
           produit: form.produit,
           taille: form.taille.trim(),
@@ -82,33 +78,24 @@ const Stocks = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        setStocks((prev) => [data, ...prev]);
-        setForm(emptyForm);
-        setShowForm(false);
+        setStocks(prev => [data, ...prev]);
+        setForm(emptyForm); setShowForm(false);
         setSuccess("Stock créé avec succès !");
         setTimeout(() => setSuccess(""), 3000);
       } else {
-        const msg = Object.entries(data)
-          .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`)
-          .join(" | ");
-        setError(msg || "Erreur lors de la création");
+        setError(Object.entries(data).map(([k, v]) =>
+          `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join(" | ") || "Erreur");
       }
-    } catch {
-      setError("Erreur serveur");
-    } finally {
-      setSubmitting(false);
-    }
+    } catch { setError("Erreur serveur"); }
+    finally { setSubmitting(false); }
   };
 
   // --- UPDATE ---
   const handleUpdate = async (id) => {
-    setUpdating(true);
-    setError("");
-    setSuccess("");
+    setUpdating(true); setError(""); setSuccess("");
     try {
       const res = await fetch(`${CONFIG.BASE_URL}/api/stocks/${id}/`, {
-        method: "PUT",
-        headers,
+        method: "PUT", headers,
         body: JSON.stringify({
           produit: editForm.produit,
           taille: editForm.taille.trim(),
@@ -118,171 +105,154 @@ const Stocks = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        setStocks((prev) => prev.map((s) => (s.id === id ? data : s)));
+        setStocks(prev => prev.map(s => s.id === id ? data : s));
         setEditingId(null);
         setSuccess("Stock modifié !");
         setTimeout(() => setSuccess(""), 3000);
       } else {
-        const msg = Object.entries(data)
-          .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`)
-          .join(" | ");
-        setError(msg || "Erreur lors de la modification");
+        setError(Object.entries(data).map(([k, v]) =>
+          `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join(" | ") || "Erreur");
       }
-    } catch {
-      setError("Erreur serveur");
-    } finally {
-      setUpdating(false);
-    }
+    } catch { setError("Erreur serveur"); }
+    finally { setUpdating(false); }
   };
 
   // --- DELETE ---
   const handleDelete = async (id) => {
-    setDeletingId(id);
-    setError("");
+    setDeletingId(id); setError("");
     try {
-      const res = await fetch(`${CONFIG.BASE_URL}/api/stocks/${id}/`, {
-        method: "DELETE",
-        headers,
-      });
+      const res = await fetch(`${CONFIG.BASE_URL}/api/stocks/${id}/`, { method: "DELETE", headers });
       if (res.ok || res.status === 204) {
-        setStocks((prev) => prev.filter((s) => s.id !== id));
+        setStocks(prev => prev.filter(s => s.id !== id));
         setConfirmDeleteId(null);
         setSuccess("Stock supprimé !");
         setTimeout(() => setSuccess(""), 3000);
-      } else {
-        setError("Erreur lors de la suppression");
-      }
-    } catch {
-      setError("Erreur serveur");
-    } finally {
-      setDeletingId(null);
-    }
+      } else { setError("Erreur lors de la suppression"); }
+    } catch { setError("Erreur serveur"); }
+    finally { setDeletingId(null); }
   };
 
   // --- FILTER ---
-  const filtered = stocks.filter((s) => {
-    const matchSearch =
+  const filtered = stocks.filter(s => {
+    const ms =
       s.produit_nom?.toLowerCase().includes(search.toLowerCase()) ||
       s.taille?.toLowerCase().includes(search.toLowerCase()) ||
       s.couleur?.toLowerCase().includes(search.toLowerCase());
-    const matchProduit = filterProduit
-      ? String(s.produit) === filterProduit
-      : true;
-    return matchSearch && matchProduit;
+    const mp = filterProduit ? String(s.produit) === filterProduit : true;
+    return ms && mp;
   });
 
-  // Badge couleur quantité
-  const getQuantiteBadge = (q) => {
-    if (q === 0) return "bg-red-500/20 text-red-400";
-    if (q <= 5) return "bg-orange-500/20 text-orange-400";
-    return "bg-green-500/20 text-green-400";
+  const quantiteBadgeStyle = (q) => ({
+    padding: "3px 10px", borderRadius: "20px",
+    fontSize: "12px", fontWeight: "600", display: "inline-block",
+    background: q === 0 ? SS.dangerBg : q <= 5 ? SS.warningBg : SS.successBg,
+    color: q === 0 ? SS.danger : q <= 5 ? SS.warning : SS.success,
+    border: `1px solid ${(q === 0 ? SS.danger : q <= 5 ? SS.warning : SS.success)}40`,
+  });
+
+  // ── Styles partagés ──────────────────────────────────────────────
+  const inputStyle = {
+    width: "100%", padding: "10px 14px", borderRadius: "8px",
+    background: SS.card, border: `1px solid ${SS.border}`,
+    color: SS.text, fontSize: "14px", outline: "none",
+  };
+
+  const inputSmStyle = {
+    width: "100%", padding: "7px 10px", borderRadius: "7px",
+    background: SS.card, border: `1px solid ${SS.border}`,
+    color: SS.text, fontSize: "13px", outline: "none",
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] p-4 md:p-8">
-      <div className="max-w-5xl mx-auto">
+    <div style={{ minHeight: "100vh", background: SS.bg, padding: "2rem", color: SS.text, fontFamily: "var(--font-sans, sans-serif)" }}>
+      <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+
+        {/* Fil d'Ariane */}
+        <div style={{ display: "flex", gap: "6px", alignItems: "center", marginBottom: "6px" }}>
+          <span style={{ fontSize: "12px", color: SS.textDim }}>Gestion</span>
+          <span style={{ fontSize: "12px", color: SS.textDim }}>/</span>
+          <span style={{ fontSize: "12px", color: SS.gold }}>Stocks</span>
+        </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
-          <div className="flex items-center gap-4">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem", flexWrap: "wrap", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <button
               onClick={() => navigate("/dashboardAdmin")}
-              className="p-2 rounded-xl bg-[#41124f]/30 text-gray-400 hover:text-white transition-colors"
+              style={{ padding: "8px 10px", borderRadius: "8px", border: `1px solid ${SS.border}`, background: SS.card, cursor: "pointer", display: "flex", alignItems: "center", color: SS.textMuted }}
             >
-              <ArrowLeft size={20} />
+              <ArrowLeft size={18} />
             </button>
-            <div className="flex items-center gap-3">
-              <Layers className="w-7 h-7 text-[#a34ee5]" />
-              <h1 className="text-2xl font-bold text-white">Stocks</h1>
-              <span className="px-2 py-0.5 rounded-full bg-[#a34ee5]/20 text-[#a34ee5] text-sm">
-                {stocks.length}
-              </span>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: `${SS.gold}20`, border: `1px solid ${SS.gold}50`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Layers size={19} color={SS.gold} />
+              </div>
+              <div>
+                <div style={{ fontSize: "20px", fontWeight: "600", color: SS.goldLight, lineHeight: 1.2 }}>Stocks</div>
+                <div style={{ fontSize: "12px", color: SS.textDim }}>{stocks.length} référence{stocks.length > 1 ? "s" : ""}</div>
+              </div>
             </div>
           </div>
+
           <button
             onClick={() => { setShowForm(!showForm); setError(""); }}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#a34ee5] to-[#fec603] text-white font-bold hover:opacity-90 transition-opacity"
+            style={{ background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`, border: "none", borderRadius: "8px", padding: "10px 20px", color: "#1A1208", fontWeight: "600", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", boxShadow: `0 2px 12px ${SS.gold}30` }}
           >
-            <Plus size={18} />
+            <Plus size={16} />
             Nouveau stock
           </button>
         </div>
 
         {/* Alerts */}
         {error && (
-          <div className="mb-4 p-3 bg-red-500/20 text-red-400 rounded-xl flex justify-between items-center">
+          <div style={{ padding: "12px 16px", borderRadius: "10px", background: `${SS.danger}18`, border: `1px solid ${SS.danger}40`, color: SS.danger, fontSize: "14px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
             <span>{error}</span>
-            <button onClick={() => setError("")}><X size={16} /></button>
+            <button onClick={() => setError("")} style={{ background: "none", border: "none", cursor: "pointer", color: SS.danger }}><X size={15} /></button>
           </div>
         )}
         {success && (
-          <div className="mb-4 p-3 bg-green-500/20 text-green-400 rounded-xl flex justify-between items-center">
+          <div style={{ padding: "12px 16px", borderRadius: "10px", background: `${SS.success}18`, border: `1px solid ${SS.success}40`, color: SS.success, fontSize: "14px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
             <span>{success}</span>
-            <button onClick={() => setSuccess("")}><X size={16} /></button>
+            <button onClick={() => setSuccess("")} style={{ background: "none", border: "none", cursor: "pointer", color: SS.success }}><X size={15} /></button>
           </div>
         )}
 
         {/* Formulaire création */}
         {showForm && (
-          <div className="bg-[#0a0a0a]/90 backdrop-blur-2xl rounded-3xl p-6 shadow-2xl border border-[#a34ee5]/30 mb-6">
-            <h2 className="text-white font-semibold mb-4">Nouveau stock</h2>
-            <form onSubmit={handleCreate} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                <select
-                  className="p-3 rounded-xl bg-[#41124f]/30 text-white outline-none focus:ring-2 focus:ring-[#a34ee5]"
-                  value={form.produit}
-                  onChange={(e) => setForm({ ...form, produit: e.target.value })}
-                  required
-                >
+          <div style={{ background: SS.surface, border: `1px solid ${SS.gold}50`, borderRadius: "14px", padding: "20px", marginBottom: "20px", boxShadow: `0 4px 24px ${SS.gold}10` }}>
+            <div style={{ fontSize: "15px", fontWeight: "600", color: SS.goldLight, marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+              <Layers size={16} color={SS.gold} />
+              Nouveau stock
+            </div>
+            <form onSubmit={handleCreate}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
+                <select style={inputStyle} value={form.produit}
+                  onChange={e => setForm({ ...form, produit: e.target.value })} required>
                   <option value="">— Sélectionner un produit —</option>
-                  {produits.map((p) => (
-                    <option key={p.id} value={p.id}>{p.nom}</option>
-                  ))}
+                  {produits.map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}
                 </select>
 
-                <input
-                  type="number"
-                  placeholder="Quantité"
-                  min="0"
-                  className="p-3 rounded-xl bg-[#41124f]/30 text-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#a34ee5]"
-                  value={form.quantite}
-                  onChange={(e) => setForm({ ...form, quantite: e.target.value })}
-                  required
-                />
+                <input type="number" placeholder="Quantité" min="0"
+                  style={inputStyle} value={form.quantite}
+                  onChange={e => setForm({ ...form, quantite: e.target.value })} required />
 
-                <input
-                  type="text"
-                  placeholder="Taille (ex: S, M, L, XL, 42...)"
-                  className="p-3 rounded-xl bg-[#41124f]/30 text-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#a34ee5]"
-                  value={form.taille}
-                  onChange={(e) => setForm({ ...form, taille: e.target.value })}
-                  required
-                />
+                <input type="text" placeholder="Taille (ex: S, M, L, XL, 42...)"
+                  style={inputStyle} value={form.taille}
+                  onChange={e => setForm({ ...form, taille: e.target.value })} required />
 
-                <input
-                  type="text"
-                  placeholder="Couleur (ex: Rouge, Noir...)"
-                  className="p-3 rounded-xl bg-[#41124f]/30 text-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#a34ee5]"
-                  value={form.couleur}
-                  onChange={(e) => setForm({ ...form, couleur: e.target.value })}
-                  required
-                />
+                <input type="text" placeholder="Couleur (ex: Rouge, Noir...)"
+                  style={inputStyle} value={form.couleur}
+                  onChange={e => setForm({ ...form, couleur: e.target.value })} required />
               </div>
 
-              <div className="flex gap-3 justify-end">
-                <button
-                  type="button"
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                <button type="button"
                   onClick={() => { setShowForm(false); setForm(emptyForm); }}
-                  className="px-4 py-2 rounded-xl bg-gray-700/40 text-gray-400 hover:text-white transition-colors"
-                >
+                  style={{ padding: "10px 20px", borderRadius: "8px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.textMuted, cursor: "pointer", fontSize: "14px" }}>
                   Annuler
                 </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#a34ee5] to-[#fec603] text-white font-bold hover:opacity-90 disabled:opacity-50"
-                >
+                <button type="submit" disabled={submitting}
+                  style={{ padding: "10px 20px", borderRadius: "8px", background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`, border: "none", color: "#1A1208", fontWeight: "600", fontSize: "14px", cursor: "pointer", opacity: submitting ? 0.5 : 1 }}>
                   {submitting ? "Création..." : "Créer"}
                 </button>
               </div>
@@ -291,167 +261,115 @@ const Stocks = () => {
         )}
 
         {/* Filtres */}
-        <div className="flex gap-3 mb-6 flex-wrap">
-          <div className="flex-1 min-w-48 flex items-center gap-2 px-3 rounded-xl bg-[#41124f]/20 border border-[#a34ee5]/10">
-            <Search size={16} className="text-gray-500" />
+        <div style={{ display: "flex", gap: "10px", marginBottom: "14px", flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: "200px", display: "flex", alignItems: "center", gap: "10px", background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "8px", padding: "0 14px" }}>
+            <Search size={15} color={SS.textDim} />
             <input
-              type="text"
               placeholder="Rechercher (produit, taille, couleur)..."
-              className="flex-1 py-3 bg-transparent text-white placeholder-gray-500 outline-none"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              style={{ flex: 1, background: "none", border: "none", outline: "none", color: SS.text, fontSize: "14px", padding: "10px 0" }}
+              value={search} onChange={e => setSearch(e.target.value)}
             />
           </div>
-          <div className="flex items-center gap-2 px-3 rounded-xl bg-[#41124f]/20 border border-[#a34ee5]/10">
-            <ChevronDown size={16} className="text-gray-500" />
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "8px", padding: "0 14px" }}>
+            <ChevronDown size={14} color={SS.textDim} />
             <select
-              className="py-3 bg-transparent text-white outline-none"
-              value={filterProduit}
-              onChange={(e) => setFilterProduit(e.target.value)}
-            >
+              style={{ background: "none", border: "none", outline: "none", color: SS.text, fontSize: "14px", padding: "10px 0" }}
+              value={filterProduit} onChange={e => setFilterProduit(e.target.value)}>
               <option value="">Tous les produits</option>
-              {produits.map((p) => (
-                <option key={p.id} value={String(p.id)}>{p.nom}</option>
-              ))}
+              {produits.map(p => <option key={p.id} value={String(p.id)}>{p.nom}</option>)}
             </select>
           </div>
         </div>
 
         {/* Tableau */}
         {loading ? (
-          <div className="text-center py-16 text-gray-500">Chargement...</div>
+          <div style={{ textAlign: "center", padding: "4rem", color: SS.textDim }}>Chargement...</div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">Aucun stock trouvé</div>
+          <div style={{ textAlign: "center", padding: "4rem", color: SS.textDim }}>Aucun stock trouvé</div>
         ) : (
-          <div className="bg-[#0a0a0a]/90 backdrop-blur-2xl rounded-3xl border border-[#a34ee5]/30 overflow-hidden">
-            {/* Header tableau */}
-            <div className="grid grid-cols-12 gap-2 px-4 py-3 border-b border-[#a34ee5]/10 text-gray-500 text-xs uppercase tracking-wider">
-              <div className="col-span-4">Produit</div>
-              <div className="col-span-2">Taille</div>
-              <div className="col-span-2">Couleur</div>
-              <div className="col-span-2">Quantité</div>
-              <div className="col-span-2 text-right">Actions</div>
+          <div style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "14px", overflow: "hidden" }}>
+
+            {/* Header colonnes */}
+            <div style={{ display: "grid", gridTemplateColumns: "3fr 1.5fr 1.5fr 1.5fr 1.5fr", padding: "12px 20px", borderBottom: `1px solid ${SS.border}`, background: SS.card }}>
+              {["Produit", "Taille", "Couleur", "Quantité", "Actions"].map((h, i) => (
+                <div key={i} style={{ fontSize: "11px", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", textAlign: i === 4 ? "right" : "left" }}>
+                  {h}
+                </div>
+              ))}
             </div>
 
-            {/* Rows */}
-            <ul className="divide-y divide-[#a34ee5]/10">
-              {filtered.map((stock) => (
-                <li key={stock.id} className="px-4 py-3 hover:bg-[#41124f]/10 transition-colors">
+            {/* Lignes */}
+            {filtered.map((stock, i) => {
+              const isLast = i === filtered.length - 1;
+              return (
+                <div
+                  key={stock.id}
+                  style={{ borderBottom: isLast ? "none" : `1px solid ${SS.border}`, transition: "background 0.15s" }}
+                  onMouseEnter={e => { if (editingId !== stock.id) e.currentTarget.style.background = SS.card; }}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                >
                   {editingId === stock.id ? (
                     /* Mode édition */
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
-                      <div className="md:col-span-3">
-                        <select
-                          className="w-full p-2 rounded-lg bg-[#41124f]/40 text-white outline-none focus:ring-2 focus:ring-[#a34ee5] text-sm"
-                          value={editForm.produit}
-                          onChange={(e) => setEditForm({ ...editForm, produit: e.target.value })}
-                        >
-                          <option value="">— Produit —</option>
-                          {produits.map((p) => (
-                            <option key={p.id} value={p.id}>{p.nom}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="md:col-span-2">
-                        <input
-                          type="text"
-                          placeholder="Taille"
-                          className="w-full p-2 rounded-lg bg-[#41124f]/40 text-white outline-none focus:ring-2 focus:ring-[#a34ee5] text-sm"
-                          value={editForm.taille}
-                          onChange={(e) => setEditForm({ ...editForm, taille: e.target.value })}
-                        />
-                      </div>
-                      <div className="md:col-span-2">
-                        <input
-                          type="text"
-                          placeholder="Couleur"
-                          className="w-full p-2 rounded-lg bg-[#41124f]/40 text-white outline-none focus:ring-2 focus:ring-[#a34ee5] text-sm"
-                          value={editForm.couleur}
-                          onChange={(e) => setEditForm({ ...editForm, couleur: e.target.value })}
-                        />
-                      </div>
-                      <div className="md:col-span-2">
-                        <input
-                          type="number"
-                          min="0"
-                          className="w-full p-2 rounded-lg bg-[#41124f]/40 text-white outline-none focus:ring-2 focus:ring-[#a34ee5] text-sm"
-                          value={editForm.quantite}
-                          onChange={(e) => setEditForm({ ...editForm, quantite: e.target.value })}
-                        />
-                      </div>
-                      <div className="md:col-span-3 flex gap-2 justify-end">
-                        <button
-                          onClick={() => handleUpdate(stock.id)}
-                          disabled={updating}
-                          className="p-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors disabled:opacity-50"
-                        >
-                          <Check size={16} />
+                    <div style={{ display: "grid", gridTemplateColumns: "3fr 1.5fr 1.5fr 1.5fr 1.5fr", gap: "8px", padding: "10px 20px", alignItems: "center" }}>
+                      <select style={inputSmStyle} value={editForm.produit}
+                        onChange={e => setEditForm({ ...editForm, produit: e.target.value })}>
+                        <option value="">— Produit —</option>
+                        {produits.map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}
+                      </select>
+                      <input type="text" placeholder="Taille" style={inputSmStyle}
+                        value={editForm.taille} onChange={e => setEditForm({ ...editForm, taille: e.target.value })} />
+                      <input type="text" placeholder="Couleur" style={inputSmStyle}
+                        value={editForm.couleur} onChange={e => setEditForm({ ...editForm, couleur: e.target.value })} />
+                      <input type="number" min="0" style={inputSmStyle}
+                        value={editForm.quantite} onChange={e => setEditForm({ ...editForm, quantite: e.target.value })} />
+                      <div style={{ display: "flex", gap: "6px", justifyContent: "flex-end" }}>
+                        <button onClick={() => handleUpdate(stock.id)} disabled={updating}
+                          style={{ padding: "6px 8px", borderRadius: "7px", background: `${SS.success}20`, border: `1px solid ${SS.success}40`, color: SS.success, cursor: "pointer", display: "flex", alignItems: "center", opacity: updating ? 0.5 : 1 }}>
+                          <Check size={15} />
                         </button>
-                        <button
-                          onClick={() => setEditingId(null)}
-                          className="p-2 rounded-lg bg-gray-500/20 text-gray-400 hover:bg-gray-500/30 transition-colors"
-                        >
-                          <X size={16} />
+                        <button onClick={() => setEditingId(null)}
+                          style={{ padding: "6px 8px", borderRadius: "7px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.textMuted, cursor: "pointer", display: "flex", alignItems: "center" }}>
+                          <X size={15} />
                         </button>
                       </div>
                     </div>
                   ) : (
                     /* Mode affichage */
-                    <div className="grid grid-cols-12 gap-2 items-center">
-                      <div className="col-span-4 flex items-center gap-2">
-                        <Package size={14} className="text-[#a34ee5] shrink-0" />
-                        <span className="text-white text-sm truncate">{stock.produit_nom}</span>
+                    <div style={{ display: "grid", gridTemplateColumns: "3fr 1.5fr 1.5fr 1.5fr 1.5fr", gap: "8px", padding: "13px 20px", alignItems: "center" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <Package size={14} color={SS.gold} style={{ flexShrink: 0 }} />
+                        <span style={{ fontSize: "14px", color: SS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {stock.produit_nom}
+                        </span>
                       </div>
-                      <div className="col-span-2">
-                        <span className="px-2 py-0.5 rounded-md bg-[#41124f]/40 text-gray-300 text-sm">
+                      <div>
+                        <span style={{ padding: "2px 8px", borderRadius: "5px", background: `${SS.gold}18`, border: `1px solid ${SS.gold}35`, fontSize: "12px", color: SS.gold, fontWeight: "500" }}>
                           {stock.taille}
                         </span>
                       </div>
-                      <div className="col-span-2">
-                        <span className="text-gray-300 text-sm">{stock.couleur}</span>
-                      </div>
-                      <div className="col-span-2">
-                        <span className={`px-2 py-0.5 rounded-full text-sm font-semibold ${getQuantiteBadge(stock.quantite)}`}>
-                          {stock.quantite}
-                        </span>
-                      </div>
-                      <div className="col-span-2 flex gap-2 justify-end">
+                      <div style={{ fontSize: "13px", color: SS.textMuted }}>{stock.couleur}</div>
+                      <div><span style={quantiteBadgeStyle(stock.quantite)}>{stock.quantite}</span></div>
+                      <div style={{ display: "flex", gap: "6px", justifyContent: "flex-end" }}>
                         {confirmDeleteId === stock.id ? (
                           <>
-                            <button
-                              onClick={() => handleDelete(stock.id)}
-                              disabled={deletingId === stock.id}
-                              className="px-2 py-1 rounded-lg bg-red-500/30 text-red-400 text-xs font-semibold disabled:opacity-50"
-                            >
+                            <button onClick={() => handleDelete(stock.id)} disabled={deletingId === stock.id}
+                              style={{ padding: "4px 10px", borderRadius: "6px", background: `${SS.danger}25`, border: `1px solid ${SS.danger}50`, color: SS.danger, fontSize: "12px", cursor: "pointer", opacity: deletingId === stock.id ? 0.5 : 1 }}>
                               {deletingId === stock.id ? "..." : "Oui"}
                             </button>
-                            <button
-                              onClick={() => setConfirmDeleteId(null)}
-                              className="px-2 py-1 rounded-lg bg-gray-500/20 text-gray-400 text-xs"
-                            >
+                            <button onClick={() => setConfirmDeleteId(null)}
+                              style={{ padding: "4px 10px", borderRadius: "6px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.textMuted, fontSize: "12px", cursor: "pointer" }}>
                               Non
                             </button>
                           </>
                         ) : (
                           <>
                             <button
-                              onClick={() => {
-                                setEditingId(stock.id);
-                                setEditForm({
-                                  produit: stock.produit,
-                                  taille: stock.taille,
-                                  couleur: stock.couleur,
-                                  quantite: stock.quantite,
-                                });
-                              }}
-                              className="p-2 rounded-lg bg-[#a34ee5]/20 text-[#a34ee5] hover:bg-[#a34ee5]/30 transition-colors"
-                            >
+                              onClick={() => { setEditingId(stock.id); setEditForm({ produit: stock.produit, taille: stock.taille, couleur: stock.couleur, quantite: stock.quantite }); }}
+                              style={{ padding: "6px 8px", borderRadius: "7px", background: `${SS.gold}18`, border: `1px solid ${SS.gold}35`, color: SS.gold, cursor: "pointer", display: "flex", alignItems: "center" }}>
                               <Pencil size={14} />
                             </button>
-                            <button
-                              onClick={() => setConfirmDeleteId(stock.id)}
-                              className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
-                            >
+                            <button onClick={() => setConfirmDeleteId(stock.id)}
+                              style={{ padding: "6px 8px", borderRadius: "7px", background: `${SS.danger}18`, border: `1px solid ${SS.danger}35`, color: SS.danger, cursor: "pointer", display: "flex", alignItems: "center" }}>
                               <Trash2 size={14} />
                             </button>
                           </>
@@ -459,33 +377,25 @@ const Stocks = () => {
                       </div>
                     </div>
                   )}
-                </li>
-              ))}
-            </ul>
+                </div>
+              );
+            })}
           </div>
         )}
 
-        {/* Résumé stock bas */}
+        {/* Résumé bas */}
         {!loading && stocks.length > 0 && (
-          <div className="mt-4 flex gap-3 flex-wrap">
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-green-500/10 border border-green-500/20">
-              <span className="w-2 h-2 rounded-full bg-green-400" />
-              <span className="text-green-400 text-sm">
-                {stocks.filter((s) => s.quantite > 5).length} en stock
-              </span>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-orange-500/10 border border-orange-500/20">
-              <span className="w-2 h-2 rounded-full bg-orange-400" />
-              <span className="text-orange-400 text-sm">
-                {stocks.filter((s) => s.quantite > 0 && s.quantite <= 5).length} stock faible
-              </span>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20">
-              <span className="w-2 h-2 rounded-full bg-red-400" />
-              <span className="text-red-400 text-sm">
-                {stocks.filter((s) => s.quantite === 0).length} rupture
-              </span>
-            </div>
+          <div style={{ marginTop: "16px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            {[
+              { label: `${stocks.filter(s => s.quantite > 5).length} en stock`, color: SS.success, bg: SS.successBg },
+              { label: `${stocks.filter(s => s.quantite > 0 && s.quantite <= 5).length} stock faible`, color: SS.warning, bg: SS.warningBg },
+              { label: `${stocks.filter(s => s.quantite === 0).length} rupture`, color: SS.danger, bg: SS.dangerBg },
+            ].map((item, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 14px", borderRadius: "10px", background: item.bg, border: `1px solid ${item.color}40` }}>
+                <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: item.color, display: "inline-block", flexShrink: 0 }} />
+                <span style={{ fontSize: "13px", color: item.color }}>{item.label}</span>
+              </div>
+            ))}
           </div>
         )}
 

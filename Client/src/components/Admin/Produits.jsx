@@ -5,9 +5,11 @@ import {
   Package, Search, ChevronDown, Image as ImageIcon
 } from "lucide-react";
 import CONFIG from "../../config/config";
+import { useTheme } from "../../context/ThemeContext";
 
 const Produits = () => {
   const navigate = useNavigate();
+  const { tokens: SS } = useTheme();
 
   const [produits, setProduits] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -42,11 +44,8 @@ const Produits = () => {
       const data = await res.json();
       if (res.ok) setProduits(data);
       else setError("Erreur lors du chargement des produits");
-    } catch {
-      setError("Erreur serveur");
-    } finally {
-      setLoading(false);
-    }
+    } catch { setError("Erreur serveur"); }
+    finally { setLoading(false); }
   };
 
   const fetchCategories = async () => {
@@ -68,7 +67,6 @@ const Produits = () => {
     formData.append("file", file);
     formData.append("upload_preset", CONFIG.CLOUDINARY_UPLOAD_PRESET);
     formData.append("folder", "produits");
-
     const res = await fetch(
       `https://api.cloudinary.com/v1_1/${CONFIG.CLOUDINARY_NAME}/image/upload`,
       { method: "POST", body: formData }
@@ -81,21 +79,15 @@ const Produits = () => {
   // --- CREATE ---
   const handleCreate = async (e) => {
     e.preventDefault();
-    setSubmitting(true);
-    setError("");
-    setSuccess("");
+    setSubmitting(true); setError(""); setSuccess("");
     try {
       let imageUrl = null;
       if (form.image) imageUrl = await uploadToCloudinary(form.image);
-
       const body = {
-        nom: form.nom,
-        description: form.description,
-        prix: form.prix,
-        categorie: form.categorie || null,
+        nom: form.nom, description: form.description,
+        prix: form.prix, categorie: form.categorie || null,
         ...(imageUrl && { image: imageUrl }),
       };
-
       const res = await fetch(CONFIG.API_PRODUIT, {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
@@ -103,44 +95,29 @@ const Produits = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        setProduits((prev) => [data, ...prev]);
-        setForm(emptyForm);
-        setImagePreview(null);
-        setShowForm(false);
+        setProduits(prev => [data, ...prev]);
+        setForm(emptyForm); setImagePreview(null); setShowForm(false);
         setSuccess("Produit créé avec succès !");
         setTimeout(() => setSuccess(""), 3000);
       } else {
-        const msg = Object.entries(data)
-          .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`)
-          .join(" | ");
-        setError(msg || "Erreur lors de la création");
+        setError(Object.entries(data).map(([k, v]) =>
+          `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join(" | ") || "Erreur");
       }
-    } catch (err) {
-      setError(err.message || "Erreur serveur");
-    } finally {
-      setSubmitting(false);
-    }
+    } catch (err) { setError(err.message || "Erreur serveur"); }
+    finally { setSubmitting(false); }
   };
 
   // --- UPDATE ---
   const handleUpdate = async (id) => {
-    setUpdating(true);
-    setError("");
-    setSuccess("");
+    setUpdating(true); setError(""); setSuccess("");
     try {
       let imageUrl = editForm.imageUrl || null;
-      if (editForm.image instanceof File) {
-        imageUrl = await uploadToCloudinary(editForm.image);
-      }
-
+      if (editForm.image instanceof File) imageUrl = await uploadToCloudinary(editForm.image);
       const body = {
-        nom: editForm.nom,
-        description: editForm.description,
-        prix: editForm.prix,
-        categorie: editForm.categorie || null,
+        nom: editForm.nom, description: editForm.description,
+        prix: editForm.prix, categorie: editForm.categorie || null,
         ...(imageUrl && { image: imageUrl }),
       };
-
       const res = await fetch(`${CONFIG.API_PRODUIT}${id}/`, {
         method: "PUT",
         headers: { ...headers, "Content-Type": "application/json" },
@@ -148,196 +125,166 @@ const Produits = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        setProduits((prev) => prev.map((p) => (p.id === id ? data : p)));
-        setEditingId(null);
-        setEditImagePreview(null);
+        setProduits(prev => prev.map(p => p.id === id ? data : p));
+        setEditingId(null); setEditImagePreview(null);
         setSuccess("Produit modifié !");
         setTimeout(() => setSuccess(""), 3000);
       } else {
-        const msg = Object.entries(data)
-          .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`)
-          .join(" | ");
-        setError(msg || "Erreur lors de la modification");
+        setError(Object.entries(data).map(([k, v]) =>
+          `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join(" | ") || "Erreur");
       }
-    } catch (err) {
-      setError(err.message || "Erreur serveur");
-    } finally {
-      setUpdating(false);
-    }
+    } catch (err) { setError(err.message || "Erreur serveur"); }
+    finally { setUpdating(false); }
   };
 
   // --- DELETE ---
   const handleDelete = async (id) => {
-    setDeletingId(id);
-    setError("");
+    setDeletingId(id); setError("");
     try {
-      const res = await fetch(`${CONFIG.API_PRODUIT}${id}/`, {
-        method: "DELETE",
-        headers,
-      });
+      const res = await fetch(`${CONFIG.API_PRODUIT}${id}/`, { method: "DELETE", headers });
       if (res.ok || res.status === 204) {
-        setProduits((prev) => prev.filter((p) => p.id !== id));
+        setProduits(prev => prev.filter(p => p.id !== id));
         setConfirmDeleteId(null);
         setSuccess("Produit supprimé !");
         setTimeout(() => setSuccess(""), 3000);
-      } else {
-        setError("Erreur lors de la suppression");
-      }
-    } catch {
-      setError("Erreur serveur");
-    } finally {
-      setDeletingId(null);
-    }
+      } else { setError("Erreur lors de la suppression"); }
+    } catch { setError("Erreur serveur"); }
+    finally { setDeletingId(null); }
   };
 
-  // --- FILTER ---
-  const filtered = produits.filter((p) => {
-    const matchSearch = p.nom.toLowerCase().includes(search.toLowerCase());
-    const matchCat = filterCat ? String(p.categorie) === filterCat : true;
-    return matchSearch && matchCat;
+  const filtered = produits.filter(p => {
+    const ms = p.nom.toLowerCase().includes(search.toLowerCase());
+    const mc = filterCat ? String(p.categorie) === filterCat : true;
+    return ms && mc;
   });
 
-  const getCatNom = (id) => categories.find((c) => c.id === id)?.nom || "—";
-
-  // ✅ Utilise image_url du nouveau serializer
+  const getCatNom = (id) => categories.find(c => c.id === id)?.nom || "—";
   const getImageSrc = (produit) => produit.image_url || null;
 
+  // ── Styles partagés ──────────────────────────────────────────────
+  const inputStyle = {
+    width: "100%", padding: "10px 14px", borderRadius: "8px",
+    background: SS.card, border: `1px solid ${SS.border}`,
+    color: SS.text, fontSize: "14px", outline: "none",
+  };
+
+  const inputSmStyle = {
+    width: "100%", padding: "7px 10px", borderRadius: "7px",
+    background: SS.card, border: `1px solid ${SS.border}`,
+    color: SS.text, fontSize: "13px", outline: "none",
+  };
+
   return (
-    <div className="min-h-screen bg-[#0a0a0a] p-4 md:p-8">
-      <div className="max-w-5xl mx-auto">
+    <div style={{ minHeight: "100vh", background: SS.bg, padding: "2rem", color: SS.text, fontFamily: "var(--font-sans, sans-serif)" }}>
+      <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+
+        {/* Fil d'Ariane */}
+        <div style={{ display: "flex", gap: "6px", alignItems: "center", marginBottom: "6px" }}>
+          <span style={{ fontSize: "12px", color: SS.textDim }}>Gestion</span>
+          <span style={{ fontSize: "12px", color: SS.textDim }}>/</span>
+          <span style={{ fontSize: "12px", color: SS.gold }}>Produits</span>
+        </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
-          <div className="flex items-center gap-4">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem", flexWrap: "wrap", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <button
               onClick={() => navigate("/dashboardAdmin")}
-              className="p-2 rounded-xl bg-[#41124f]/30 text-gray-400 hover:text-white transition-colors"
+              style={{ padding: "8px 10px", borderRadius: "8px", border: `1px solid ${SS.border}`, background: SS.card, cursor: "pointer", display: "flex", alignItems: "center", color: SS.textMuted }}
             >
-              <ArrowLeft size={20} />
+              <ArrowLeft size={18} />
             </button>
-            <div className="flex items-center gap-3">
-              <Package className="w-7 h-7 text-[#a34ee5]" />
-              <h1 className="text-2xl font-bold text-white">Produits</h1>
-              <span className="px-2 py-0.5 rounded-full bg-[#a34ee5]/20 text-[#a34ee5] text-sm">
-                {produits.length}
-              </span>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: `${SS.gold}20`, border: `1px solid ${SS.gold}50`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Package size={19} color={SS.gold} />
+              </div>
+              <div>
+                <div style={{ fontSize: "20px", fontWeight: "600", color: SS.goldLight, lineHeight: 1.2 }}>Produits</div>
+                <div style={{ fontSize: "12px", color: SS.textDim }}>{produits.length} article{produits.length > 1 ? "s" : ""}</div>
+              </div>
             </div>
           </div>
           <button
             onClick={() => { setShowForm(!showForm); setError(""); }}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#a34ee5] to-[#fec603] text-white font-bold hover:opacity-90 transition-opacity"
+            style={{ background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`, border: "none", borderRadius: "8px", padding: "10px 20px", color: "#1A1208", fontWeight: "600", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", boxShadow: `0 2px 12px ${SS.gold}30` }}
           >
-            <Plus size={18} />
+            <Plus size={16} />
             Nouveau produit
           </button>
         </div>
 
         {/* Alerts */}
         {error && (
-          <div className="mb-4 p-3 bg-red-500/20 text-red-400 rounded-xl flex justify-between items-center">
+          <div style={{ padding: "12px 16px", borderRadius: "10px", background: `${SS.danger}18`, border: `1px solid ${SS.danger}40`, color: SS.danger, fontSize: "14px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
             <span>{error}</span>
-            <button onClick={() => setError("")}><X size={16} /></button>
+            <button onClick={() => setError("")} style={{ background: "none", border: "none", cursor: "pointer", color: SS.danger }}><X size={15} /></button>
           </div>
         )}
         {success && (
-          <div className="mb-4 p-3 bg-green-500/20 text-green-400 rounded-xl flex justify-between items-center">
+          <div style={{ padding: "12px 16px", borderRadius: "10px", background: `${SS.success}18`, border: `1px solid ${SS.success}40`, color: SS.success, fontSize: "14px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
             <span>{success}</span>
-            <button onClick={() => setSuccess("")}><X size={16} /></button>
+            <button onClick={() => setSuccess("")} style={{ background: "none", border: "none", cursor: "pointer", color: SS.success }}><X size={15} /></button>
           </div>
         )}
 
         {/* Formulaire création */}
         {showForm && (
-          <div className="bg-[#0a0a0a]/90 backdrop-blur-2xl rounded-3xl p-6 shadow-2xl border border-[#a34ee5]/30 mb-6">
-            <h2 className="text-white font-semibold mb-4">Nouveau produit</h2>
-            <form onSubmit={handleCreate} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  placeholder="Nom du produit"
-                  className="p-3 rounded-xl bg-[#41124f]/30 text-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#a34ee5]"
-                  value={form.nom}
-                  onChange={(e) => setForm({ ...form, nom: e.target.value })}
-                  required
-                />
-                <input
-                  type="number"
-                  placeholder="Prix (GNF)"
-                  step="0.01"
-                  min="0"
-                  className="p-3 rounded-xl bg-[#41124f]/30 text-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#a34ee5]"
-                  value={form.prix}
-                  onChange={(e) => setForm({ ...form, prix: e.target.value })}
-                  required
-                />
+          <div style={{ background: SS.surface, border: `1px solid ${SS.gold}50`, borderRadius: "14px", padding: "20px", marginBottom: "20px", boxShadow: `0 4px 24px ${SS.gold}10` }}>
+            <div style={{ fontSize: "15px", fontWeight: "600", color: SS.goldLight, marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+              <Package size={16} color={SS.gold} />
+              Nouveau produit
+            </div>
+            <form onSubmit={handleCreate}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+                <input type="text" placeholder="Nom du produit" style={inputStyle}
+                  value={form.nom} onChange={e => setForm({ ...form, nom: e.target.value })} required />
+                <input type="number" placeholder="Prix (GNF)" step="0.01" min="0" style={inputStyle}
+                  value={form.prix} onChange={e => setForm({ ...form, prix: e.target.value })} required />
               </div>
 
-              <textarea
-                placeholder="Description (optionnel)"
-                rows={3}
-                className="w-full p-3 rounded-xl bg-[#41124f]/30 text-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#a34ee5] resize-none"
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-              />
+              <textarea placeholder="Description (optionnel)" rows={3}
+                style={{ ...inputStyle, resize: "none", marginBottom: "12px" }}
+                value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <select
-                  className="p-3 rounded-xl bg-[#41124f]/30 text-white outline-none focus:ring-2 focus:ring-[#a34ee5]"
-                  value={form.categorie}
-                  onChange={(e) => setForm({ ...form, categorie: e.target.value })}
-                >
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+                <select style={inputStyle} value={form.categorie}
+                  onChange={e => setForm({ ...form, categorie: e.target.value })}>
                   <option value="">— Catégorie —</option>
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>{c.nom}</option>
-                  ))}
+                  {categories.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
                 </select>
 
-                <label className="flex items-center gap-3 p-3 rounded-xl bg-[#41124f]/30 text-gray-400 cursor-pointer hover:bg-[#41124f]/50 transition-colors">
-                  <ImageIcon size={18} className="text-[#a34ee5]" />
-                  <span className="truncate text-sm">
+                <label style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", borderRadius: "8px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.textMuted, cursor: "pointer" }}>
+                  <ImageIcon size={17} color={SS.gold} />
+                  <span style={{ fontSize: "13px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {form.image ? form.image.name : "Choisir une image"}
                   </span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
+                  <input type="file" accept="image/*" style={{ display: "none" }}
+                    onChange={e => {
                       const file = e.target.files[0];
-                      if (file) {
-                        setForm({ ...form, image: file });
-                        setImagePreview(URL.createObjectURL(file));
-                      }
-                    }}
-                  />
+                      if (file) { setForm({ ...form, image: file }); setImagePreview(URL.createObjectURL(file)); }
+                    }} />
                 </label>
               </div>
 
               {imagePreview && (
-                <div className="relative w-32 h-32">
-                  <img src={imagePreview} alt="preview" className="w-32 h-32 object-cover rounded-xl" />
-                  <button
-                    type="button"
+                <div style={{ position: "relative", width: "120px", height: "120px", marginBottom: "12px" }}>
+                  <img src={imagePreview} alt="preview" style={{ width: "120px", height: "120px", objectFit: "cover", borderRadius: "10px" }} />
+                  <button type="button"
                     onClick={() => { setImagePreview(null); setForm({ ...form, image: null }); }}
-                    className="absolute -top-2 -right-2 p-1 rounded-full bg-red-500 text-white"
-                  >
+                    style={{ position: "absolute", top: "-8px", right: "-8px", padding: "3px", borderRadius: "50%", background: SS.danger, border: "none", cursor: "pointer", display: "flex", alignItems: "center", color: "#fff" }}>
                     <X size={12} />
                   </button>
                 </div>
               )}
 
-              <div className="flex gap-3 justify-end">
-                <button
-                  type="button"
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                <button type="button"
                   onClick={() => { setShowForm(false); setForm(emptyForm); setImagePreview(null); }}
-                  className="px-4 py-2 rounded-xl bg-gray-700/40 text-gray-400 hover:text-white transition-colors"
-                >
+                  style={{ padding: "10px 20px", borderRadius: "8px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.textMuted, cursor: "pointer", fontSize: "14px" }}>
                   Annuler
                 </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#a34ee5] to-[#fec603] text-white font-bold hover:opacity-90 disabled:opacity-50"
-                >
+                <button type="submit" disabled={submitting}
+                  style={{ padding: "10px 20px", borderRadius: "8px", background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`, border: "none", color: "#1A1208", fontWeight: "600", fontSize: "14px", cursor: "pointer", opacity: submitting ? 0.5 : 1 }}>
                   {submitting ? "Upload en cours..." : "Créer"}
                 </button>
               </div>
@@ -346,194 +293,140 @@ const Produits = () => {
         )}
 
         {/* Filtres */}
-        <div className="flex gap-3 mb-6 flex-wrap">
-          <div className="flex-1 min-w-48 flex items-center gap-2 px-3 rounded-xl bg-[#41124f]/20 border border-[#a34ee5]/10">
-            <Search size={16} className="text-gray-500" />
-            <input
-              type="text"
-              placeholder="Rechercher..."
-              className="flex-1 py-3 bg-transparent text-white placeholder-gray-500 outline-none"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+        <div style={{ display: "flex", gap: "10px", marginBottom: "14px", flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: "200px", display: "flex", alignItems: "center", gap: "10px", background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "8px", padding: "0 14px" }}>
+            <Search size={15} color={SS.textDim} />
+            <input placeholder="Rechercher..."
+              style={{ flex: 1, background: "none", border: "none", outline: "none", color: SS.text, fontSize: "14px", padding: "10px 0" }}
+              value={search} onChange={e => setSearch(e.target.value)} />
           </div>
-          <div className="flex items-center gap-2 px-3 rounded-xl bg-[#41124f]/20 border border-[#a34ee5]/10">
-            <ChevronDown size={16} className="text-gray-500" />
-            <select
-              className="py-3 bg-transparent text-white outline-none"
-              value={filterCat}
-              onChange={(e) => setFilterCat(e.target.value)}
-            >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "8px", padding: "0 14px" }}>
+            <ChevronDown size={14} color={SS.textDim} />
+            <select style={{ background: "none", border: "none", outline: "none", color: SS.text, fontSize: "14px", padding: "10px 0" }}
+              value={filterCat} onChange={e => setFilterCat(e.target.value)}>
               <option value="">Toutes catégories</option>
-              {categories.map((c) => (
-                <option key={c.id} value={String(c.id)}>{c.nom}</option>
-              ))}
+              {categories.map(c => <option key={c.id} value={String(c.id)}>{c.nom}</option>)}
             </select>
           </div>
         </div>
 
-        {/* Liste produits */}
+        {/* Grille produits */}
         {loading ? (
-          <div className="text-center py-16 text-gray-500">Chargement...</div>
+          <div style={{ textAlign: "center", padding: "4rem", color: SS.textDim }}>Chargement...</div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">Aucun produit trouvé</div>
+          <div style={{ textAlign: "center", padding: "4rem", color: SS.textDim }}>Aucun produit trouvé</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map((produit) => (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "16px" }}>
+            {filtered.map(produit => (
               <div
                 key={produit.id}
-                className="bg-[#0a0a0a]/90 backdrop-blur-2xl rounded-2xl border border-[#a34ee5]/20 hover:border-[#a34ee5]/40 transition-colors overflow-hidden"
+                style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "14px", overflow: "hidden", transition: "border-color 0.2s" }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = SS.borderHover}
+                onMouseLeave={e => e.currentTarget.style.borderColor = SS.border}
               >
-                {/* ✅ Image via image_url */}
-                <div className="h-48 bg-[#41124f]/20 flex items-center justify-center overflow-hidden">
+                {/* Image */}
+                <div style={{ height: "180px", background: SS.card, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
                   {getImageSrc(produit) ? (
-                    <img
-                      src={getImageSrc(produit)}
-                      alt={produit.nom}
-                      className="w-full h-full object-cover"
-                      onError={(e) => { e.target.style.display = "none"; }}
-                    />
+                    <img src={getImageSrc(produit)} alt={produit.nom}
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      onError={e => { e.target.style.display = "none"; }} />
                   ) : (
-                    <Package size={40} className="text-[#a34ee5]/30" />
+                    <Package size={40} color={`${SS.gold}40`} />
                   )}
                 </div>
 
-                <div className="p-4">
+                {/* Contenu */}
+                <div style={{ padding: "14px" }}>
                   {editingId === produit.id ? (
-                    <div className="space-y-3">
-                      <input
-                        type="text"
-                        className="w-full p-2 rounded-lg bg-[#41124f]/40 text-white outline-none focus:ring-2 focus:ring-[#a34ee5] text-sm"
-                        value={editForm.nom}
-                        onChange={(e) => setEditForm({ ...editForm, nom: e.target.value })}
-                      />
-                      <input
-                        type="number"
-                        step="0.01"
-                        className="w-full p-2 rounded-lg bg-[#41124f]/40 text-white outline-none focus:ring-2 focus:ring-[#a34ee5] text-sm"
-                        value={editForm.prix}
-                        onChange={(e) => setEditForm({ ...editForm, prix: e.target.value })}
-                      />
-                      <textarea
-                        rows={2}
-                        className="w-full p-2 rounded-lg bg-[#41124f]/40 text-white outline-none focus:ring-2 focus:ring-[#a34ee5] text-sm resize-none"
-                        value={editForm.description}
-                        onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                      />
-                      <select
-                        className="w-full p-2 rounded-lg bg-[#41124f]/40 text-white outline-none focus:ring-2 focus:ring-[#a34ee5] text-sm"
-                        value={editForm.categorie}
-                        onChange={(e) => setEditForm({ ...editForm, categorie: e.target.value })}
-                      >
+                    /* Mode édition */
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      <input type="text" style={inputSmStyle}
+                        value={editForm.nom} onChange={e => setEditForm({ ...editForm, nom: e.target.value })} />
+                      <input type="number" step="0.01" style={inputSmStyle}
+                        value={editForm.prix} onChange={e => setEditForm({ ...editForm, prix: e.target.value })} />
+                      <textarea rows={2} style={{ ...inputSmStyle, resize: "none" }}
+                        value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })} />
+                      <select style={inputSmStyle} value={editForm.categorie}
+                        onChange={e => setEditForm({ ...editForm, categorie: e.target.value })}>
                         <option value="">— Catégorie —</option>
-                        {categories.map((c) => (
-                          <option key={c.id} value={c.id}>{c.nom}</option>
-                        ))}
+                        {categories.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
                       </select>
 
-                      <label className="flex items-center gap-2 p-2 rounded-lg bg-[#41124f]/30 text-gray-400 cursor-pointer text-sm">
-                        <ImageIcon size={14} className="text-[#a34ee5]" />
-                        <span className="truncate">
+                      <label style={{ display: "flex", alignItems: "center", gap: "8px", padding: "7px 10px", borderRadius: "7px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.textMuted, cursor: "pointer", fontSize: "12px" }}>
+                        <ImageIcon size={13} color={SS.gold} />
+                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {editForm.image instanceof File ? editForm.image.name : "Changer l'image"}
                         </span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
+                        <input type="file" accept="image/*" style={{ display: "none" }}
+                          onChange={e => {
                             const file = e.target.files[0];
-                            if (file) {
-                              setEditForm({ ...editForm, image: file });
-                              setEditImagePreview(URL.createObjectURL(file));
-                            }
-                          }}
-                        />
+                            if (file) { setEditForm({ ...editForm, image: file }); setEditImagePreview(URL.createObjectURL(file)); }
+                          }} />
                       </label>
 
-                      {/* ✅ Preview : nouvelle image ou image_url existante */}
                       {(editImagePreview || editForm.imageUrl) && (
-                        <img
-                          src={editImagePreview || editForm.imageUrl}
-                          alt="preview"
-                          className="w-full h-24 object-cover rounded-lg"
-                        />
+                        <img src={editImagePreview || editForm.imageUrl} alt="preview"
+                          style={{ width: "100%", height: "80px", objectFit: "cover", borderRadius: "8px" }} />
                       )}
 
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleUpdate(produit.id)}
-                          disabled={updating}
-                          className="flex-1 py-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors flex items-center justify-center gap-1 text-sm disabled:opacity-50"
-                        >
-                          <Check size={14} />
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <button onClick={() => handleUpdate(produit.id)} disabled={updating}
+                          style={{ flex: 1, padding: "8px", borderRadius: "7px", background: `${SS.success}20`, border: `1px solid ${SS.success}40`, color: SS.success, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", fontSize: "13px", opacity: updating ? 0.5 : 1 }}>
+                          <Check size={13} />
                           {updating ? "..." : "Sauver"}
                         </button>
-                        <button
-                          onClick={() => { setEditingId(null); setEditImagePreview(null); }}
-                          className="flex-1 py-2 rounded-lg bg-gray-500/20 text-gray-400 hover:bg-gray-500/30 transition-colors flex items-center justify-center gap-1 text-sm"
-                        >
-                          <X size={14} />
+                        <button onClick={() => { setEditingId(null); setEditImagePreview(null); }}
+                          style={{ flex: 1, padding: "8px", borderRadius: "7px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.textMuted, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", fontSize: "13px" }}>
+                          <X size={13} />
                           Annuler
                         </button>
                       </div>
                     </div>
                   ) : (
+                    /* Mode affichage */
                     <>
-                      <div className="mb-3">
-                        <h3 className="text-white font-semibold truncate">{produit.nom}</h3>
-                        <p className="text-[#fec603] font-bold mt-1">
+                      <div style={{ marginBottom: "12px" }}>
+                        <div style={{ fontSize: "15px", fontWeight: "600", color: SS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {produit.nom}
+                        </div>
+                        <div style={{ fontSize: "15px", fontWeight: "700", color: SS.goldLight, marginTop: "4px" }}>
                           {Number(produit.prix).toLocaleString("fr-FR")} GNF
-                        </p>
+                        </div>
                         {produit.description && (
-                          <p className="text-gray-500 text-sm mt-1 line-clamp-2">{produit.description}</p>
+                          <div style={{ fontSize: "12px", color: SS.textMuted, marginTop: "4px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                            {produit.description}
+                          </div>
                         )}
-                        <span className="inline-block mt-2 px-2 py-0.5 rounded-full bg-[#a34ee5]/20 text-[#a34ee5] text-xs">
+                        <span style={{ display: "inline-block", marginTop: "8px", padding: "2px 10px", borderRadius: "20px", background: `${SS.gold}18`, border: `1px solid ${SS.gold}35`, fontSize: "11px", color: SS.gold }}>
                           {getCatNom(produit.categorie)}
                         </span>
                       </div>
 
                       {confirmDeleteId === produit.id ? (
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleDelete(produit.id)}
-                            disabled={deletingId === produit.id}
-                            className="flex-1 py-2 rounded-lg bg-red-500/30 text-red-400 hover:bg-red-500/40 text-sm font-semibold disabled:opacity-50"
-                          >
+                        <div style={{ display: "flex", gap: "8px" }}>
+                          <button onClick={() => handleDelete(produit.id)} disabled={deletingId === produit.id}
+                            style={{ flex: 1, padding: "8px", borderRadius: "7px", background: `${SS.danger}25`, border: `1px solid ${SS.danger}50`, color: SS.danger, fontSize: "13px", fontWeight: "600", cursor: "pointer", opacity: deletingId === produit.id ? 0.5 : 1 }}>
                             {deletingId === produit.id ? "..." : "Confirmer"}
                           </button>
-                          <button
-                            onClick={() => setConfirmDeleteId(null)}
-                            className="flex-1 py-2 rounded-lg bg-gray-500/20 text-gray-400 text-sm"
-                          >
+                          <button onClick={() => setConfirmDeleteId(null)}
+                            style={{ flex: 1, padding: "8px", borderRadius: "7px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.textMuted, fontSize: "13px", cursor: "pointer" }}>
                             Annuler
                           </button>
                         </div>
                       ) : (
-                        <div className="flex gap-2">
+                        <div style={{ display: "flex", gap: "8px" }}>
                           <button
                             onClick={() => {
-                              setEditingId(produit.id);
-                              setEditImagePreview(null);
-                              setEditForm({
-                                nom: produit.nom,
-                                description: produit.description || "",
-                                prix: produit.prix,
-                                categorie: produit.categorie || "",
-                                // ✅ image_url pour preview existante
-                                imageUrl: produit.image_url || null,
-                                image: null,
-                              });
+                              setEditingId(produit.id); setEditImagePreview(null);
+                              setEditForm({ nom: produit.nom, description: produit.description || "", prix: produit.prix, categorie: produit.categorie || "", imageUrl: produit.image_url || null, image: null });
                             }}
-                            className="flex-1 py-2 rounded-lg bg-[#a34ee5]/20 text-[#a34ee5] hover:bg-[#a34ee5]/30 transition-colors flex items-center justify-center gap-1 text-sm"
-                          >
-                            <Pencil size={14} />
+                            style={{ flex: 1, padding: "8px", borderRadius: "7px", background: `${SS.gold}18`, border: `1px solid ${SS.gold}35`, color: SS.gold, fontSize: "13px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }}>
+                            <Pencil size={13} />
                             Modifier
                           </button>
-                          <button
-                            onClick={() => setConfirmDeleteId(produit.id)}
-                            className="flex-1 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors flex items-center justify-center gap-1 text-sm"
-                          >
-                            <Trash2 size={14} />
+                          <button onClick={() => setConfirmDeleteId(produit.id)}
+                            style={{ flex: 1, padding: "8px", borderRadius: "7px", background: `${SS.danger}18`, border: `1px solid ${SS.danger}35`, color: SS.danger, fontSize: "13px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }}>
+                            <Trash2 size={13} />
                             Supprimer
                           </button>
                         </div>
