@@ -31,6 +31,7 @@ class Produit(models.Model):
         related_name="produits"
     )
     image = CloudinaryField('Image', folder='produits', blank=True, null=True)
+    est_nouveau = models.BooleanField(default=False)
     date_creation = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
