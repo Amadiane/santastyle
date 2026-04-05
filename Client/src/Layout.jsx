@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Outlet, useLocation, Navigate } from "react-router-dom";
 import Header from "./components/Header/Header";
 import Footer from "./components/Footer/Footer";
@@ -7,13 +8,17 @@ import i18n from "./i18n";
 import React from "react";
 import { useTheme } from "./context/ThemeContext";
 
+const SIDEBAR_EXPANDED  = 240;
+const SIDEBAR_COLLAPSED = 64;
+
 const App = () => {
-  const location = useLocation();
-  const token = localStorage.getItem("access");
+  const location  = useLocation();
+  const token     = localStorage.getItem("access");
   const { tokens, theme } = useTheme();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   React.useEffect(() => {
-    const rootElement = document.getElementById('root');
+    const rootElement = document.getElementById("root");
     if (rootElement) rootElement.scrollTop = 0;
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
@@ -41,6 +46,8 @@ const App = () => {
     return <Navigate to="/login" replace />;
   }
 
+  const sidebarW = sidebarCollapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED;
+
   const globalStyles = `
     html { overflow: hidden; width: 100%; height: 100%; }
     body { overflow: hidden; width: 100%; height: 100%; margin: 0; padding: 0; }
@@ -65,6 +72,11 @@ const App = () => {
 
     input::placeholder { color: ${tokens.textDim}; }
     select option { background: ${tokens.surface}; color: ${tokens.text}; }
+
+    .admin-sidebar-link:hover {
+      background: ${tokens.gold}12 !important;
+      color: ${tokens.gold} !important;
+    }
   `;
 
   return (
@@ -72,35 +84,71 @@ const App = () => {
       <style>{globalStyles}</style>
 
       {isAdminPage ? (
-        <div style={{ background: tokens.bg, minHeight: "100vh", width: "100%", position: "relative" }}>
-          <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
-            <div style={{
-              position: "absolute", top: 0, right: 0,
-              width: "600px", height: "600px", borderRadius: "50%",
-              background: `radial-gradient(circle, ${tokens.gold}08 0%, transparent 70%)`,
-            }} />
-            <div style={{
-              position: "absolute", bottom: 0, left: 0,
-              width: "500px", height: "500px", borderRadius: "50%",
-              background: `radial-gradient(circle, ${tokens.gold}06 0%, transparent 70%)`,
-            }} />
-            <div style={{
-              position: "absolute", top: 0, left: 0, right: 0, height: "1px",
-              background: `linear-gradient(90deg, transparent, ${tokens.gold}30, transparent)`,
-            }} />
-          </div>
 
-          <NavAdmin />
+        // ── LAYOUT ADMIN — sidebar gauche + contenu ──────────────
+        <div style={{
+          background: tokens.bg,
+          minHeight: "100vh",
+          width: "100%",
+          display: "flex",
+          position: "relative",
+        }}>
 
-          <main style={{ position: "relative", width: "100%" }}>
-            <div style={{ maxWidth: "1800px", margin: "0 auto", padding: "6rem 3rem 2.5rem" }}>
+          {/* Sidebar fixe à gauche */}
+          <NavAdmin onToggle={setSidebarCollapsed} />
+
+          {/* Contenu principal — se décale selon la sidebar */}
+          <main style={{
+            marginLeft: `${sidebarW}px`,
+            flex: 1,
+            minHeight: "100vh",
+            transition: "margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+            position: "relative",
+            overflow: "hidden",
+          }}>
+
+            {/* Déco fond */}
+            <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
+              <div style={{
+                position: "absolute", top: 0, right: 0,
+                width: "600px", height: "600px", borderRadius: "50%",
+                background: `radial-gradient(circle, ${tokens.gold}08 0%, transparent 70%)`,
+              }} />
+              <div style={{
+                position: "absolute", bottom: 0, left: 0,
+                width: "500px", height: "500px", borderRadius: "50%",
+                background: `radial-gradient(circle, ${tokens.gold}06 0%, transparent 70%)`,
+              }} />
+              <div style={{
+                position: "absolute", top: 0, left: 0, right: 0, height: "1px",
+                background: `linear-gradient(90deg, transparent, ${tokens.gold}20, transparent)`,
+              }} />
+            </div>
+
+            {/* Zone de contenu */}
+            <div style={{
+              position: "relative",
+              maxWidth: "1600px",
+              margin: "0 auto",
+              padding: "36px 28px 40px",
+            }}>
               <Outlet />
             </div>
           </main>
         </div>
 
       ) : (
-        <div style={{ background: tokens.bg, color: tokens.text, minHeight: "100vh", width: "100%", position: "relative" }}>
+
+        // ── LAYOUT PUBLIC — header fixe + footer ─────────────────
+        <div style={{
+          background: tokens.bg,
+          color: tokens.text,
+          minHeight: "100vh",
+          width: "100%",
+          position: "relative",
+        }}>
+
+          {/* Déco fond public */}
           <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
             <div style={{
               position: "absolute", top: 0, right: 0,
@@ -114,14 +162,25 @@ const App = () => {
             }} />
           </div>
 
+          {/* Header public fixe */}
           {!isLoginPage && (
             <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50 }}>
               <Header logoColor={tokens.gold} />
             </div>
           )}
 
-          <main style={{ position: "relative", paddingTop: "8rem", paddingBottom: "4rem" }}>
-            <div style={{ width: "100%", maxWidth: "1600px", margin: "0 auto", padding: "0 3rem" }}>
+          {/* Contenu public */}
+          <main style={{
+            position: "relative",
+            paddingTop: isLoginPage ? "0" : "8rem",
+            paddingBottom: "4rem",
+          }}>
+            <div style={{
+              width: "100%",
+              maxWidth: "1600px",
+              margin: "0 auto",
+              padding: "0 3rem",
+            }}>
               <Outlet />
             </div>
           </main>

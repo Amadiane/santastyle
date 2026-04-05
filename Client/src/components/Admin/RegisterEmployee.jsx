@@ -3,29 +3,13 @@ import { useNavigate } from "react-router-dom";
 import {
   Shield, ArrowLeft, User, Lock, Eye, EyeOff,
   UserPlus, Users, Trash2, X, Check, Crown,
-  ShoppingBag, ChevronRight, Calendar, AtSign,
-  BadgeCheck, Pencil, Save, ChevronDown, ChevronUp
+  ShoppingBag, Calendar, AtSign, BadgeCheck, Pencil, Save
 } from "lucide-react";
 import CONFIG from "../../config/config";
+import { useTheme } from "../../context/ThemeContext";
 
-const SS = {
-  bg:        "#F7F3EC",
-  surface:   "#EDE5D0",
-  card:      "#E4D9C0",
-  border:    "#D4C08A",
-  gold:      "#C9A84C",
-  goldLight: "#8A6A20",
-  goldDark:  "#5C3D00",
-  text:      "#2C1A00",
-  textMuted: "#8A6A20",
-  textDim:   "#B8A070",
-  success:   "#1A6B3C",
-  successBg: "#D4EDDF",
-  danger:    "#A32020",
-  dangerBg:  "#FDEAEA",
-};
-
-const iStyle = (focused) => ({
+// ── Styles helpers (dépendent des tokens) ─────────────────────────
+const iStyle = (SS, focused) => ({
   display: "flex", alignItems: "center", gap: "10px",
   padding: "0 14px",
   background: SS.surface,
@@ -35,24 +19,23 @@ const iStyle = (focused) => ({
   transition: "all 0.2s",
 });
 
-const Label = ({ children }) => (
+const Label = ({ children, SS }) => (
   <div style={{ fontSize: "11px", fontWeight: "700", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "6px" }}>
     {children}
   </div>
 );
 
 // ── Modal détail + édition ─────────────────────────────────────────
-const ModalEmploye = ({ emp, onClose, onUpdate, onDelete }) => {
-  const [mode, setMode]           = useState("view"); // "view" | "edit"
-  const [firstName, setFirstName] = useState(emp.first_name || "");
-  const [lastName, setLastName]   = useState(emp.last_name  || "");
-  const [email, setEmail]         = useState(emp.email      || "");
-  const [role, setRole]           = useState(emp.role       || "vendeur");
-  const [password, setPassword]   = useState("");
-  const [showPass, setShowPass]   = useState(false);
-  const [saving, setSaving]       = useState(false);
+const ModalEmploye = ({ emp, onClose, onUpdate, onDelete, SS }) => {
+  const [mode, setMode]             = useState("view");
+  const [firstName, setFirstName]   = useState(emp.first_name || "");
+  const [lastName, setLastName]     = useState(emp.last_name  || "");
+  const [email, setEmail]           = useState(emp.email      || "");
+  const [role, setRole]             = useState(emp.role       || "vendeur");
+  const [password, setPassword]     = useState("");
+  const [showPass, setShowPass]     = useState(false);
+  const [saving, setSaving]         = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
-
   const [fFirst, setFFirst] = useState(false);
   const [fLast,  setFLast]  = useState(false);
   const [fEmail, setFEmail] = useState(false);
@@ -70,11 +53,7 @@ const ModalEmploye = ({ emp, onClose, onUpdate, onDelete }) => {
         method: "PATCH", headers, body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (res.ok) {
-        onUpdate(data);
-        setMode("view");
-        setPassword("");
-      }
+      if (res.ok) { onUpdate(data); setMode("view"); setPassword(""); }
     } catch {} finally { setSaving(false); }
   };
 
@@ -98,13 +77,12 @@ const ModalEmploye = ({ emp, onClose, onUpdate, onDelete }) => {
     <div onClick={onClose}
       style={{ position: "fixed", inset: 0, background: "rgba(44,26,0,0.55)", backdropFilter: "blur(6px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
       <div onClick={e => e.stopPropagation()}
-        style={{ width: "100%", maxWidth: "480px", background: "#fff", borderRadius: "20px", overflow: "hidden", boxShadow: `0 24px 60px ${SS.gold}30`, border: `1px solid ${SS.border}`, maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
+        style={{ width: "100%", maxWidth: "480px", background: SS.surface, borderRadius: "20px", overflow: "hidden", boxShadow: `0 24px 60px ${SS.gold}30`, border: `1px solid ${SS.border}`, maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
 
-        {/* Barre top */}
         <div style={{ height: "3px", background: `linear-gradient(90deg, ${SS.goldDark}, ${SS.gold}, ${SS.goldDark})`, flexShrink: 0 }} />
 
-        {/* Header */}
-        <div style={{ padding: "20px 24px", background: `linear-gradient(135deg, ${SS.surface}, ${SS.card})`, borderBottom: `1px solid ${SS.border}`, display: "flex", alignItems: "center", gap: "14px", flexShrink: 0 }}>
+        {/* Header modal */}
+        <div style={{ padding: "20px 24px", background: SS.card, borderBottom: `1px solid ${SS.border}`, display: "flex", alignItems: "center", gap: "14px", flexShrink: 0 }}>
           <div style={{ width: "56px", height: "56px", borderRadius: "14px", background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", fontWeight: "800", color: "#fff", boxShadow: `0 4px 16px ${SS.gold}40`, flexShrink: 0 }}>
             {getInitiales()}
           </div>
@@ -120,7 +98,7 @@ const ModalEmploye = ({ emp, onClose, onUpdate, onDelete }) => {
             </div>
           </div>
 
-          {/* Tabs view/edit */}
+          {/* Tabs */}
           <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
             {[
               { key: "view", icon: <BadgeCheck size={14} />, label: "Profil"   },
@@ -140,24 +118,22 @@ const ModalEmploye = ({ emp, onClose, onUpdate, onDelete }) => {
         </div>
 
         {/* Contenu scrollable */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: SS.bg }}>
 
-          {/* ── MODE VUE ── */}
+          {/* Mode vue */}
           {mode === "view" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-
-              {/* Infos ligne par ligne */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {[
-                { icon: <User size={14} />,        label: "Prénom",         value: emp.first_name  || "—" },
-                { icon: <User size={14} />,        label: "Nom",            value: emp.last_name   || "—" },
-                { icon: <AtSign size={14} />,      label: "Identifiant",    value: `@${emp.username}` },
-                { icon: <BadgeCheck size={14} />,  label: "Email",          value: emp.email       || "—" },
-                { icon: <Crown size={14} />,       label: "Rôle",           value: getRoleStyle(emp.role).label },
-                { icon: <Check size={14} />,       label: "Statut",         value: emp.is_active ? "Actif" : "Inactif" },
-                { icon: <Calendar size={14} />,    label: "Inscription",    value: formatDate(emp.date_joined) },
-                { icon: <Calendar size={14} />,    label: "Dernière conn.", value: formatDate(emp.last_login) },
+                { icon: <User size={14} />,       label: "Prénom",         value: emp.first_name || "—" },
+                { icon: <User size={14} />,       label: "Nom",            value: emp.last_name  || "—" },
+                { icon: <AtSign size={14} />,     label: "Identifiant",    value: `@${emp.username}` },
+                { icon: <BadgeCheck size={14} />, label: "Email",          value: emp.email      || "—" },
+                { icon: <Crown size={14} />,      label: "Rôle",           value: getRoleStyle(emp.role).label },
+                { icon: <Check size={14} />,      label: "Statut",         value: emp.is_active ? "Actif" : "Inactif" },
+                { icon: <Calendar size={14} />,   label: "Inscription",    value: formatDate(emp.date_joined) },
+                { icon: <Calendar size={14} />,   label: "Dernière conn.", value: formatDate(emp.last_login) },
               ].map((info, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: i % 2 === 0 ? SS.surface : "#fff", borderRadius: "10px", border: `1px solid ${SS.border}` }}>
+                <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: i % 2 === 0 ? SS.surface : SS.card, borderRadius: "10px", border: `1px solid ${SS.border}` }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                     <span style={{ color: SS.gold }}>{info.icon}</span>
                     <span style={{ fontSize: "12px", fontWeight: "600", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.05em" }}>{info.label}</span>
@@ -166,9 +142,8 @@ const ModalEmploye = ({ emp, onClose, onUpdate, onDelete }) => {
                 </div>
               ))}
 
-              {/* Statut actif */}
               <div style={{ padding: "12px 14px", borderRadius: "10px", background: emp.is_active ? SS.successBg : SS.dangerBg, border: `1px solid ${emp.is_active ? SS.success : SS.danger}40`, display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: emp.is_active ? SS.success : SS.danger, boxShadow: `0 0 6px ${emp.is_active ? SS.success : SS.danger}` }} />
+                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: emp.is_active ? SS.success : SS.danger }} />
                 <span style={{ fontSize: "13px", fontWeight: "600", color: emp.is_active ? SS.success : SS.danger }}>
                   Compte {emp.is_active ? "actif" : "inactif"}
                 </span>
@@ -181,7 +156,7 @@ const ModalEmploye = ({ emp, onClose, onUpdate, onDelete }) => {
             </div>
           )}
 
-          {/* ── MODE ÉDITION ── */}
+          {/* Mode édition */}
           {mode === "edit" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
 
@@ -190,11 +165,10 @@ const ModalEmploye = ({ emp, onClose, onUpdate, onDelete }) => {
                 Modifiez les champs souhaités puis sauvegardez.
               </div>
 
-              {/* Prénom + Nom */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                 <div>
-                  <Label>Prénom</Label>
-                  <div style={iStyle(fFirst)}>
+                  <Label SS={SS}>Prénom</Label>
+                  <div style={iStyle(SS, fFirst)}>
                     <User size={14} color={fFirst ? SS.gold : SS.textDim} style={{ flexShrink: 0 }} />
                     <input value={firstName} onChange={e => setFirstName(e.target.value)}
                       onFocus={() => setFFirst(true)} onBlur={() => setFFirst(false)}
@@ -202,8 +176,8 @@ const ModalEmploye = ({ emp, onClose, onUpdate, onDelete }) => {
                   </div>
                 </div>
                 <div>
-                  <Label>Nom</Label>
-                  <div style={iStyle(fLast)}>
+                  <Label SS={SS}>Nom</Label>
+                  <div style={iStyle(SS, fLast)}>
                     <User size={14} color={fLast ? SS.gold : SS.textDim} style={{ flexShrink: 0 }} />
                     <input value={lastName} onChange={e => setLastName(e.target.value)}
                       onFocus={() => setFLast(true)} onBlur={() => setFLast(false)}
@@ -212,10 +186,9 @@ const ModalEmploye = ({ emp, onClose, onUpdate, onDelete }) => {
                 </div>
               </div>
 
-              {/* Email */}
               <div>
-                <Label>Email</Label>
-                <div style={iStyle(fEmail)}>
+                <Label SS={SS}>Email</Label>
+                <div style={iStyle(SS, fEmail)}>
                   <AtSign size={14} color={fEmail ? SS.gold : SS.textDim} style={{ flexShrink: 0 }} />
                   <input type="email" value={email} onChange={e => setEmail(e.target.value)}
                     onFocus={() => setFEmail(true)} onBlur={() => setFEmail(false)}
@@ -224,10 +197,12 @@ const ModalEmploye = ({ emp, onClose, onUpdate, onDelete }) => {
                 </div>
               </div>
 
-              {/* Nouveau mot de passe */}
               <div>
-                <Label>Nouveau mot de passe <span style={{ fontSize: "10px", fontWeight: "400", color: SS.textDim }}>(laisser vide pour ne pas changer)</span></Label>
-                <div style={iStyle(fPass)}>
+                <Label SS={SS}>
+                  Nouveau mot de passe{" "}
+                  <span style={{ fontSize: "10px", fontWeight: "400", color: SS.textDim }}>(laisser vide pour ne pas changer)</span>
+                </Label>
+                <div style={iStyle(SS, fPass)}>
                   <Lock size={14} color={fPass ? SS.gold : SS.textDim} style={{ flexShrink: 0 }} />
                   <input type={showPass ? "text" : "password"} value={password}
                     onChange={e => setPassword(e.target.value)}
@@ -241,9 +216,8 @@ const ModalEmploye = ({ emp, onClose, onUpdate, onDelete }) => {
                 </div>
               </div>
 
-              {/* Rôle */}
               <div>
-                <Label>Rôle</Label>
+                <Label SS={SS}>Rôle</Label>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
                   {[
                     { val: "vendeur", label: "Vendeur", icon: <ShoppingBag size={15} />, desc: "Accès ventes" },
@@ -259,18 +233,16 @@ const ModalEmploye = ({ emp, onClose, onUpdate, onDelete }) => {
                 </div>
               </div>
 
-              {/* Bouton sauvegarder */}
               <button onClick={handleSave} disabled={saving}
                 style={{ padding: "13px", borderRadius: "10px", border: "none", background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`, color: "#fff", fontSize: "14px", fontWeight: "700", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", boxShadow: `0 4px 16px ${SS.gold}35` }}>
-                {saving ? (
-                  <><div style={{ width: "15px", height: "15px", borderRadius: "50%", border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "#fff", animation: "spin 0.8s linear infinite" }} />Sauvegarde...</>
-                ) : (
-                  <><Save size={16} /> Sauvegarder les modifications</>
-                )}
+                {saving
+                  ? <><div style={{ width: "15px", height: "15px", borderRadius: "50%", border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "#fff", animation: "spin 0.8s linear infinite" }} />Sauvegarde...</>
+                  : <><Save size={16} /> Sauvegarder les modifications</>
+                }
               </button>
 
-              {/* Zone suppression */}
-              <div style={{ marginTop: "4px", padding: "14px", borderRadius: "10px", background: SS.dangerBg, border: `1px solid ${SS.danger}30` }}>
+              {/* Zone danger */}
+              <div style={{ padding: "14px", borderRadius: "10px", background: SS.dangerBg, border: `1px solid ${SS.danger}30` }}>
                 <div style={{ fontSize: "12px", fontWeight: "700", color: SS.danger, marginBottom: "10px", display: "flex", alignItems: "center", gap: "6px" }}>
                   <Trash2 size={13} /> Zone de danger
                 </div>
@@ -281,7 +253,7 @@ const ModalEmploye = ({ emp, onClose, onUpdate, onDelete }) => {
                   </button>
                 ) : (
                   <div>
-                    <div style={{ fontSize: "13px", color: SS.danger, marginBottom: "10px", fontWeight: "500" }}>
+                    <div style={{ fontSize: "13px", color: SS.danger, marginBottom: "10px" }}>
                       Confirmer la suppression de <strong>@{emp.username}</strong> ?
                     </div>
                     <div style={{ display: "flex", gap: "8px" }}>
@@ -301,10 +273,10 @@ const ModalEmploye = ({ emp, onClose, onUpdate, onDelete }) => {
           )}
         </div>
 
-        {/* Footer */}
-        <div style={{ padding: "14px 24px", borderTop: `1px solid ${SS.border}`, display: "flex", justifyContent: "flex-end", flexShrink: 0 }}>
+        {/* Footer modal */}
+        <div style={{ padding: "14px 24px", borderTop: `1px solid ${SS.border}`, background: SS.surface, display: "flex", justifyContent: "flex-end", flexShrink: 0 }}>
           <button onClick={onClose}
-            style={{ padding: "9px 24px", borderRadius: "10px", background: SS.surface, border: `1px solid ${SS.border}`, color: SS.textMuted, fontSize: "13px", fontWeight: "600", cursor: "pointer" }}>
+            style={{ padding: "9px 24px", borderRadius: "10px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.textMuted, fontSize: "13px", fontWeight: "600", cursor: "pointer" }}>
             Fermer
           </button>
         </div>
@@ -316,8 +288,8 @@ const ModalEmploye = ({ emp, onClose, onUpdate, onDelete }) => {
 // ── Page principale ────────────────────────────────────────────────
 const RegisterEmployee = () => {
   const navigate = useNavigate();
+  const { tokens: SS } = useTheme(); // ✅ useTheme comme Categories
 
-  // Form
   const [username, setUsername]   = useState("");
   const [password, setPassword]   = useState("");
   const [role, setRole]           = useState("vendeur");
@@ -327,15 +299,10 @@ const RegisterEmployee = () => {
   const [error, setError]         = useState("");
   const [success, setSuccess]     = useState("");
   const [showPass, setShowPass]   = useState(false);
-
-  // Employés
   const [employes, setEmployes]               = useState([]);
   const [loadingEmployes, setLoadingEmployes] = useState(true);
   const [selectedEmploye, setSelectedEmploye] = useState(null);
-
-  // UI
-  const [activeTab, setActiveTab] = useState("creer"); // "creer" | "liste"
-
+  const [activeTab, setActiveTab]             = useState("creer");
   const [fFirst, setFFirst] = useState(false);
   const [fLast,  setFLast]  = useState(false);
   const [fUser,  setFUser]  = useState(false);
@@ -401,10 +368,7 @@ const RegisterEmployee = () => {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: SS.bg, fontFamily: "var(--font-sans, sans-serif)", position: "relative", overflow: "hidden" }}>
-
-      <div style={{ position: "absolute", top: "-100px", right: "-100px", width: "400px", height: "400px", borderRadius: "50%", background: `radial-gradient(circle, ${SS.gold}12 0%, transparent 70%)`, pointerEvents: "none" }} />
-      <div style={{ position: "absolute", bottom: "-80px", left: "-80px", width: "300px", height: "300px", borderRadius: "50%", background: `radial-gradient(circle, ${SS.gold}08 0%, transparent 70%)`, pointerEvents: "none" }} />
+    <div style={{ minHeight: "100vh", background: SS.bg, color: SS.text, fontFamily: "var(--font-sans, sans-serif)" }}>
 
       {selectedEmploye && (
         <ModalEmploye
@@ -412,40 +376,44 @@ const RegisterEmployee = () => {
           onClose={() => setSelectedEmploye(null)}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
+          SS={SS}
         />
       )}
 
-      {/* Breadcrumb */}
-      <div style={{ background: SS.surface, borderBottom: `1px solid ${SS.border}`, padding: "12px 24px" }}>
-        <div style={{ maxWidth: "680px", margin: "0 auto", display: "flex", alignItems: "center", gap: "8px" }}>
-          <button onClick={() => navigate("/dashboardAdmin")}
-            style={{ display: "flex", alignItems: "center", gap: "6px", background: "none", border: "none", color: SS.textMuted, cursor: "pointer", fontSize: "13px" }}>
-            <ArrowLeft size={15} /> Dashboard
-          </button>
-          <span style={{ color: SS.textDim }}>/</span>
-          <span style={{ color: SS.gold, fontSize: "13px", fontWeight: "500" }}>Gestion des employés</span>
+      <div style={{ maxWidth: "680px", margin: "0 auto", padding: "2rem 1rem" }}>
+
+        {/* Fil d'Ariane */}
+        <div style={{ display: "flex", gap: "6px", alignItems: "center", marginBottom: "6px" }}>
+          <span style={{ fontSize: "12px", color: SS.textDim }}>Gestion</span>
+          <span style={{ fontSize: "12px", color: SS.textDim }}>/</span>
+          <span style={{ fontSize: "12px", color: SS.gold }}>Employés</span>
         </div>
-      </div>
 
-      <div style={{ maxWidth: "680px", margin: "0 auto", padding: "32px 16px" }}>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "1.5rem" }}>
+          <button onClick={() => navigate("/dashboardAdmin")}
+            style={{ padding: "8px 10px", borderRadius: "8px", border: `1px solid ${SS.border}`, background: SS.card, cursor: "pointer", display: "flex", alignItems: "center", color: SS.textMuted }}>
+            <ArrowLeft size={18} />
+          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: `${SS.gold}20`, border: `1px solid ${SS.gold}50`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Users size={19} color={SS.gold} />
+            </div>
+            <div>
+              <div style={{ fontSize: "20px", fontWeight: "600", color: SS.goldLight, lineHeight: 1.2 }}>Employés</div>
+              <div style={{ fontSize: "12px", color: SS.textDim }}>{employes.length} membre{employes.length > 1 ? "s" : ""}</div>
+            </div>
+          </div>
+        </div>
 
-        {/* ── Tabs switcher ── */}
-        <div style={{ display: "flex", gap: "0", marginBottom: "24px", background: "#fff", border: `1px solid ${SS.border}`, borderRadius: "14px", padding: "4px", boxShadow: `0 2px 12px ${SS.gold}10` }}>
+        {/* Tabs switcher */}
+        <div style={{ display: "flex", marginBottom: "24px", background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "14px", padding: "4px", boxShadow: `0 2px 12px ${SS.gold}10` }}>
           {[
-            { key: "creer", icon: <UserPlus size={16} />, label: "Nouvel employé",   count: null },
-            { key: "liste", icon: <Users    size={16} />, label: "Équipe",           count: employes.length },
+            { key: "creer", icon: <UserPlus size={16} />, label: "Nouvel employé", count: null },
+            { key: "liste", icon: <Users    size={16} />, label: "Équipe",          count: employes.length },
           ].map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-              style={{
-                flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
-                padding: "12px 16px", borderRadius: "10px", border: "none", cursor: "pointer",
-                fontSize: "14px", fontWeight: "700", transition: "all 0.2s",
-                background: activeTab === tab.key
-                  ? `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`
-                  : "transparent",
-                color: activeTab === tab.key ? "#fff" : SS.textMuted,
-                boxShadow: activeTab === tab.key ? `0 4px 16px ${SS.gold}35` : "none",
-              }}>
+              style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", padding: "12px 16px", borderRadius: "10px", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: "700", transition: "all 0.2s", background: activeTab === tab.key ? `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})` : "transparent", color: activeTab === tab.key ? "#fff" : SS.textMuted, boxShadow: activeTab === tab.key ? `0 4px 16px ${SS.gold}35` : "none" }}>
               {tab.icon}
               {tab.label}
               {tab.count !== null && (
@@ -459,38 +427,37 @@ const RegisterEmployee = () => {
 
         {/* ── TAB CRÉER ── */}
         {activeTab === "creer" && (
-          <div style={{ background: "#fff", border: `1px solid ${SS.border}`, borderRadius: "16px", overflow: "hidden", boxShadow: `0 4px 24px ${SS.gold}15` }}>
+          <div style={{ background: SS.surface, border: `1px solid ${SS.gold}50`, borderRadius: "14px", overflow: "hidden", boxShadow: `0 4px 24px ${SS.gold}10` }}>
             <div style={{ height: "3px", background: `linear-gradient(90deg, ${SS.goldDark}, ${SS.gold}, ${SS.goldDark})` }} />
+            <div style={{ padding: "24px" }}>
 
-            <div style={{ padding: "28px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "24px" }}>
-                <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 4px 16px ${SS.gold}40` }}>
-                  <UserPlus size={22} color="#fff" />
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
+                <div style={{ width: "44px", height: "44px", borderRadius: "11px", background: `${SS.gold}20`, border: `1px solid ${SS.gold}50`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <UserPlus size={20} color={SS.gold} />
                 </div>
                 <div>
-                  <div style={{ fontSize: "17px", fontWeight: "700", color: SS.text }}>Créer un compte employé</div>
-                  <div style={{ fontSize: "12px", color: SS.textMuted }}>Remplissez les informations ci-dessous</div>
+                  <div style={{ fontSize: "15px", fontWeight: "600", color: SS.goldLight }}>Créer un compte employé</div>
+                  <div style={{ fontSize: "12px", color: SS.textDim }}>Vendeur ou administrateur</div>
                 </div>
               </div>
 
               {error && (
-                <div style={{ marginBottom: "16px", padding: "12px 14px", background: SS.dangerBg, border: `1px solid ${SS.danger}40`, borderRadius: "10px", color: SS.danger, fontSize: "13px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ padding: "12px 14px", borderRadius: "10px", background: SS.dangerBg, border: `1px solid ${SS.danger}40`, color: SS.danger, fontSize: "13px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
                   <span>{error}</span>
                   <button onClick={() => setError("")} style={{ background: "none", border: "none", cursor: "pointer", color: SS.danger }}><X size={14} /></button>
                 </div>
               )}
               {success && (
-                <div style={{ marginBottom: "16px", padding: "12px 14px", background: SS.successBg, border: `1px solid ${SS.success}40`, borderRadius: "10px", color: SS.success, fontSize: "13px", display: "flex", alignItems: "center", gap: "8px" }}>
+                <div style={{ padding: "12px 14px", borderRadius: "10px", background: SS.successBg, border: `1px solid ${SS.success}40`, color: SS.success, fontSize: "13px", display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px" }}>
                   <Check size={15} /> {success}
                 </div>
               )}
 
               <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                   <div>
-                    <Label>Prénom</Label>
-                    <div style={iStyle(fFirst)}>
+                    <Label SS={SS}>Prénom</Label>
+                    <div style={iStyle(SS, fFirst)}>
                       <User size={14} color={fFirst ? SS.gold : SS.textDim} style={{ flexShrink: 0 }} />
                       <input type="text" placeholder="Prénom" value={firstName}
                         onChange={e => setFirstName(e.target.value)}
@@ -499,8 +466,8 @@ const RegisterEmployee = () => {
                     </div>
                   </div>
                   <div>
-                    <Label>Nom</Label>
-                    <div style={iStyle(fLast)}>
+                    <Label SS={SS}>Nom</Label>
+                    <div style={iStyle(SS, fLast)}>
                       <User size={14} color={fLast ? SS.gold : SS.textDim} style={{ flexShrink: 0 }} />
                       <input type="text" placeholder="Nom" value={lastName}
                         onChange={e => setLastName(e.target.value)}
@@ -511,8 +478,8 @@ const RegisterEmployee = () => {
                 </div>
 
                 <div>
-                  <Label>Identifiant</Label>
-                  <div style={iStyle(fUser)}>
+                  <Label SS={SS}>Identifiant</Label>
+                  <div style={iStyle(SS, fUser)}>
                     <Shield size={14} color={fUser ? SS.gold : SS.textDim} style={{ flexShrink: 0 }} />
                     <input type="text" placeholder="lettres, chiffres, @/./+/-/_" value={username}
                       onChange={e => setUsername(e.target.value.replace(/[^a-zA-Z0-9@.+\-_]/g, ""))}
@@ -522,8 +489,8 @@ const RegisterEmployee = () => {
                 </div>
 
                 <div>
-                  <Label>Mot de passe</Label>
-                  <div style={iStyle(fPass)}>
+                  <Label SS={SS}>Mot de passe</Label>
+                  <div style={iStyle(SS, fPass)}>
                     <Lock size={14} color={fPass ? SS.gold : SS.textDim} style={{ flexShrink: 0 }} />
                     <input type={showPass ? "text" : "password"} placeholder="••••••••" value={password}
                       onChange={e => setPassword(e.target.value)}
@@ -537,14 +504,14 @@ const RegisterEmployee = () => {
                 </div>
 
                 <div>
-                  <Label>Rôle</Label>
+                  <Label SS={SS}>Rôle</Label>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
                     {[
                       { val: "vendeur", label: "Vendeur", icon: <ShoppingBag size={18} />, desc: "Gestion des ventes" },
                       { val: "admin",   label: "Admin",   icon: <Crown size={18} />,       desc: "Accès complet" },
                     ].map(r => (
                       <button key={r.val} type="button" onClick={() => setRole(r.val)}
-                        style={{ padding: "14px", borderRadius: "10px", cursor: "pointer", border: `2px solid ${role === r.val ? SS.gold : SS.border}`, background: role === r.val ? `${SS.gold}15` : SS.surface, display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", transition: "all 0.15s" }}>
+                        style={{ padding: "14px", borderRadius: "10px", cursor: "pointer", border: `2px solid ${role === r.val ? SS.gold : SS.border}`, background: role === r.val ? `${SS.gold}15` : SS.card, display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", transition: "all 0.15s" }}>
                         <span style={{ color: role === r.val ? SS.gold : SS.textDim }}>{r.icon}</span>
                         <span style={{ fontSize: "14px", fontWeight: "700", color: role === r.val ? SS.goldDark : SS.text }}>{r.label}</span>
                         <span style={{ fontSize: "11px", color: SS.textDim }}>{r.desc}</span>
@@ -554,10 +521,10 @@ const RegisterEmployee = () => {
                 </div>
 
                 <button type="submit" disabled={loading}
-                  style={{ marginTop: "4px", padding: "14px", borderRadius: "10px", border: "none", background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`, color: "#fff", fontSize: "15px", fontWeight: "700", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", boxShadow: `0 4px 16px ${SS.gold}35`, transition: "all 0.2s" }}>
+                  style={{ marginTop: "4px", padding: "12px 18px", borderRadius: "8px", background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`, border: "none", color: "#1A1208", fontWeight: "600", fontSize: "14px", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.5 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", boxShadow: `0 2px 12px ${SS.gold}30` }}>
                   {loading
-                    ? <><div style={{ width: "15px", height: "15px", borderRadius: "50%", border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "#fff", animation: "spin 0.8s linear infinite" }} />Création...</>
-                    : <><UserPlus size={17} /> Créer l'employé</>
+                    ? <><div style={{ width: "14px", height: "14px", borderRadius: "50%", border: "2px solid rgba(0,0,0,0.2)", borderTopColor: "#1A1208", animation: "spin 0.8s linear infinite" }} />Création...</>
+                    : <><UserPlus size={16} /> Créer l'employé</>
                   }
                 </button>
               </form>
@@ -569,11 +536,11 @@ const RegisterEmployee = () => {
         {activeTab === "liste" && (
           <div>
             {/* Stats */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "20px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "16px" }}>
               {[
-                { label: "Total",    value: employes.length, color: SS.gold,    bg: `${SS.gold}12`    },
-                { label: "Admins",   value: employes.filter(e => e.role === "admin").length,   color: SS.goldLight, bg: `${SS.gold}18` },
-                { label: "Vendeurs", value: employes.filter(e => e.role !== "admin").length,   color: SS.success,   bg: SS.successBg  },
+                { label: "Total",    value: employes.length,                                 color: SS.gold,      bg: `${SS.gold}12`    },
+                { label: "Admins",   value: employes.filter(e => e.role === "admin").length, color: SS.goldLight, bg: `${SS.gold}18`    },
+                { label: "Vendeurs", value: employes.filter(e => e.role !== "admin").length, color: SS.success,   bg: SS.successBg      },
               ].map((s, i) => (
                 <div key={i} style={{ padding: "14px", borderRadius: "12px", background: s.bg, border: `1px solid ${s.color}30`, textAlign: "center" }}>
                   <div style={{ fontSize: "24px", fontWeight: "800", color: s.color }}>{s.value}</div>
@@ -584,16 +551,16 @@ const RegisterEmployee = () => {
 
             {/* Liste */}
             {loadingEmployes ? (
-              <div style={{ textAlign: "center", padding: "4rem", color: SS.textDim }}>
-                <Users size={40} color={`${SS.gold}40`} style={{ marginBottom: "12px" }} />
+              <div style={{ textAlign: "center", padding: "3rem", color: SS.textDim }}>
+                <Users size={36} color={`${SS.gold}40`} style={{ marginBottom: "10px" }} />
                 <div>Chargement...</div>
               </div>
             ) : employes.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "4rem", color: SS.textDim, background: "#fff", borderRadius: "14px", border: `1px solid ${SS.border}` }}>
-                <Users size={40} color={`${SS.gold}40`} style={{ marginBottom: "12px" }} />
-                <div style={{ fontSize: "15px", fontWeight: "500", marginBottom: "12px" }}>Aucun employé</div>
+              <div style={{ textAlign: "center", padding: "3rem", color: SS.textDim, background: SS.surface, borderRadius: "14px", border: `1px solid ${SS.border}` }}>
+                <Users size={36} color={`${SS.gold}40`} style={{ marginBottom: "10px" }} />
+                <div style={{ fontSize: "14px", marginBottom: "12px" }}>Aucun employé enregistré</div>
                 <button onClick={() => setActiveTab("creer")}
-                  style={{ padding: "10px 20px", borderRadius: "8px", background: SS.gold, border: "none", color: "#1A1208", fontWeight: "700", cursor: "pointer" }}>
+                  style={{ padding: "9px 20px", borderRadius: "8px", background: SS.gold, border: "none", color: "#1A1208", fontWeight: "700", cursor: "pointer" }}>
                   Créer le premier employé
                 </button>
               </div>
@@ -603,31 +570,27 @@ const RegisterEmployee = () => {
                   const rs = getRoleStyle(emp.role);
                   return (
                     <div key={emp.id}
-                      style={{ background: "#fff", border: `1px solid ${SS.border}`, borderRadius: "12px", padding: "14px 16px", display: "flex", alignItems: "center", gap: "14px", transition: "all 0.15s", cursor: "default" }}
-                      onMouseEnter={e => { e.currentTarget.style.boxShadow = `0 4px 16px ${SS.gold}15`; e.currentTarget.style.borderColor = SS.border; }}
-                      onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}>
+                      style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "12px", padding: "12px 14px", display: "flex", alignItems: "center", gap: "12px", transition: "all 0.15s" }}
+                      onMouseEnter={e => { e.currentTarget.style.boxShadow = `0 4px 16px ${SS.gold}15`; e.currentTarget.style.borderColor = SS.borderHover; }}
+                      onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderColor = SS.border; }}>
 
-                      {/* Avatar */}
-                      <div style={{ width: "44px", height: "44px", borderRadius: "11px", background: `linear-gradient(135deg, ${SS.surface}, ${SS.card})`, border: `1px solid ${SS.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: "800", color: SS.goldDark, flexShrink: 0 }}>
+                      <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: SS.card, border: `1px solid ${SS.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: "800", color: SS.goldDark, flexShrink: 0 }}>
                         {getInitiales(emp)}
                       </div>
 
-                      {/* Infos */}
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: "14px", fontWeight: "700", color: SS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <div style={{ fontSize: "14px", fontWeight: "600", color: SS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {emp.first_name && emp.last_name ? `${emp.first_name} ${emp.last_name}` : emp.username}
                         </div>
-                        <div style={{ fontSize: "12px", color: SS.textMuted }}>@{emp.username}</div>
+                        <div style={{ fontSize: "11px", color: SS.textMuted }}>@{emp.username}</div>
                       </div>
 
-                      {/* Badge */}
                       <span style={{ padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: "600", background: rs.bg, color: rs.color, border: rs.border, display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
                         {rs.icon} {rs.label}
                       </span>
 
-                      {/* Bouton voir / modifier */}
                       <button onClick={() => setSelectedEmploye(emp)}
-                        style={{ padding: "8px 14px", borderRadius: "8px", background: `${SS.gold}15`, border: `1px solid ${SS.gold}35`, color: SS.goldDark, cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: "700", flexShrink: 0, transition: "all 0.15s" }}
+                        style={{ padding: "7px 12px", borderRadius: "8px", background: `${SS.gold}15`, border: `1px solid ${SS.gold}35`, color: SS.goldDark, cursor: "pointer", display: "flex", alignItems: "center", gap: "5px", fontSize: "12px", fontWeight: "600", flexShrink: 0 }}
                         onMouseEnter={e => e.currentTarget.style.background = `${SS.gold}28`}
                         onMouseLeave={e => e.currentTarget.style.background = `${SS.gold}15`}>
                         <Pencil size={13} />

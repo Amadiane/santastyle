@@ -1,581 +1,460 @@
 import React, { useState } from "react";
-import {
-  Mail,
-  Phone,
-  MapPin,
-  Send,
-  Facebook,
-  Instagram,
-  Linkedin,
-  Youtube,
-  ArrowRight,
-  Sparkles,
-  Palette,
-  Video,
-  Printer,
-  Globe,
-  Users,
-  GraduationCap,
-  Lightbulb,
-  Calendar,
-  ExternalLink,
-} from "lucide-react";
 import { NavLink } from "react-router-dom";
+import {
+  Mail, Phone, MapPin, Send, Facebook, Instagram,
+  Linkedin, Youtube, ArrowRight, Sparkles, ShoppingBag,
+  Tag, Package, Layers, Heart, ExternalLink, X
+} from "lucide-react";
 import CONFIG from "../../config/config.js";
-// import Logo from "../Header/Logo";
 
-/**
- * 🎨 FOOTER ULTRA MODERNE - TEKACOM
- * Agence de communication & digital
- * Charte : #a34ee5 (violet), #41124f (violet profond), #fec603 (or), #7828a8 (violet foncé)
- * 
- * Améliorations :
- * ✅ Toast notification visible et accessible
- * ✅ Performance optimisée mobile (blur réduits)
- * ✅ ARIA labels pour accessibilité
- * ✅ Meilleur contrast WCAG
- * ✅ Animation fade-in au scroll
- * ✅ Loading state amélioré
- */
+const WAIcon = ({ size = 16, color = "#1A6B3C" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+    <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.528 5.855L.057 23.643a.5.5 0 0 0 .61.61l5.788-1.471A11.941 11.941 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.96 0-3.791-.57-5.33-1.548l-.383-.232-3.968 1.01 1.01-3.968-.232-.383A9.937 9.937 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+  </svg>
+);
 
-// Ajouter les keyframes pour l'animation
-const styles = `
+const SS = {
+  bg:        "#F7F3EC",
+  surface:   "#EDE5D0",
+  card:      "#E4D9C0",
+  border:    "#D4C08A",
+  gold:      "#C9A84C",
+  goldLight: "#8A6A20",
+  goldDark:  "#5C3D00",
+  text:      "#2C1A00",
+  textMuted: "#8A6A20",
+  textDim:   "#B8A070",
+  success:   "#1A6B3C",
+  successBg: "#D4EDDF",
+};
+
+const keyframes = `
   @keyframes shrink {
     from { width: 100%; }
-    to { width: 0%; }
+    to   { width: 0%; }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 `;
 
 const Footer = () => {
-  const [email, setEmail] = useState("");
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
-  const [toastType, setToastType] = useState("success"); // "success" | "error"
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
+  const [email, setEmail]           = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast]           = useState(null); // { msg, type }
+
   const footerRef = React.useRef(null);
+  const [visible, setVisible] = React.useState(false);
 
-  // Intersection Observer pour fade-in
   React.useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-        }
-      },
-      { threshold: 0.1 }
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) setVisible(true); },
+      { threshold: 0.05 }
     );
-
-    if (footerRef.current) {
-      observer.observe(footerRef.current);
-    }
-
-    return () => {
-      if (footerRef.current) {
-        observer.unobserve(footerRef.current);
-      }
-    };
+    if (footerRef.current) obs.observe(footerRef.current);
+    return () => obs.disconnect();
   }, []);
 
-  const showNotification = (message, type = "success") => {
-    setToastMessage(message);
-    setToastType(type);
-    setShowToast(true);
-    
-    setTimeout(() => {
-      setShowToast(false);
-    }, 5000);
+  const showToast = (msg, type = "success") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 5000);
   };
 
   const handleSubscribe = async (e) => {
     e.preventDefault();
     if (!email.trim()) return;
-
-    setIsSubmitting(true);
-
+    setSubmitting(true);
     try {
-      const response = await fetch(CONFIG.API_NEWSLETTER_CREATE, {
+      const res  = await fetch(CONFIG.API_NEWSLETTER_CREATE, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        showNotification("🎉 Merci ! Vous êtes maintenant inscrit à notre newsletter.", "success");
+      const data = await res.json();
+      if (res.ok) {
+        showToast("Merci ! Vous êtes inscrit à notre newsletter.", "success");
         setEmail("");
       } else {
-        showNotification(
-          data.error || data.message || "⚠️ Une erreur est survenue. Veuillez réessayer.",
-          "error"
-        );
+        showToast(data.error || "Une erreur est survenue.", "error");
       }
-    } catch (err) {
-      console.error("Erreur :", err);
-      showNotification("⚠️ Erreur de connexion. Veuillez réessayer plus tard.", "error");
+    } catch {
+      showToast("Erreur de connexion. Réessayez plus tard.", "error");
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
 
-  const services = [
-    { label: "Communication visuelle", href: "/services", icon: Palette },
-    { label: "Production audiovisuelle", href: "/services", icon: Video },
-    { label: "Impression numérique", href: "/services", icon: Printer },
-    { label: "Conception sites web", href: "/services", icon: Globe },
-    { label: "Community management", href: "/services", icon: Users },
-    { label: "Formation", href: "/services", icon: GraduationCap },
-    { label: "Consulting", href: "/services", icon: Lightbulb },
-    { label: "Organisation événements", href: "/services", icon: Calendar },
+  const ouvrirWA = (msg) => {
+    window.open(
+      `https://wa.me/${CONFIG.WHATSAPP_NUMBER || "224620762508"}?text=${encodeURIComponent(msg)}`,
+      "_blank"
+    );
+  };
+
+  const boutique = [
+    { label: "Tous les articles", path: "/boutique",               icon: ShoppingBag },
+    { label: "Nouveautés",        path: "/boutique?filtre=nouveau", icon: Sparkles    },
+    { label: "Hommes",            path: "/boutique?cat=hommes",     icon: Package     },
+    { label: "Femmes",            path: "/boutique?cat=femmes",     icon: Package     },
+    { label: "Enfants",           path: "/boutique?cat=enfants",    icon: Package     },
   ];
 
-  const quickLinks = [
-    { label: "Accueil", href: "/" },
-    { label: "À propos", href: "/nosMissions" },
-    { label: "Notre équipe", href: "/notreEquipe" },
-    { label: "Notre mission", href: "/nosMissions" },
-    { label: "Portfolio", href: "/portfolio" },
-    { label: "Partenaires", href: "/partner" },
-    { label: "Contact", href: "/contacternous" },
+  const infos = [
+    { label: "À propos",     path: "/nosMissions"   },
+    { label: "Notre équipe", path: "/notreEquipe"   },
+    { label: "Boutique",     path: "/boutique"      },
+    { label: "Contact",      path: "/contacternous" },
   ];
 
-  const socialLinks = [
-    { 
-      name: "Facebook", 
-      icon: Facebook, 
-      url: "https://facebook.com/tekacom", 
-      color: "hover:text-blue-400",
-      gradient: "from-blue-600 to-blue-400"
-    },
-    { 
-      name: "Instagram", 
-      icon: Instagram, 
-      url: "https://instagram.com/tekacom", 
-      color: "hover:text-pink-400",
-      gradient: "from-pink-600 via-purple-600 to-orange-500"
-    },
-    { 
-      name: "LinkedIn", 
-      icon: Linkedin, 
-      url: "https://linkedin.com/company/tekacom", 
-      color: "hover:text-blue-500",
-      gradient: "from-blue-700 to-blue-500"
-    },
-    { 
-      name: "YouTube", 
-      icon: Youtube, 
-      url: "https://youtube.com/@tekacom", 
-      color: "hover:text-red-500",
-      gradient: "from-red-600 to-red-400"
-    },
+  const contacts = [
+    { icon: MapPin, label: "Conakry, Guinée",        href: "https://maps.app.goo.gl/2gya1yBW9QCu4Lt36", ext: true  },
+    { icon: Phone,  label: "+224 620 762 508",        href: "tel:+224620762508",                          ext: false },
+    { icon: Mail,   label: "contact@santastyle.gn",   href: "mailto:contact@santastyle.gn",               ext: false },
   ];
 
-  const contactInfo = [
-    { 
-      icon: MapPin, 
-      text: "Conakry, Guinée", 
-      color: "text-[#fec603]",
-      bgColor: "bg-[#fec603]/10",
-      link: "https://maps.app.goo.gl/2gya1yBW9QCu4Lt36"
-    },
-    { 
-      icon: Phone, 
-      text: "+224 611 92 98 92", 
-      color: "text-[#a34ee5]",
-      bgColor: "bg-[#a34ee5]/10",
-      link: "tel:+224626741478"
-    },
-    { 
-      icon: Mail, 
-      text: "contact@tekacom.gn", 
-      color: "text-[#fec603]",
-      bgColor: "bg-[#fec603]/10",
-      link: "mailto:contact@tekacom.gn"
-    },
+  const socials = [
+    { name: "Facebook",  icon: Facebook,  url: "https://facebook.com",  bg: "#1877F2" },
+    { name: "Instagram", icon: Instagram, url: "https://instagram.com", bg: "linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)" },
+    { name: "LinkedIn",  icon: Linkedin,  url: "https://linkedin.com",  bg: "#0A66C2" },
+    { name: "YouTube",   icon: Youtube,   url: "https://youtube.com",   bg: "#FF0000" },
   ];
 
   return (
     <>
-      {/* CSS Animations */}
-      <style>{styles}</style>
+      <style>{keyframes}</style>
 
-      {/* Toast Notification */}
-      {showToast && (
-        <div className="fixed top-6 right-6 z-[9999] animate-in slide-in-from-right duration-500">
-          <div className={`relative max-w-md ${
-            toastType === "success" 
-              ? "bg-gradient-to-r from-green-500/90 to-emerald-600/90" 
-              : "bg-gradient-to-r from-red-500/90 to-rose-600/90"
-          } backdrop-blur-xl rounded-2xl p-5 border ${
-            toastType === "success" ? "border-green-400/50" : "border-red-400/50"
-          } shadow-2xl shadow-black/50`}
-          role="alert"
-          aria-live="polite"
-          >
-            {/* Glow effect */}
-            <div className={`absolute -inset-1 ${
-              toastType === "success" ? "bg-green-400/30" : "bg-red-400/30"
-            } rounded-2xl blur-xl -z-10`}></div>
-            
-            <div className="flex items-start gap-3">
-              {/* Icon */}
-              <div className={`w-10 h-10 rounded-xl ${
-                toastType === "success" ? "bg-white/20" : "bg-white/20"
-              } flex items-center justify-center flex-shrink-0`}>
-                {toastType === "success" ? (
-                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                ) : (
-                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                )}
-              </div>
-              
-              {/* Message */}
-              <div className="flex-1">
-                <p className="text-white font-bold text-sm mb-1">
-                  {toastType === "success" ? "Succès !" : "Erreur"}
-                </p>
-                <p className="text-white/90 text-sm leading-relaxed">
-                  {toastMessage}
-                </p>
-              </div>
-              
-              {/* Close button */}
-              <button
-                onClick={() => setShowToast(false)}
-                className="p-1 hover:bg-white/20 rounded-lg transition-all"
-                aria-label="Fermer la notification"
-              >
-                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+      {/* ── Toast ── */}
+      {toast && (
+        <div style={{
+          position: "fixed", top: "24px", right: "24px",
+          zIndex: 9999, maxWidth: "360px", width: "calc(100% - 48px)",
+          animation: "fadeUp 0.3s ease",
+        }}>
+          <div style={{
+            background: toast.type === "success"
+              ? `linear-gradient(135deg, ${SS.goldDark}, ${SS.goldLight})`
+              : "#A32020",
+            borderRadius: "14px", padding: "16px 18px",
+            border: `1px solid ${toast.type === "success" ? SS.gold : "#C0392B"}`,
+            boxShadow: `0 8px 32px ${toast.type === "success" ? SS.gold : "#A32020"}30`,
+            display: "flex", alignItems: "flex-start", gap: "12px",
+          }}>
+            <div style={{ width: "36px", height: "36px", borderRadius: "9px", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              {toast.type === "success"
+                ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              }
             </div>
-            
-            {/* Progress bar */}
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20 rounded-b-2xl overflow-hidden">
-              <div className="h-full bg-white/60 animate-[shrink_5s_linear]" style={{
-                animation: 'shrink 5s linear forwards'
-              }}></div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: "13px", fontWeight: "700", color: "#fff", marginBottom: "3px" }}>
+                {toast.type === "success" ? "Succès !" : "Erreur"}
+              </div>
+              <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.85)", lineHeight: 1.5 }}>
+                {toast.msg}
+              </div>
+            </div>
+            <button onClick={() => setToast(null)}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.7)", padding: 0, display: "flex" }}>
+              <X size={16} />
+            </button>
+            {/* Barre progression */}
+            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "3px", background: "rgba(255,255,255,0.2)", borderRadius: "0 0 14px 14px", overflow: "hidden" }}>
+              <div style={{ height: "100%", background: "rgba(255,255,255,0.6)", animation: "shrink 5s linear forwards" }} />
             </div>
           </div>
         </div>
       )}
 
-      <footer 
+      {/* ── Footer ── */}
+      <footer
         ref={footerRef}
-        className={`relative bg-[#0a0a0a] border-t border-[#a34ee5]/20 overflow-hidden transition-all duration-1000 ${
-          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-        }`}
+        style={{
+          background: SS.bg,
+          borderTop: `1px solid ${SS.border}`,
+          fontFamily: "var(--font-sans, sans-serif)",
+          opacity: visible ? 1 : 0,
+          transform: visible ? "none" : "translateY(16px)",
+          transition: "opacity 0.7s ease, transform 0.7s ease",
+          position: "relative",
+          overflow: "hidden",
+        }}
       >
-      
-      {/* Effets de fond optimisés pour mobile */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {/* Gradients lumineux - réduits sur mobile */}
-        <div className="absolute -top-40 left-0 w-64 h-64 sm:w-96 sm:h-96 bg-[#a34ee5]/10 rounded-full blur-2xl sm:blur-3xl"></div>
-        <div className="absolute top-1/2 right-0 w-64 h-64 sm:w-96 sm:h-96 bg-[#fec603]/10 rounded-full blur-2xl sm:blur-3xl"></div>
-        <div className="absolute bottom-0 left-1/2 w-64 h-64 sm:w-96 sm:h-96 bg-[#7828a8]/10 rounded-full blur-2xl sm:blur-3xl"></div>
-        
-        {/* Grille de points - cachée sur mobile pour performance */}
-        <div className="hidden sm:block absolute inset-0 opacity-[0.02]" 
-             style={{
-               backgroundImage: 'radial-gradient(circle, #a34ee5 1px, transparent 1px)',
-               backgroundSize: '50px 50px'
-             }}>
+        {/* Déco fond */}
+        <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: "-80px", right: "-80px", width: "320px", height: "320px", borderRadius: "50%", background: `radial-gradient(circle, ${SS.gold}10 0%, transparent 70%)` }} />
+          <div style={{ position: "absolute", bottom: "-60px", left: "-60px", width: "260px", height: "260px", borderRadius: "50%", background: `radial-gradient(circle, ${SS.gold}08 0%, transparent 70%)` }} />
+          <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(circle, ${SS.gold}14 1px, transparent 1px)`, backgroundSize: "40px 40px", opacity: 0.4 }} />
         </div>
-      </div>
 
-      {/* Section principale */}
-      <div className="relative max-w-[1600px] mx-auto px-6 lg:px-12 py-16 md:py-20">
-        
-        {/* Top Section - Logo + CTA */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16 pb-16 border-b border-[#a34ee5]/20">
-          
-          {/* Logo + Description */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                {/* Glow effect
-                <div className="absolute inset-0 bg-gradient-to-r from-[#a34ee5]/30 to-[#fec603]/30 rounded-2xl blur-xl"></div>
-                <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-[#41124f] to-[#0a0a0a] border border-[#a34ee5]/30 flex items-center justify-center overflow-hidden shadow-lg shadow-[#a34ee5]/20">
-                  <Logo scrolled={false} />
-                </div> */}
-              </div>
+        <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "56px 24px 0", position: "relative" }}>
+
+          {/* ── Section principale ── */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "48px", marginBottom: "48px", paddingBottom: "48px", borderBottom: `1px solid ${SS.border}` }}>
+
+            {/* Gauche — Brand + contacts */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+
+              {/* Brand */}
               <div>
-                <h3 className="text-3xl font-black text-white tracking-tight">
-                  <span className="text-gradient bg-gradient-to-r from-[#a34ee5] to-[#fec603] bg-clip-text text-transparent">
-                    TEKACOM
-                  </span>
-                </h3>
-                <p className="text-sm text-[#fec603] font-bold tracking-wide">
-                  Inspirer • Créer • Impacter
-                </p>
-              </div>
-            </div>
-
-            <p className="text-gray-400 text-base leading-relaxed max-w-xl">
-              Agence guinéenne multidisciplinaire spécialisée dans la{" "}
-              <span className="text-[#a34ee5] font-semibold">communication</span> et le{" "}
-              <span className="text-[#fec603] font-semibold">digital</span>. 
-              Nous proposons des solutions globales et créatives pour donner vie à vos projets.
-            </p>
-
-            {/* Contact Info Cards */}
-            <div className="space-y-3 pt-4">
-              {contactInfo.map((item, idx) => {
-                const Icon = item.icon;
-                const content = (
-                  <div className={`group flex items-center gap-3 p-4 rounded-xl bg-[#41124f]/20 border border-[#a34ee5]/20 hover:border-[#a34ee5]/40 transition-all duration-500 ${item.link ? 'cursor-pointer hover:scale-[1.02]' : ''}`}>
-                    <div className={`w-10 h-10 rounded-lg ${item.bgColor} flex items-center justify-center transition-all duration-500 group-hover:scale-110`}>
-                      <Icon className={`w-5 h-5 ${item.color}`} />
-                    </div>
-                    <span className="text-gray-300 text-sm font-medium group-hover:text-white transition-colors">
-                      {item.text}
-                    </span>
-                    {item.link && (
-                      <ExternalLink className="w-4 h-4 text-[#a34ee5] opacity-0 group-hover:opacity-100 ml-auto transition-all" />
-                    )}
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+                  <div style={{ width: "44px", height: "44px", borderRadius: "11px", background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 4px 16px ${SS.gold}40` }}>
+                    <span style={{ color: "#fff", fontSize: "22px", fontWeight: "900" }}>S</span>
                   </div>
-                );
-                
-                return item.link ? (
-                  <a 
-                    key={idx} 
-                    href={item.link}
-                    target={item.link.startsWith('http') ? '_blank' : undefined}
-                    rel={item.link.startsWith('http') ? 'noopener noreferrer' : undefined}
-                  >
-                    {content}
-                  </a>
-                ) : (
-                  <div key={idx}>{content}</div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Newsletter */}
-          <div className="relative">
-            {/* Decoration */}
-            <div className="absolute -top-6 -right-6 w-32 h-32 bg-gradient-to-br from-[#a34ee5]/20 to-[#fec603]/20 rounded-full blur-2xl"></div>
-            
-            <div className="relative bg-gradient-to-br from-[#41124f]/40 to-[#0a0a0a]/40 backdrop-blur-sm rounded-2xl p-8 border border-[#a34ee5]/30 shadow-xl shadow-[#a34ee5]/10">
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-2 mb-4 bg-[#a34ee5]/10 backdrop-blur-sm border border-[#a34ee5]/30 rounded-full">
-                <Sparkles className="w-4 h-4 text-[#fec603]" />
-                <span className="text-sm font-semibold text-[#a34ee5]">
-                  Newsletter
-                </span>
-              </div>
-
-              <h4 className="text-2xl font-black text-white mb-3">
-                Restez <span className="text-gradient bg-gradient-to-r from-[#a34ee5] to-[#fec603] bg-clip-text text-transparent">informé</span>
-              </h4>
-              
-              <p className="text-gray-400 text-sm mb-6 leading-relaxed">
-                Recevez nos actualités, projets créatifs et conseils directement dans votre boîte mail.
-              </p>
-
-              <form onSubmit={handleSubscribe} className="space-y-4">
-                <div className="relative group">
-                  {/* Glow effect renforcé sur mobile */}
-                  <div className="absolute -inset-1 sm:-inset-0.5 bg-gradient-to-r from-[#a34ee5] to-[#fec603] rounded-xl opacity-20 sm:opacity-0 group-focus-within:opacity-100 blur-sm sm:blur transition-all duration-500"></div>
-                  
-                  <div className="relative flex">
-                    <input
-                      type="email"
-                      value={email}
-                      placeholder="votre@email.com"
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      disabled={isSubmitting}
-                      className="flex-1 px-5 py-4 bg-[#41124f]/60 text-white border-2 border-[#a34ee5]/30 rounded-l-xl focus:outline-none focus:border-[#a34ee5] placeholder-gray-500 font-medium transition-all duration-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                      aria-label="Adresse email pour la newsletter"
-                    />
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="px-6 bg-gradient-to-r from-[#a34ee5] to-[#7828a8] text-white font-bold rounded-r-xl hover:shadow-lg hover:shadow-[#a34ee5]/50 transition-all duration-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-w-[100px] sm:min-w-[120px] justify-center"
-                      aria-label={isSubmitting ? "Envoi en cours" : "S'inscrire à la newsletter"}
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <div className="w-5 h-5 border-2 border-white/30 border-t-white animate-spin rounded-full"></div>
-                          <span className="hidden sm:inline text-sm">Envoi...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-4 h-4" />
-                          <span className="hidden sm:inline">S'inscrire</span>
-                        </>
-                      )}
-                    </button>
+                  <div>
+                    <div style={{ fontSize: "20px", fontWeight: "800", color: SS.goldDark, letterSpacing: "-0.02em" }}>
+                      Santa'Style
+                    </div>
+                    <div style={{ fontSize: "12px", color: SS.textMuted, fontWeight: "500" }}>
+                      Inspirer · Porter · Rayonner
+                    </div>
                   </div>
                 </div>
-              </form>
-            </div>
-          </div>
-        </div>
+                <p style={{ fontSize: "13px", color: SS.textMuted, lineHeight: 1.7, maxWidth: "340px" }}>
+                  Boutique de vêtements et accessoires pour{" "}
+                  <span style={{ color: SS.goldLight, fontWeight: "600" }}>Hommes</span>,{" "}
+                  <span style={{ color: SS.goldLight, fontWeight: "600" }}>Femmes</span> et{" "}
+                  <span style={{ color: SS.goldLight, fontWeight: "600" }}>Enfants</span> à Conakry.
+                  Commandez facilement via WhatsApp.
+                </p>
+              </div>
 
-        {/* Links Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mb-16">
-          
-          {/* Nos Services */}
-          <div>
-            <h4 className="text-lg font-black text-white mb-4 flex items-center gap-2">
-              <div className="w-1 h-6 bg-gradient-to-b from-[#a34ee5] to-[#fec603] rounded-full"></div>
-              Nos Services
-            </h4>
-            <ul className="space-y-2.5">
-              {services.slice(0, 4).map((service, idx) => {
-                const Icon = service.icon;
-                return (
-                  <li key={idx}>
-                    <NavLink
-                      to={service.href}
-                      className="group flex items-center gap-2 text-gray-300 hover:text-[#fec603] text-sm transition-all duration-300 focus:outline-none focus:text-[#fec603]"
-                      aria-label={service.label}
-                    >
-                      <Icon className="w-4 h-4 text-[#a34ee5] group-hover:text-[#fec603] transition-colors" aria-hidden="true" />
-                      <span>{service.label}</span>
-                    </NavLink>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-
-          {/* Plus de Services */}
-          <div>
-            <h4 className="text-lg font-black text-white mb-4 flex items-center gap-2">
-              <div className="w-1 h-6 bg-gradient-to-b from-[#7828a8] to-[#a34ee5] rounded-full"></div>
-              Expertises
-            </h4>
-            <ul className="space-y-2.5">
-              {services.slice(4).map((service, idx) => {
-                const Icon = service.icon;
-                return (
-                  <li key={idx}>
-                    <NavLink
-                      to={service.href}
-                      className="group flex items-center gap-2 text-gray-300 hover:text-[#fec603] text-sm transition-all duration-300 focus:outline-none focus:text-[#fec603]"
-                      aria-label={service.label}
-                    >
-                      <Icon className="w-4 h-4 text-[#a34ee5] group-hover:text-[#fec603] transition-colors" aria-hidden="true" />
-                      <span>{service.label}</span>
-                    </NavLink>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-
-          {/* Liens Rapides */}
-          <div>
-            <h4 className="text-lg font-black text-white mb-4 flex items-center gap-2">
-              <div className="w-1 h-6 bg-gradient-to-b from-[#fec603] to-[#a34ee5] rounded-full"></div>
-              Navigation
-            </h4>
-            <ul className="space-y-2.5">
-              {quickLinks.map((link, idx) => (
-                <li key={idx}>
-                  <NavLink
-                    to={link.href}
-                    className="group flex items-center gap-2 text-gray-300 hover:text-[#a34ee5] text-sm transition-all duration-300 focus:outline-none focus:text-[#a34ee5]"
-                    aria-label={link.label}
-                  >
-                    <ArrowRight className="w-3 h-3 text-[#a34ee5] opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" aria-hidden="true" />
-                    <span>{link.label}</span>
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Réseaux Sociaux */}
-          <div>
-            <h4 className="text-lg font-black text-white mb-4 flex items-center gap-2">
-              <div className="w-1 h-6 bg-gradient-to-b from-[#a34ee5] to-[#7828a8] rounded-full"></div>
-              Suivez-nous
-            </h4>
-            <div className="space-y-3">
-              {socialLinks.map((social, idx) => {
-                const Icon = social.icon;
-                return (
-                  <a
-                    key={idx}
-                    href={social.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group flex items-center gap-3 p-3 rounded-xl bg-[#41124f]/20 border border-[#a34ee5]/20 hover:border-[#a34ee5]/40 transition-all duration-500 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#a34ee5] focus:ring-offset-2 focus:ring-offset-[#0a0a0a]"
-                    aria-label={`Suivez-nous sur ${social.name}`}
-                  >
-                    <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${social.gradient} flex items-center justify-center shadow-lg transition-all duration-500 group-hover:scale-110`}>
-                      <Icon className="w-5 h-5 text-white" aria-hidden="true" />
+              {/* Contacts */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {contacts.map((c, i) => {
+                  const Icon = c.icon;
+                  const inner = (
+                    <div style={{
+                      display: "flex", alignItems: "center", gap: "12px",
+                      padding: "10px 14px", borderRadius: "10px",
+                      background: SS.surface, border: `1px solid ${SS.border}`,
+                      transition: "all 0.15s",
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = SS.gold; e.currentTarget.style.background = SS.card; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = SS.border; e.currentTarget.style.background = SS.surface; }}>
+                      <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: `${SS.gold}15`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <Icon size={15} color={SS.gold} />
+                      </div>
+                      <span style={{ fontSize: "13px", color: SS.textMuted, fontWeight: "500", flex: 1 }}>{c.label}</span>
+                      {c.ext && <ExternalLink size={12} color={SS.textDim} />}
                     </div>
-                    <span className="text-gray-200 text-sm font-medium group-hover:text-white transition-colors">
-                      {social.name}
-                    </span>
+                  );
+                  return c.href ? (
+                    <a key={i} href={c.href} target={c.ext ? "_blank" : undefined} rel={c.ext ? "noopener noreferrer" : undefined} style={{ textDecoration: "none" }}>
+                      {inner}
+                    </a>
+                  ) : <div key={i}>{inner}</div>;
+                })}
+              </div>
+
+              {/* Réseaux sociaux */}
+              <div>
+                <div style={{ fontSize: "11px", fontWeight: "700", color: SS.textDim, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "10px" }}>
+                  Suivez-nous
+                </div>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  {socials.map((s, i) => {
+                    const Icon = s.icon;
+                    return (
+                      <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
+                        style={{ width: "38px", height: "38px", borderRadius: "9px", background: s.bg, display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.15s, box-shadow 0.15s", textDecoration: "none" }}
+                        onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)"; }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}>
+                        <Icon size={16} color="#fff" />
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Droite — Newsletter */}
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+              <div style={{ background: SS.surface, border: `1px solid ${SS.gold}40`, borderRadius: "16px", padding: "28px", position: "relative", overflow: "hidden" }}>
+
+                {/* Barre dorée top */}
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: `linear-gradient(90deg, ${SS.goldDark}, ${SS.gold}, ${SS.goldDark})` }} />
+
+                {/* Badge */}
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 12px", borderRadius: "20px", background: `${SS.gold}15`, border: `1px solid ${SS.gold}40`, marginBottom: "14px" }}>
+                  <Sparkles size={13} color={SS.gold} />
+                  <span style={{ fontSize: "11px", fontWeight: "700", color: SS.goldLight, textTransform: "uppercase", letterSpacing: "0.06em" }}>Newsletter</span>
+                </div>
+
+                <h4 style={{ fontSize: "18px", fontWeight: "700", color: SS.goldDark, margin: "0 0 8px", lineHeight: 1.3 }}>
+                  Restez informé des{" "}
+                  <span style={{ color: SS.gold }}>nouveautés</span>
+                </h4>
+
+                <p style={{ fontSize: "13px", color: SS.textMuted, marginBottom: "20px", lineHeight: 1.6 }}>
+                  Recevez nos dernières collections, promotions et actualités directement dans votre boîte mail.
+                </p>
+
+                <form onSubmit={handleSubscribe} style={{ display: "flex", gap: "0" }}>
+                  <input
+                    type="email"
+                    value={email}
+                    placeholder="votre@email.com"
+                    onChange={e => setEmail(e.target.value)}
+                    required
+                    disabled={submitting}
+                    style={{
+                      flex: 1, padding: "11px 14px",
+                      background: SS.card, border: `1px solid ${SS.border}`,
+                      borderRight: "none", borderRadius: "10px 0 0 10px",
+                      color: SS.text, fontSize: "13px", outline: "none",
+                      transition: "border-color 0.2s",
+                    }}
+                    onFocus={e => e.target.style.borderColor = SS.gold}
+                    onBlur={e => e.target.style.borderColor = SS.border}
+                  />
+                  <button type="submit" disabled={submitting}
+                    style={{
+                      padding: "11px 18px", borderRadius: "0 10px 10px 0",
+                      background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`,
+                      border: "none", color: "#1A1208", fontWeight: "700",
+                      fontSize: "13px", cursor: submitting ? "not-allowed" : "pointer",
+                      opacity: submitting ? 0.6 : 1,
+                      display: "flex", alignItems: "center", gap: "6px",
+                      whiteSpace: "nowrap",
+                    }}>
+                    {submitting
+                      ? <div style={{ width: "14px", height: "14px", borderRadius: "50%", border: "2px solid rgba(0,0,0,0.2)", borderTopColor: "#1A1208", animation: "spin 0.8s linear infinite" }} />
+                      : <><Send size={14} /> S'inscrire</>
+                    }
+                  </button>
+                </form>
+
+                {/* CTA WhatsApp */}
+                <button
+                  onClick={() => ouvrirWA(`Bonjour Santa'Style ! 👋\nJe souhaite recevoir vos nouveautés et promotions.`)}
+                  style={{ marginTop: "12px", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", padding: "11px", borderRadius: "10px", border: `1px solid ${SS.success}40`, background: SS.successBg, color: SS.success, fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>
+                  <WAIcon size={15} color={SS.success} />
+                  Nous contacter sur WhatsApp
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Liens grille ── */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "32px", marginBottom: "40px" }}>
+
+            {/* Boutique */}
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px" }}>
+                <div style={{ width: "3px", height: "18px", borderRadius: "2px", background: `linear-gradient(180deg, ${SS.goldDark}, ${SS.gold})` }} />
+                <span style={{ fontSize: "13px", fontWeight: "800", color: SS.goldDark, textTransform: "uppercase", letterSpacing: "0.07em" }}>Boutique</span>
+              </div>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "8px" }}>
+                {boutique.map((b, i) => {
+                  const Icon = b.icon;
+                  return (
+                    <li key={i}>
+                      <NavLink to={b.path}
+                        style={({ isActive }) => ({
+                          display: "flex", alignItems: "center", gap: "8px",
+                          textDecoration: "none", fontSize: "13px", fontWeight: "500",
+                          color: isActive ? SS.gold : SS.textMuted,
+                          transition: "all 0.15s",
+                        })}
+                        onMouseEnter={e => { e.currentTarget.style.color = SS.gold; e.currentTarget.style.paddingLeft = "4px"; }}
+                        onMouseLeave={e => { e.currentTarget.style.color = SS.textMuted; e.currentTarget.style.paddingLeft = "0"; }}>
+                        <Icon size={13} color={SS.gold} style={{ flexShrink: 0 }} />
+                        {b.label}
+                      </NavLink>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+
+            {/* Informations */}
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px" }}>
+                <div style={{ width: "3px", height: "18px", borderRadius: "2px", background: `linear-gradient(180deg, ${SS.gold}, ${SS.goldLight})` }} />
+                <span style={{ fontSize: "13px", fontWeight: "800", color: SS.goldDark, textTransform: "uppercase", letterSpacing: "0.07em" }}>Informations</span>
+              </div>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "8px" }}>
+                {infos.map((l, i) => (
+                  <li key={i}>
+                    <NavLink to={l.path}
+                      style={({ isActive }) => ({
+                        display: "flex", alignItems: "center", gap: "8px",
+                        textDecoration: "none", fontSize: "13px", fontWeight: "500",
+                        color: isActive ? SS.gold : SS.textMuted,
+                        transition: "all 0.15s",
+                      })}
+                      onMouseEnter={e => { e.currentTarget.style.color = SS.gold; e.currentTarget.style.paddingLeft = "4px"; }}
+                      onMouseLeave={e => { e.currentTarget.style.color = SS.textMuted; e.currentTarget.style.paddingLeft = "0"; }}>
+                      <ArrowRight size={12} color={SS.gold} style={{ flexShrink: 0 }} />
+                      {l.label}
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Commande */}
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px" }}>
+                <div style={{ width: "3px", height: "18px", borderRadius: "2px", background: `linear-gradient(180deg, ${SS.success}, ${SS.gold})` }} />
+                <span style={{ fontSize: "13px", fontWeight: "800", color: SS.goldDark, textTransform: "uppercase", letterSpacing: "0.07em" }}>Commander</span>
+              </div>
+
+              {/* Carte WA */}
+              <div style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "12px", padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
+                <div style={{ fontSize: "12px", color: SS.textMuted, lineHeight: 1.6 }}>
+                  Passez votre commande directement sur WhatsApp. Réponse rapide garantie !
+                </div>
+                {[
+                  { label: "Commander un article",  msg: `Bonjour Santa'Style ! 👋\nJe souhaite commander un article.` },
+                  { label: "Demander un devis",      msg: `Bonjour Santa'Style ! 👋\nJe souhaite avoir un devis.` },
+                ].map((btn, i) => (
+                  <button key={i} onClick={() => ouvrirWA(btn.msg)}
+                    style={{ display: "flex", alignItems: "center", gap: "8px", padding: "9px 12px", borderRadius: "8px", border: `1px solid ${i === 0 ? SS.success : SS.border}40`, background: i === 0 ? SS.successBg : SS.card, color: i === 0 ? SS.success : SS.textMuted, fontSize: "12px", fontWeight: "600", cursor: "pointer", width: "100%", transition: "all 0.15s" }}
+                    onMouseEnter={e => e.currentTarget.style.opacity = "0.8"}
+                    onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
+                    <WAIcon size={13} color={i === 0 ? SS.success : SS.textMuted} />
+                    {btn.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Bottom ── */}
+          <div style={{ borderTop: `1px solid ${SS.border}`, padding: "20px 0 24px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
+
+              <div style={{ fontSize: "12px", color: SS.textDim }}>
+                © {new Date().getFullYear()}{" "}
+                <span style={{ fontWeight: "700", color: SS.goldLight }}>Santa'Style</span>
+                {" "}— Tous droits réservés.
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                {["Mentions légales", "Confidentialité", "CGV"].map((l, i) => (
+                  <a key={i} href="#" style={{ fontSize: "12px", color: SS.textDim, textDecoration: "none", transition: "color 0.15s" }}
+                    onMouseEnter={e => e.currentTarget.style.color = SS.gold}
+                    onMouseLeave={e => e.currentTarget.style.color = SS.textDim}>
+                    {l}
                   </a>
-                );
-              })}
+                ))}
+              </div>
+
+              <div style={{ fontSize: "12px", color: SS.textDim, display: "flex", alignItems: "center", gap: "4px" }}>
+                Créé avec <Heart size={12} color="#A32020" style={{ margin: "0 2px" }} /> à Conakry
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="relative mb-8">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-[#a34ee5]/20"></div>
-          </div>
-          <div className="relative flex justify-center">
-            <div className="bg-[#0a0a0a] px-4">
-              <div className="w-2 h-2 bg-gradient-to-r from-[#a34ee5] to-[#fec603] rounded-full"></div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Section - Copyright */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
-          <div className="text-gray-500 text-center md:text-left">
-            © {new Date().getFullYear()}{" "}
-            <span className="font-black text-gradient bg-gradient-to-r from-[#a34ee5] to-[#fec603] bg-clip-text text-transparent">
-              TEKACOM
-            </span>
-            . Tous droits réservés.
-          </div>
-
-          <div className="flex items-center gap-6 text-gray-500">
-            <a href="/mentions-legales" className="hover:text-[#a34ee5] transition-colors">
-              Mentions légales
-            </a>
-            <span>•</span>
-            <a href="/politique-confidentialite" className="hover:text-[#a34ee5] transition-colors">
-              Confidentialité
-            </a>
-            <span>•</span>
-            <a href="/cgv" className="hover:text-[#a34ee5] transition-colors">
-              CGV
-            </a>
-          </div>
-        </div>
-
-        {/* Made with love badge */}
-        <div className="mt-8 text-center">
-          <p className="text-xs text-gray-600">
-            Créé avec <span className="text-red-500">♥</span> par{" "}
-            <span className="text-[#fec603] font-semibold">TEKACOM</span>
-          </p>
-        </div>
-      </div>
-
-      {/* Gradient line at bottom */}
-      <div className="h-1 bg-gradient-to-r from-[#a34ee5] via-[#fec603] to-[#7828a8]"></div>
+        {/* Barre dorée bas */}
+        <div style={{ height: "3px", background: `linear-gradient(90deg, ${SS.goldDark}, ${SS.gold}, ${SS.goldDark})` }} />
       </footer>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </>
   );
 };
