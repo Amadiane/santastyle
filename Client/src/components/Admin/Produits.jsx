@@ -22,9 +22,7 @@ const Produits = () => {
   const [filterCat, setFilterCat]   = useState("");
   const [showForm, setShowForm]     = useState(false);
 
-  const emptyForm = {
-    nom: "", description: "", prix: "", categorie: "", image: null,
-  };
+  const emptyForm  = { nom: "", description: "", prix: "", categorie: "", image: null };
   const emptyStock = { taille: "", couleur: "", quantite: "1" };
 
   const [form, setForm]                 = useState(emptyForm);
@@ -32,11 +30,13 @@ const Produits = () => {
   const [ajouterStock, setAjouterStock] = useState(true);
   const [imagePreview, setImagePreview] = useState(null);
   const [submitting, setSubmitting]     = useState(false);
-  const [editingId, setEditingId]       = useState(null);
-  const [editForm, setEditForm]         = useState({});
+
+  const [editingId, setEditingId]             = useState(null);
+  const [editForm, setEditForm]               = useState({});
   const [editImagePreview, setEditImagePreview] = useState(null);
-  const [updating, setUpdating]         = useState(false);
-  const [deletingId, setDeletingId]     = useState(null);
+  const [updating, setUpdating]               = useState(false);
+
+  const [deletingId, setDeletingId]           = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const token   = localStorage.getItem("access");
@@ -74,16 +74,14 @@ const Produits = () => {
     return data.secure_url;
   };
 
-  // ── Créer produit → puis stock si renseigné ──────────────────────
+  // ── Créer produit + stock optionnel ─────────────────────────────
   const handleCreate = async (e) => {
     e.preventDefault();
     setSubmitting(true); setError(""); setSuccess("");
     try {
-      // 1. Upload image
       let imageUrl = null;
       if (form.image) imageUrl = await uploadToCloudinary(form.image);
 
-      // 2. Créer produit
       const resProduit = await fetch(CONFIG.API_PRODUIT, {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
@@ -100,7 +98,6 @@ const Produits = () => {
         return;
       }
 
-      // 3. Créer stock initial si coché et renseigné
       let stockCree = false;
       if (ajouterStock && stockForm.taille && stockForm.couleur) {
         const resStock = await fetch(`${CONFIG.BASE_URL}/api/stocks/`, {
@@ -121,34 +118,41 @@ const Produits = () => {
       }
 
       setProduits(prev => [produit, ...prev]);
-      setForm(emptyForm);
-      setStockForm(emptyStock);
-      setImagePreview(null);
-      setShowForm(false);
-
+      setForm(emptyForm); setStockForm(emptyStock);
+      setImagePreview(null); setShowForm(false);
       setSuccess(
         stockCree
-          ? `✅ "${produit.nom}" créé et visible en boutique (${stockForm.taille} · ${stockForm.couleur} · ${stockForm.quantite} pcs)`
-          : `⚠️ "${produit.nom}" créé — ajoutez un stock dans Stocks pour le rendre visible en boutique`
+          ? `✅ "${produit.nom}" créé et visible en boutique`
+          : `⚠️ "${produit.nom}" créé — ajoutez un stock dans Stocks pour le rendre visible`
       );
       setTimeout(() => setSuccess(""), 5000);
     } catch (err) { setError(err.message || "Erreur serveur"); }
     finally { setSubmitting(false); }
   };
 
+  // ── Modifier produit — image conservée si non modifiée ──────────
   const handleUpdate = async (id) => {
     setUpdating(true); setError(""); setSuccess("");
     try {
-      let imageUrl = editForm.imageUrl || null;
-      if (editForm.image instanceof File) imageUrl = await uploadToCloudinary(editForm.image);
+      // ✅ On n'upload une nouvelle image QUE si l'utilisateur en a choisi une
+      let imageUrl = editForm.imageUrl || null; // conserve l'image existante
+      if (editForm.image instanceof File) {
+        imageUrl = await uploadToCloudinary(editForm.image); // nouveau upload seulement si fichier choisi
+      }
+
+      const body = {
+        nom:         editForm.nom,
+        description: editForm.description,
+        prix:        editForm.prix,
+        categorie:   editForm.categorie || null,
+      };
+      // ✅ On n'envoie l'image que si elle a changé
+      if (imageUrl) body.image = imageUrl;
+
       const res  = await fetch(`${CONFIG.API_PRODUIT}${id}/`, {
         method: "PUT",
         headers: { ...headers, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nom: editForm.nom, description: editForm.description,
-          prix: editForm.prix, categorie: editForm.categorie || null,
-          ...(imageUrl && { image: imageUrl }),
-        }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (res.ok) {
@@ -179,15 +183,15 @@ const Produits = () => {
     finally { setDeletingId(null); }
   };
 
-  const filtered = produits.filter(p => {
+  const filtered   = produits.filter(p => {
     const ms = p.nom.toLowerCase().includes(search.toLowerCase());
     const mc = filterCat ? String(p.categorie) === filterCat : true;
     return ms && mc;
   });
 
-  const getCatNom    = (id) => categories.find(c => c.id === id)?.nom || "—";
-  const getStocks    = (id) => stocks.filter(s => String(s.produit) === String(id));
-  const getTotalQte  = (id) => getStocks(id).reduce((a, s) => a + s.quantite, 0);
+  const getCatNom   = (id) => categories.find(c => c.id === id)?.nom || "—";
+  const getStocks   = (id) => stocks.filter(s => String(s.produit) === String(id));
+  const getTotalQte = (id) => getStocks(id).reduce((a, s) => a + s.quantite, 0);
 
   const inputStyle = {
     width: "100%", padding: "10px 14px", borderRadius: "8px",
@@ -211,7 +215,7 @@ const Produits = () => {
           <span style={{ fontSize: "12px", color: SS.gold }}>Produits</span>
         </div>
 
-        {/* Header */}
+        {/* Header — sans bouton "Gérer les stocks" */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem", flexWrap: "wrap", gap: "12px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <button onClick={() => navigate("/dashboardAdmin")}
@@ -226,7 +230,9 @@ const Produits = () => {
                 <div style={{ fontSize: "20px", fontWeight: "600", color: SS.goldLight }}>Produits</div>
                 <div style={{ fontSize: "12px", color: SS.textDim }}>
                   {produits.length} article{produits.length > 1 ? "s" : ""} —{" "}
-                  <span style={{ color: SS.success }}>{produits.filter(p => getTotalQte(p.id) > 0).length} en ligne</span>
+                  <span style={{ color: SS.success }}>
+                    {produits.filter(p => getTotalQte(p.id) > 0).length} en ligne
+                  </span>
                   {produits.filter(p => getTotalQte(p.id) === 0).length > 0 && (
                     <span style={{ color: SS.danger }}>
                       {" "}· {produits.filter(p => getTotalQte(p.id) === 0).length} sans stock
@@ -236,36 +242,26 @@ const Produits = () => {
               </div>
             </div>
           </div>
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button
-              onClick={() => navigate("/stocks")}
-              style={{ padding: "10px 16px", borderRadius: "8px", border: `1px solid ${SS.border}`, background: SS.card, color: SS.textMuted, fontWeight: "600", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}>
-              <Layers size={16} />
-              Gérer les stocks
-            </button>
-            <button onClick={() => { setShowForm(!showForm); setError(""); }}
-              style={{ background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`, border: "none", borderRadius: "8px", padding: "10px 20px", color: "#1A1208", fontWeight: "600", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", boxShadow: `0 2px 12px ${SS.gold}30` }}>
-              <Plus size={16} />
-              Nouveau produit
-            </button>
-          </div>
+          {/* ✅ Un seul bouton — pas de "Gérer les stocks" ici, c'est dans la sidebar */}
+          <button onClick={() => { setShowForm(!showForm); setError(""); }}
+            style={{ background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`, border: "none", borderRadius: "8px", padding: "10px 20px", color: "#1A1208", fontWeight: "600", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", boxShadow: `0 2px 12px ${SS.gold}30` }}>
+            <Plus size={16} />
+            Nouveau produit
+          </button>
         </div>
 
-        {/* Explication du flux */}
-        <div style={{ padding: "12px 16px", borderRadius: "10px", background: `${SS.gold}10`, border: `1px solid ${SS.gold}30`, marginBottom: "20px", display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: SS.goldLight }}>
-            <Package size={15} color={SS.gold} />
-            <strong>1. Créez le produit</strong>
+        {/* Rappel du flux */}
+        <div style={{ padding: "10px 16px", borderRadius: "10px", background: `${SS.gold}10`, border: `1px solid ${SS.gold}30`, marginBottom: "20px", display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: SS.goldLight }}>
+            <Package size={13} color={SS.gold} /><strong>1. Produit</strong>
           </div>
-          <ArrowRight size={14} color={SS.textDim} />
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: SS.goldLight }}>
-            <Layers size={15} color={SS.gold} />
-            <strong>2. Ajoutez les stocks</strong> (taille, couleur, quantité)
+          <ArrowRight size={12} color={SS.textDim} />
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: SS.goldLight }}>
+            <Layers size={13} color={SS.gold} /><strong>2. Stock</strong> (sidebar → Stocks)
           </div>
-          <ArrowRight size={14} color={SS.textDim} />
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: SS.success }}>
-            <Check size={15} color={SS.success} />
-            <strong>3. Visible en boutique</strong>
+          <ArrowRight size={12} color={SS.textDim} />
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: SS.success }}>
+            <Check size={13} color={SS.success} /><strong>3. Visible en boutique</strong>
           </div>
         </div>
 
@@ -293,10 +289,10 @@ const Produits = () => {
             </div>
 
             <form onSubmit={handleCreate}>
-              {/* ── Infos produit ── */}
-              <div style={{ marginBottom: "20px", padding: "16px", borderRadius: "10px", background: SS.bg, border: `1px solid ${SS.border}` }}>
-                <div style={{ fontSize: "12px", fontWeight: "700", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "14px" }}>
-                  Informations du produit
+              {/* Infos produit */}
+              <div style={{ marginBottom: "16px", padding: "16px", borderRadius: "10px", background: SS.bg, border: `1px solid ${SS.border}` }}>
+                <div style={{ fontSize: "11px", fontWeight: "700", color: SS.textDim, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "12px" }}>
+                  Informations
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
                   <input type="text" placeholder="Nom du produit *" style={inputStyle}
@@ -304,7 +300,7 @@ const Produits = () => {
                   <input type="number" placeholder="Prix (GNF) *" step="0.01" min="0" style={inputStyle}
                     value={form.prix} onChange={e => setForm({ ...form, prix: e.target.value })} required />
                 </div>
-                <textarea placeholder="Description (optionnel)" rows={2}
+                <textarea placeholder="Description" rows={2}
                   style={{ ...inputStyle, resize: "none", marginBottom: "12px" }}
                   value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
@@ -314,7 +310,7 @@ const Produits = () => {
                     {categories.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
                   </select>
                   <label style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", borderRadius: "8px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.textMuted, cursor: "pointer" }}>
-                    <ImageIcon size={17} color={SS.gold} />
+                    <ImageIcon size={16} color={SS.gold} />
                     <span style={{ fontSize: "13px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {form.image ? form.image.name : "Choisir une image"}
                     </span>
@@ -326,9 +322,9 @@ const Produits = () => {
                   </label>
                 </div>
                 {imagePreview && (
-                  <div style={{ position: "relative", width: "90px", height: "90px", marginTop: "12px" }}>
+                  <div style={{ position: "relative", width: "90px", height: "120px", marginTop: "12px" }}>
                     <img src={imagePreview} alt="preview"
-                      style={{ width: "90px", height: "90px", objectFit: "cover", borderRadius: "8px" }} />
+                      style={{ width: "90px", height: "120px", objectFit: "cover", borderRadius: "8px" }} />
                     <button type="button"
                       onClick={() => { setImagePreview(null); setForm({ ...form, image: null }); }}
                       style={{ position: "absolute", top: "-6px", right: "-6px", padding: "2px", borderRadius: "50%", background: SS.danger, border: "none", cursor: "pointer", display: "flex", color: "#fff" }}>
@@ -338,59 +334,43 @@ const Produits = () => {
                 )}
               </div>
 
-              {/* ── Stock initial optionnel ── */}
-              <div style={{ marginBottom: "20px", padding: "16px", borderRadius: "10px", background: SS.bg, border: `1px solid ${ajouterStock ? SS.gold + "50" : SS.border}` }}>
+              {/* Stock initial */}
+              <div style={{ marginBottom: "16px", padding: "16px", borderRadius: "10px", background: SS.bg, border: `1px solid ${ajouterStock ? SS.gold + "50" : SS.border}` }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: ajouterStock ? "14px" : "0" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <Layers size={15} color={SS.gold} />
-                    <span style={{ fontSize: "13px", fontWeight: "700", color: SS.goldLight }}>
-                      Ajouter un stock initial
-                    </span>
-                    <span style={{ fontSize: "11px", color: SS.textDim }}>
-                      (recommandé — sinon le produit sera "Épuisé")
-                    </span>
+                    <Layers size={14} color={SS.gold} />
+                    <span style={{ fontSize: "13px", fontWeight: "700", color: SS.goldLight }}>Stock initial</span>
+                    <span style={{ fontSize: "11px", color: SS.textDim }}>(sinon le produit sera "Épuisé")</span>
                   </div>
-                  {/* Toggle */}
                   <button type="button" onClick={() => setAjouterStock(!ajouterStock)}
-                    style={{
-                      width: "44px", height: "24px", borderRadius: "12px", border: "none", cursor: "pointer",
-                      background: ajouterStock ? SS.gold : SS.border,
-                      position: "relative", transition: "background 0.2s",
-                    }}>
-                    <div style={{
-                      width: "18px", height: "18px", borderRadius: "50%", background: "#fff",
-                      position: "absolute", top: "3px",
-                      left: ajouterStock ? "23px" : "3px",
-                      transition: "left 0.2s",
-                    }} />
+                    style={{ width: "44px", height: "24px", borderRadius: "12px", border: "none", cursor: "pointer", background: ajouterStock ? SS.gold : SS.border, position: "relative", transition: "background 0.2s" }}>
+                    <div style={{ width: "18px", height: "18px", borderRadius: "50%", background: "#fff", position: "absolute", top: "3px", left: ajouterStock ? "23px" : "3px", transition: "left 0.2s" }} />
                   </button>
                 </div>
-
                 {ajouterStock && (
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 100px", gap: "12px" }}>
                     <div>
-                      <div style={{ fontSize: "11px", color: SS.textMuted, marginBottom: "6px" }}>Taille</div>
-                      <input type="text" placeholder="S, M, L, XL, 38..." style={inputStyle}
+                      <div style={{ fontSize: "11px", color: SS.textMuted, marginBottom: "5px" }}>Taille</div>
+                      <input type="text" placeholder="S, M, L, XL..." style={inputStyle}
                         value={stockForm.taille} onChange={e => setStockForm({ ...stockForm, taille: e.target.value })} />
                     </div>
                     <div>
-                      <div style={{ fontSize: "11px", color: SS.textMuted, marginBottom: "6px" }}>Couleur</div>
-                      <input type="text" placeholder="Noir, Rouge, Blanc..." style={inputStyle}
+                      <div style={{ fontSize: "11px", color: SS.textMuted, marginBottom: "5px" }}>Couleur</div>
+                      <input type="text" placeholder="Noir, Rouge..." style={inputStyle}
                         value={stockForm.couleur} onChange={e => setStockForm({ ...stockForm, couleur: e.target.value })} />
                     </div>
                     <div>
-                      <div style={{ fontSize: "11px", color: SS.textMuted, marginBottom: "6px" }}>Quantité</div>
+                      <div style={{ fontSize: "11px", color: SS.textMuted, marginBottom: "5px" }}>Quantité</div>
                       <input type="number" min="1" style={inputStyle}
                         value={stockForm.quantite} onChange={e => setStockForm({ ...stockForm, quantite: e.target.value })} />
                     </div>
                   </div>
                 )}
-
                 {!ajouterStock && (
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "10px", padding: "8px 12px", borderRadius: "8px", background: SS.warningBg, border: `1px solid ${SS.warning}40` }}>
                     <AlertCircle size={13} color={SS.warning} />
                     <span style={{ fontSize: "12px", color: SS.warning }}>
-                      Vous pourrez ajouter les stocks plus tard depuis la page <strong>Stocks</strong>
+                      Ajoutez le stock plus tard via <strong>Stocks</strong> dans la sidebar
                     </span>
                   </div>
                 )}
@@ -430,13 +410,13 @@ const Produits = () => {
           </div>
         </div>
 
-        {/* ── Grille produits ── */}
+        {/* ── Grille produits — style mansori ── */}
         {loading ? (
           <div style={{ textAlign: "center", padding: "4rem", color: SS.textDim }}>Chargement...</div>
         ) : filtered.length === 0 ? (
           <div style={{ textAlign: "center", padding: "4rem", color: SS.textDim }}>Aucun produit trouvé</div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "16px" }}>
             {filtered.map(produit => {
               const totalQte   = getTotalQte(produit.id);
               const stocksList = getStocks(produit.id);
@@ -446,122 +426,147 @@ const Produits = () => {
                 <div key={produit.id}
                   style={{
                     background: SS.surface,
-                    border: `1px solid ${sanStock ? SS.danger + "60" : SS.border}`,
-                    borderRadius: "14px", overflow: "hidden", transition: "border-color 0.2s",
+                    border: `1px solid ${sanStock ? SS.danger + "50" : SS.border}`,
+                    borderRadius: "16px", overflow: "hidden",
+                    transition: "all 0.2s",
                   }}
                   onMouseEnter={e => e.currentTarget.style.borderColor = sanStock ? SS.danger + "80" : SS.borderHover}
-                  onMouseLeave={e => e.currentTarget.style.borderColor = sanStock ? SS.danger + "60" : SS.border}>
+                  onMouseLeave={e => e.currentTarget.style.borderColor = sanStock ? SS.danger + "50" : SS.border}>
 
-                  {/* Image */}
-                  <div style={{ height: "160px", background: SS.card, position: "relative", overflow: "hidden" }}>
-                    {produit.image_url ? (
-                      <img src={produit.image_url} alt={produit.nom}
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                        onError={e => { e.target.style.display = "none"; }} />
-                    ) : (
-                      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <Package size={40} color={`${SS.gold}40`} />
+                  {editingId === produit.id ? (
+                    /* ── Mode édition complet ── */
+                    <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
+                      <div style={{ fontSize: "13px", fontWeight: "700", color: SS.goldLight, marginBottom: "4px" }}>
+                        Modifier — {produit.nom}
                       </div>
-                    )}
 
-                    {/* Badge stock */}
-                    <div style={{ position: "absolute", top: "8px", right: "8px" }}>
-                      <span style={{
-                        padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: "700",
-                        background: sanStock ? SS.dangerBg : SS.successBg,
-                        color: sanStock ? SS.danger : SS.success,
-                      }}>
-                        {sanStock ? "Sans stock" : `${totalQte} en stock`}
-                      </span>
-                    </div>
+                      {/* ✅ Aperçu image actuelle */}
+                      <div style={{ position: "relative" }}>
+                        <div style={{ fontSize: "11px", color: SS.textMuted, marginBottom: "6px" }}>Image actuelle</div>
+                        {editImagePreview || editForm.imageUrl ? (
+                          <div style={{ position: "relative", display: "inline-block" }}>
+                            <img
+                              src={editImagePreview || editForm.imageUrl}
+                              alt="current"
+                              style={{ width: "80px", height: "100px", objectFit: "cover", borderRadius: "8px", border: `1px solid ${SS.border}` }}
+                            />
+                            {editImagePreview && (
+                              <span style={{ position: "absolute", top: "-4px", right: "-4px", background: SS.gold, color: "#1A1208", fontSize: "9px", fontWeight: "700", padding: "1px 5px", borderRadius: "20px" }}>
+                                Nouveau
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <div style={{ width: "80px", height: "100px", borderRadius: "8px", background: SS.card, border: `1px solid ${SS.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <Package size={28} color={`${SS.gold}40`} />
+                          </div>
+                        )}
+                      </div>
 
-                    {/* Alerte si sans stock */}
-                    {sanStock && (
-                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "6px 10px", background: "rgba(163,32,32,0.88)", display: "flex", alignItems: "center", gap: "6px" }}>
-                        <AlertCircle size={12} color="#fff" />
-                        <span style={{ fontSize: "11px", color: "#fff" }}>
-                          Invisible en boutique
+                      {/* Changer l'image */}
+                      <label style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", borderRadius: "8px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.textMuted, cursor: "pointer", fontSize: "12px" }}>
+                        <ImageIcon size={13} color={SS.gold} />
+                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {editForm.image instanceof File ? `✓ ${editForm.image.name}` : "Changer l'image (optionnel)"}
                         </span>
-                        <button
-                          onClick={() => navigate("/stocks")}
-                          style={{ marginLeft: "auto", padding: "2px 10px", borderRadius: "20px", background: "#fff", border: "none", color: SS.danger, fontSize: "11px", fontWeight: "700", cursor: "pointer" }}>
-                          Ajouter un stock →
+                        <input type="file" accept="image/*" style={{ display: "none" }}
+                          onChange={e => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              setEditForm({ ...editForm, image: file });
+                              setEditImagePreview(URL.createObjectURL(file));
+                            }
+                          }} />
+                      </label>
+                      {editImagePreview && (
+                        <button type="button"
+                          onClick={() => { setEditImagePreview(null); setEditForm({ ...editForm, image: null }); }}
+                          style={{ fontSize: "11px", color: SS.danger, background: SS.dangerBg, border: `1px solid ${SS.danger}40`, borderRadius: "6px", padding: "4px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", width: "fit-content" }}>
+                          <X size={11} /> Annuler le changement d'image
+                        </button>
+                      )}
+
+                      <input type="text" style={inputSmStyle} placeholder="Nom"
+                        value={editForm.nom} onChange={e => setEditForm({ ...editForm, nom: e.target.value })} />
+                      <input type="number" step="0.01" style={inputSmStyle} placeholder="Prix"
+                        value={editForm.prix} onChange={e => setEditForm({ ...editForm, prix: e.target.value })} />
+                      <textarea rows={2} style={{ ...inputSmStyle, resize: "none" }} placeholder="Description"
+                        value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })} />
+                      <select style={inputSmStyle} value={editForm.categorie}
+                        onChange={e => setEditForm({ ...editForm, categorie: e.target.value })}>
+                        <option value="">— Catégorie —</option>
+                        {categories.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
+                      </select>
+
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <button onClick={() => handleUpdate(produit.id)} disabled={updating}
+                          style={{ flex: 1, padding: "9px", borderRadius: "7px", background: `${SS.success}20`, border: `1px solid ${SS.success}40`, color: SS.success, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", fontSize: "13px", fontWeight: "600", opacity: updating ? 0.5 : 1 }}>
+                          <Check size={14} />{updating ? "Sauvegarde..." : "Sauvegarder"}
+                        </button>
+                        <button onClick={() => { setEditingId(null); setEditImagePreview(null); }}
+                          style={{ padding: "9px 14px", borderRadius: "7px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.textMuted, cursor: "pointer" }}>
+                          <X size={14} />
                         </button>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Contenu */}
-                  <div style={{ padding: "14px" }}>
-                    {editingId === produit.id ? (
-                      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                        <input type="text" style={inputSmStyle} value={editForm.nom}
-                          onChange={e => setEditForm({ ...editForm, nom: e.target.value })} />
-                        <input type="number" step="0.01" style={inputSmStyle} value={editForm.prix}
-                          onChange={e => setEditForm({ ...editForm, prix: e.target.value })} />
-                        <textarea rows={2} style={{ ...inputSmStyle, resize: "none" }} value={editForm.description}
-                          onChange={e => setEditForm({ ...editForm, description: e.target.value })} />
-                        <select style={inputSmStyle} value={editForm.categorie}
-                          onChange={e => setEditForm({ ...editForm, categorie: e.target.value })}>
-                          <option value="">— Catégorie —</option>
-                          {categories.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
-                        </select>
-                        <label style={{ display: "flex", alignItems: "center", gap: "8px", padding: "7px 10px", borderRadius: "7px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.textMuted, cursor: "pointer", fontSize: "12px" }}>
-                          <ImageIcon size={13} color={SS.gold} />
-                          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {editForm.image instanceof File ? editForm.image.name : "Changer l'image"}
-                          </span>
-                          <input type="file" accept="image/*" style={{ display: "none" }}
-                            onChange={e => {
-                              const file = e.target.files[0];
-                              if (file) { setEditForm({ ...editForm, image: file }); setEditImagePreview(URL.createObjectURL(file)); }
-                            }} />
-                        </label>
-                        {(editImagePreview || editForm.imageUrl) && (
-                          <img src={editImagePreview || editForm.imageUrl} alt="preview"
-                            style={{ width: "100%", height: "70px", objectFit: "cover", borderRadius: "7px" }} />
+                    </div>
+                  ) : (
+                    /* ── Mode affichage — image mansori ── */
+                    <>
+                      {/* Image portrait 4:5 */}
+                      <div style={{ position: "relative", paddingBottom: "125%", background: `linear-gradient(135deg, ${SS.card}, ${SS.surface})`, overflow: "hidden" }}>
+                        {produit.image_url ? (
+                          <img src={produit.image_url} alt={produit.nom}
+                            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }}
+                            onError={e => { e.target.style.display = "none"; }} />
+                        ) : (
+                          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+                            <Package size={36} color={`${SS.gold}40`} />
+                            <span style={{ fontSize: "10px", color: SS.textDim }}>Pas d'image</span>
+                          </div>
                         )}
-                        <div style={{ display: "flex", gap: "8px" }}>
-                          <button onClick={() => handleUpdate(produit.id)} disabled={updating}
-                            style={{ flex: 1, padding: "8px", borderRadius: "7px", background: `${SS.success}20`, border: `1px solid ${SS.success}40`, color: SS.success, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", fontSize: "13px", opacity: updating ? 0.5 : 1 }}>
-                            <Check size={13} />{updating ? "..." : "Sauver"}
-                          </button>
-                          <button onClick={() => { setEditingId(null); setEditImagePreview(null); }}
-                            style={{ flex: 1, padding: "8px", borderRadius: "7px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.textMuted, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", fontSize: "13px" }}>
-                            <X size={13} />Annuler
-                          </button>
+
+                        {/* Badge stock sur l'image */}
+                        <div style={{ position: "absolute", top: "10px", right: "10px" }}>
+                          <span style={{ padding: "4px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: "700", background: sanStock ? SS.dangerBg : SS.successBg, color: sanStock ? SS.danger : SS.success, backdropFilter: "blur(4px)" }}>
+                            {sanStock ? "Sans stock" : `${totalQte} pcs`}
+                          </span>
                         </div>
+
+                        {/* Alerte si sans stock */}
+                        {sanStock && (
+                          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "6px 10px", background: "rgba(163,32,32,0.88)", display: "flex", alignItems: "center", gap: "5px" }}>
+                            <AlertCircle size={11} color="#fff" />
+                            <span style={{ fontSize: "11px", color: "#fff" }}>Invisible en boutique — ajoutez un stock</span>
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <>
-                        <div style={{ marginBottom: "10px" }}>
-                          <div style={{ fontSize: "15px", fontWeight: "600", color: SS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {produit.nom}
-                          </div>
-                          <div style={{ fontSize: "15px", fontWeight: "700", color: SS.goldLight, marginTop: "2px" }}>
-                            {Number(produit.prix).toLocaleString("fr-FR")} GNF
-                          </div>
-                          <span style={{ display: "inline-block", marginTop: "6px", padding: "2px 10px", borderRadius: "20px", background: `${SS.gold}18`, border: `1px solid ${SS.gold}35`, fontSize: "11px", color: SS.gold }}>
+
+                      {/* Contenu */}
+                      <div style={{ padding: "12px 14px" }}>
+                        <div style={{ fontSize: "15px", fontWeight: "700", color: SS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "2px" }}>
+                          {produit.nom}
+                        </div>
+                        <div style={{ fontSize: "15px", fontWeight: "700", color: SS.goldLight, marginBottom: "6px" }}>
+                          {Number(produit.prix).toLocaleString("fr-FR")} GNF
+                        </div>
+
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+                          <span style={{ padding: "2px 10px", borderRadius: "20px", background: `${SS.gold}18`, border: `1px solid ${SS.gold}35`, fontSize: "11px", color: SS.gold }}>
                             {getCatNom(produit.categorie)}
                           </span>
                         </div>
 
-                        {/* Aperçu des variantes */}
+                        {/* Variantes */}
                         {stocksList.length > 0 && (
                           <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "10px" }}>
-                            {stocksList.slice(0, 4).map(s => (
-                              <span key={s.id} style={{
-                                padding: "2px 8px", borderRadius: "5px", fontSize: "11px", fontWeight: "500",
-                                background: s.quantite === 0 ? SS.dangerBg : SS.successBg,
-                                color: s.quantite === 0 ? SS.danger : SS.success,
-                                border: `1px solid ${(s.quantite === 0 ? SS.danger : SS.success)}30`,
-                              }}>
+                            {stocksList.slice(0, 3).map(s => (
+                              <span key={s.id} style={{ padding: "2px 8px", borderRadius: "5px", fontSize: "10px", fontWeight: "600", background: s.quantite === 0 ? SS.dangerBg : SS.successBg, color: s.quantite === 0 ? SS.danger : SS.success }}>
                                 {s.taille} · {s.couleur} ({s.quantite})
                               </span>
                             ))}
-                            {stocksList.length > 4 && (
-                              <span style={{ padding: "2px 8px", borderRadius: "5px", fontSize: "11px", color: SS.textDim, background: SS.card }}>
-                                +{stocksList.length - 4}
+                            {stocksList.length > 3 && (
+                              <span style={{ padding: "2px 8px", borderRadius: "5px", fontSize: "10px", color: SS.textDim, background: SS.card }}>
+                                +{stocksList.length - 3}
                               </span>
                             )}
                           </div>
@@ -582,7 +587,18 @@ const Produits = () => {
                         ) : (
                           <div style={{ display: "flex", gap: "8px" }}>
                             <button
-                              onClick={() => { setEditingId(produit.id); setEditImagePreview(null); setEditForm({ nom: produit.nom, description: produit.description || "", prix: produit.prix, categorie: produit.categorie || "", imageUrl: produit.image_url || null, image: null }); }}
+                              onClick={() => {
+                                setEditingId(produit.id);
+                                setEditImagePreview(null);
+                                setEditForm({
+                                  nom:         produit.nom,
+                                  description: produit.description || "",
+                                  prix:        produit.prix,
+                                  categorie:   produit.categorie || "",
+                                  imageUrl:    produit.image_url || null, // ✅ conserve l'image
+                                  image:       null, // ✅ pas de nouveau fichier par défaut
+                                });
+                              }}
                               style={{ flex: 1, padding: "8px", borderRadius: "7px", background: `${SS.gold}18`, border: `1px solid ${SS.gold}35`, color: SS.gold, fontSize: "13px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }}>
                               <Pencil size={13} />Modifier
                             </button>
@@ -592,9 +608,9 @@ const Produits = () => {
                             </button>
                           </div>
                         )}
-                      </>
-                    )}
-                  </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               );
             })}

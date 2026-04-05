@@ -11,22 +11,32 @@ import { useTheme } from "./context/ThemeContext";
 const SIDEBAR_EXPANDED  = 240;
 const SIDEBAR_COLLAPSED = 64;
 
+const LIGHT_TOKENS = {
+  bg:          "#F7F3EC",
+  surface:     "#EDE5D0",
+  card:        "#E4D9C0",
+  border:      "#D4C08A",
+  gold:        "#C9A84C",
+  goldLight:   "#8A6A20",
+  goldDark:    "#5C3D00",
+  text:        "#2C1A00",
+  textMuted:   "#8A6A20",
+  textDim:     "#B8A070",
+  scrollTrack: "#EDE5D0",
+  scrollThumb: "#C9A84C",
+};
+
 const App = () => {
-  const location  = useLocation();
-  const token     = localStorage.getItem("access");
-  const { tokens, theme } = useTheme();
+  const location = useLocation();
+  const token    = localStorage.getItem("access");
+  const { tokens } = useTheme();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   React.useEffect(() => {
     const rootElement = document.getElementById("root");
     if (rootElement) rootElement.scrollTop = 0;
     window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-    const timer = setTimeout(() => {
-      if (rootElement) rootElement.scrollTop = 0;
-      window.scrollTo(0, 0);
-    }, 0);
+    const timer = setTimeout(() => { window.scrollTo(0, 0); }, 0);
     return () => clearTimeout(timer);
   }, [location.pathname]);
 
@@ -42,96 +52,59 @@ const App = () => {
   const isAdminPage = adminPaths.includes(location.pathname);
   const isLoginPage = location.pathname === "/login";
 
-  if (isAdminPage && !token) {
-    return <Navigate to="/login" replace />;
-  }
+  if (isAdminPage && !token) return <Navigate to="/login" replace />;
 
-  const sidebarW = sidebarCollapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED;
+  const sidebarW     = sidebarCollapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED;
+  const adminTokens  = tokens;
 
-  const globalStyles = `
+  const baseStyles = `
     html { overflow: hidden; width: 100%; height: 100%; }
     body { overflow: hidden; width: 100%; height: 100%; margin: 0; padding: 0; }
     #root { overflow-y: auto; overflow-x: hidden; width: 100%; height: 100%; -webkit-overflow-scrolling: touch; }
     * { box-sizing: border-box; }
-    body, #root, #root > div { max-width: 100%; }
-    .w-full { width: 100% !important; max-width: 100% !important; }
-    .min-h-screen { width: 100% !important; }
+  `;
 
-    #root { scrollbar-width: thin; scrollbar-color: ${tokens.scrollThumb} ${tokens.scrollTrack}; }
+  const adminStyles = `
+    ${baseStyles}
+    body { background: ${adminTokens.bg}; }
+    #root { scrollbar-width: thin; scrollbar-color: ${adminTokens.scrollThumb} ${adminTokens.scrollTrack}; }
     #root::-webkit-scrollbar { width: 8px; }
-    #root::-webkit-scrollbar-track { background: ${tokens.scrollTrack}; border-radius: 10px; }
-    #root::-webkit-scrollbar-thumb {
-      background: linear-gradient(180deg, ${tokens.gold} 0%, ${tokens.goldDark} 100%);
-      border-radius: 10px;
-      border: 2px solid ${tokens.scrollTrack};
-    }
-    #root::-webkit-scrollbar-thumb:hover { background: ${tokens.goldLight}; }
-    html::-webkit-scrollbar, body::-webkit-scrollbar, *:not(#root)::-webkit-scrollbar { display: none; width: 0; }
-    html, body, *:not(#root) { scrollbar-width: none; }
-    @media (max-width: 768px) { #root::-webkit-scrollbar { width: 5px; } }
+    #root::-webkit-scrollbar-track { background: ${adminTokens.scrollTrack}; border-radius: 10px; }
+    #root::-webkit-scrollbar-thumb { background: linear-gradient(180deg, ${adminTokens.gold} 0%, ${adminTokens.goldDark} 100%); border-radius: 10px; border: 2px solid ${adminTokens.scrollTrack}; }
+    html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
+    input::placeholder { color: ${adminTokens.textDim}; }
+    select option { background: ${adminTokens.surface}; color: ${adminTokens.text}; }
+  `;
 
-    input::placeholder { color: ${tokens.textDim}; }
-    select option { background: ${tokens.surface}; color: ${tokens.text}; }
-
-    .admin-sidebar-link:hover {
-      background: ${tokens.gold}12 !important;
-      color: ${tokens.gold} !important;
-    }
+  // ✅ Public : body = fond doré foncé pour que le header transparent
+  //    soit cohérent même avant que React monte
+  const publicStyles = `
+    ${baseStyles}
+    body { background: #5C3D00; }
+    #root { scrollbar-width: thin; scrollbar-color: #C9A84C #EDE5D0; }
+    #root::-webkit-scrollbar { width: 8px; }
+    #root::-webkit-scrollbar-track { background: #EDE5D0; border-radius: 10px; }
+    #root::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #C9A84C 0%, #5C3D00 100%); border-radius: 10px; border: 2px solid #EDE5D0; }
+    html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
+    input::placeholder { color: #B8A070; }
+    select option { background: #EDE5D0; color: #2C1A00; }
   `;
 
   return (
     <I18nextProvider i18n={i18n}>
-      <style>{globalStyles}</style>
+      <style>{isAdminPage ? adminStyles : publicStyles}</style>
 
       {isAdminPage ? (
 
-        // ── LAYOUT ADMIN — sidebar gauche + contenu ──────────────
-        <div style={{
-          background: tokens.bg,
-          minHeight: "100vh",
-          width: "100%",
-          display: "flex",
-          position: "relative",
-        }}>
-
-          {/* Sidebar fixe à gauche */}
+        // ── LAYOUT ADMIN ────────────────────────────────────────────
+        <div style={{ background: adminTokens.bg, minHeight: "100vh", width: "100%", display: "flex" }}>
           <NavAdmin onToggle={setSidebarCollapsed} />
-
-          {/* Contenu principal — se décale selon la sidebar */}
-          <main style={{
-            marginLeft: `${sidebarW}px`,
-            flex: 1,
-            minHeight: "100vh",
-            transition: "margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-            position: "relative",
-            overflow: "hidden",
-          }}>
-
-            {/* Déco fond */}
-            <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
-              <div style={{
-                position: "absolute", top: 0, right: 0,
-                width: "600px", height: "600px", borderRadius: "50%",
-                background: `radial-gradient(circle, ${tokens.gold}08 0%, transparent 70%)`,
-              }} />
-              <div style={{
-                position: "absolute", bottom: 0, left: 0,
-                width: "500px", height: "500px", borderRadius: "50%",
-                background: `radial-gradient(circle, ${tokens.gold}06 0%, transparent 70%)`,
-              }} />
-              <div style={{
-                position: "absolute", top: 0, left: 0, right: 0, height: "1px",
-                background: `linear-gradient(90deg, transparent, ${tokens.gold}20, transparent)`,
-              }} />
+          <main style={{ marginLeft: `${sidebarW}px`, flex: 1, minHeight: "100vh", transition: "margin-left 0.25s cubic-bezier(0.4,0,0.2,1)", position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+              <div style={{ position: "absolute", top: 0, right: 0, width: "600px", height: "600px", borderRadius: "50%", background: `radial-gradient(circle, ${adminTokens.gold}08 0%, transparent 70%)` }} />
+              <div style={{ position: "absolute", bottom: 0, left: 0, width: "500px", height: "500px", borderRadius: "50%", background: `radial-gradient(circle, ${adminTokens.gold}06 0%, transparent 70%)` }} />
             </div>
-
-            {/* Zone de contenu */}
-            <div style={{
-              position: "relative",
-              maxWidth: "1600px",
-              margin: "0 auto",
-              padding: "36px 28px 40px",
-            }}>
+            <div style={{ position: "relative", maxWidth: "1600px", margin: "0 auto", padding: "36px 28px 40px" }}>
               <Outlet />
             </div>
           </main>
@@ -139,50 +112,34 @@ const App = () => {
 
       ) : (
 
-        // ── LAYOUT PUBLIC — header fixe + footer ─────────────────
+        // ── LAYOUT PUBLIC ────────────────────────────────────────────
+        // ✅ Un seul fond continu — dégradé doré en haut, crème en bas
+        // Pas de bords arrondis, pas de rupture
         <div style={{
-          background: tokens.bg,
-          color: tokens.text,
           minHeight: "100vh",
           width: "100%",
-          position: "relative",
+          // Dégradé vertical : brun doré → or → crème
+          // Le header transparent flotte dessus parfaitement
+          background: `linear-gradient(180deg,
+            #4A3000 0%,
+            #6B4A10 12%,
+            #C9A84C 28%,
+            #E8D99A 38%,
+            #F7F3EC 48%,
+            #F7F3EC 100%
+          )`,
         }}>
 
-          {/* Déco fond public */}
-          <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
-            <div style={{
-              position: "absolute", top: 0, right: 0,
-              width: "800px", height: "800px", borderRadius: "50%",
-              background: `radial-gradient(circle, ${tokens.gold}08 0%, transparent 65%)`,
-            }} />
-            <div style={{
-              position: "absolute", bottom: 0, left: 0,
-              width: "600px", height: "600px", borderRadius: "50%",
-              background: `radial-gradient(circle, ${tokens.gold}05 0%, transparent 65%)`,
-            }} />
-          </div>
-
-          {/* Header public fixe */}
+          {/* Header fixe transparent — PAS de fond propre, il hérite du dégradé */}
           {!isLoginPage && (
             <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50 }}>
-              <Header logoColor={tokens.gold} />
+              <Header logoColor="#C9A84C" />
             </div>
           )}
 
-          {/* Contenu public */}
-          <main style={{
-            position: "relative",
-            paddingTop: isLoginPage ? "0" : "8rem",
-            paddingBottom: "4rem",
-          }}>
-            <div style={{
-              width: "100%",
-              maxWidth: "1600px",
-              margin: "0 auto",
-              padding: "0 3rem",
-            }}>
-              <Outlet />
-            </div>
+          {/* Contenu — paddingTop 0, le hero gère son propre espace */}
+          <main style={{ position: "relative", paddingBottom: "4rem" }}>
+            <Outlet />
           </main>
 
           {!isLoginPage && <Footer />}
