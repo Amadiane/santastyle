@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Search, SlidersHorizontal, X, ShoppingBag, Package, Sparkles } from "lucide-react";
 import CONFIG from "../../config/config.js";
 
@@ -33,7 +33,11 @@ const WAIcon = ({ size = 16, color = "#fff" }) => (
 );
 
 const BadgeStock = ({ total }) => {
-  const s = { padding: "4px 12px", borderRadius: "20px", fontSize: "11px", fontWeight: "700", display: "inline-flex", alignItems: "center", gap: "4px" };
+  const s = {
+    padding: "4px 12px", borderRadius: "20px",
+    fontSize: "11px", fontWeight: "700",
+    display: "inline-flex", alignItems: "center", gap: "4px",
+  };
   if (total === 0)  return <span style={{ ...s, background: SS.dangerBg,  color: SS.danger,  border: `1px solid ${SS.danger}40`  }}>Épuisé</span>;
   if (total <= 3)   return <span style={{ ...s, background: SS.orangeBg,  color: SS.orange,  border: `1px solid ${SS.orange}40`  }}>⚡ {total} restant{total > 1 ? "s" : ""}</span>;
   if (total <= 10)  return <span style={{ ...s, background: SS.warningBg, color: SS.warning, border: `1px solid ${SS.warning}40` }}>Stock limité</span>;
@@ -44,111 +48,248 @@ const CarteProduit = ({ produit, onClick }) => {
   const [hovered, setHovered] = useState(false);
   const total  = produit.stocks?.reduce((a, s) => a + s.quantite, 0) ?? 0;
   const epuise = total === 0;
-  const isNew  = () => produit.date_creation
-    ? (Date.now() - new Date(produit.date_creation)) / 86400000 <= 14
-    : false;
+
+  // ✅ Badge Nouveau basé sur le champ Django est_nouveau
+  const isNew = () => produit.est_nouveau === true;
+
+  const envoyerWA = (e) => {
+    e.stopPropagation();
+    const msg = encodeURIComponent(
+      `Bonjour Santa'Style ! 👋\nJe souhaite commander :\n\n🛍️ *${produit.nom}*\n💰 Prix : ${Number(produit.prix).toLocaleString("fr-FR")} GNF\n🔗 Lien : ${window.location.origin}/boutique/${produit.id}\n\nEst-ce disponible ?`
+    );
+    window.open(`https://wa.me/${CONFIG.WHATSAPP_NUMBER || "224620762508"}?text=${msg}`, "_blank");
+  };
 
   return (
-    <div onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
-      style={{ background: "#fff", borderRadius: "18px", overflow: "hidden", transition: "all 0.25s cubic-bezier(0.4,0,0.2,1)", cursor: epuise ? "default" : "pointer", transform: hovered && !epuise ? "translateY(-6px)" : "none", boxShadow: hovered && !epuise ? `0 20px 48px ${SS.gold}25, 0 8px 16px rgba(0,0,0,0.08)` : "0 2px 12px rgba(0,0,0,0.07)", border: `1px solid ${hovered && !epuise ? SS.gold + "60" : SS.border}` }}>
-
-      <div onClick={() => !epuise && onClick(produit)}
-        style={{ position: "relative", paddingBottom: "130%", background: `linear-gradient(135deg, ${SS.surface}, ${SS.card})`, overflow: "hidden" }}>
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: "#fff", borderRadius: "18px", overflow: "hidden",
+        transition: "all 0.25s cubic-bezier(0.4,0,0.2,1)",
+        cursor: epuise ? "default" : "pointer",
+        transform: hovered && !epuise ? "translateY(-6px)" : "none",
+        boxShadow: hovered && !epuise
+          ? `0 20px 48px ${SS.gold}25, 0 8px 16px rgba(0,0,0,0.08)`
+          : "0 2px 12px rgba(0,0,0,0.07)",
+        border: `1px solid ${hovered && !epuise ? SS.gold + "60" : SS.border}`,
+      }}
+    >
+      {/* Image portrait 4:5 */}
+      <div
+        onClick={() => !epuise && onClick(produit)}
+        style={{
+          position: "relative", paddingBottom: "130%",
+          background: `linear-gradient(135deg, ${SS.surface}, ${SS.card})`,
+          overflow: "hidden",
+        }}
+      >
         {produit.image_url ? (
           <>
-            <img src={produit.image_url} alt={produit.nom}
-              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top", transition: "transform 0.5s", transform: hovered && !epuise ? "scale(1.06)" : "scale(1)", filter: epuise ? "brightness(0.5) saturate(0.7)" : "brightness(1)" }}
-              onError={e => { e.target.style.display = "none"; }} />
-            {!epuise && <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "80px", background: "linear-gradient(to top, rgba(0,0,0,0.55), transparent)", pointerEvents: "none" }} />}
+            <img
+              src={produit.image_url} alt={produit.nom}
+              style={{
+                position: "absolute", inset: 0,
+                width: "100%", height: "100%",
+                objectFit: "cover", objectPosition: "center top",
+                transition: "transform 0.5s cubic-bezier(0.4,0,0.2,1)",
+                transform: hovered && !epuise ? "scale(1.06)" : "scale(1)",
+                filter: epuise ? "brightness(0.5) saturate(0.7)" : "brightness(1)",
+              }}
+              onError={e => { e.target.style.display = "none"; }}
+            />
+            {!epuise && (
+              <div style={{
+                position: "absolute", bottom: 0, left: 0, right: 0, height: "80px",
+                background: "linear-gradient(to top, rgba(0,0,0,0.55), transparent)",
+                pointerEvents: "none",
+              }} />
+            )}
           </>
         ) : (
-          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+          <div style={{
+            position: "absolute", inset: 0,
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "8px",
+          }}>
             <Package size={52} color={`${SS.gold}35`} />
             <span style={{ fontSize: "11px", color: SS.textDim }}>Pas d'image</span>
           </div>
         )}
 
+        {/* Overlay épuisé */}
         {epuise && (
-          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.5)" }}>
-            <span style={{ background: "rgba(0,0,0,0.8)", color: "#fff", padding: "10px 24px", borderRadius: "30px", fontSize: "15px", fontWeight: "800", border: "1px solid rgba(255,255,255,0.2)" }}>Épuisé</span>
+          <div style={{
+            position: "absolute", inset: 0,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "rgba(0,0,0,0.5)",
+          }}>
+            <span style={{
+              background: "rgba(0,0,0,0.8)", color: "#fff",
+              padding: "10px 24px", borderRadius: "30px",
+              fontSize: "15px", fontWeight: "800",
+              border: "1px solid rgba(255,255,255,0.2)",
+            }}>Épuisé</span>
           </div>
         )}
 
+        {/* Prix sur image */}
         {!epuise && produit.image_url && (
           <div style={{ position: "absolute", bottom: "12px", left: "12px" }}>
-            <span style={{ fontSize: "16px", fontWeight: "800", color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+            <span style={{
+              fontSize: "16px", fontWeight: "800", color: "#fff",
+              textShadow: "0 1px 4px rgba(0,0,0,0.5)",
+            }}>
               {Number(produit.prix).toLocaleString("fr-FR")} GNF
             </span>
           </div>
         )}
 
-        <div style={{ position: "absolute", top: "12px", left: "12px", display: "flex", flexDirection: "column", gap: "5px" }}>
-          {isNew() && <span style={{ padding: "5px 12px", borderRadius: "20px", fontSize: "11px", fontWeight: "800", background: SS.gold, color: "#1A1208", display: "flex", alignItems: "center", gap: "4px" }}><Sparkles size={10} /> Nouveau</span>}
-          {!epuise && total <= 3 && <span style={{ padding: "5px 12px", borderRadius: "20px", fontSize: "11px", fontWeight: "700", background: SS.danger, color: "#fff" }}>🔥 Dernières pièces</span>}
+        {/* Badges top-left */}
+        <div style={{
+          position: "absolute", top: "12px", left: "12px",
+          display: "flex", flexDirection: "column", gap: "5px",
+        }}>
+          {isNew() && (
+            <span style={{
+              padding: "5px 12px", borderRadius: "20px",
+              fontSize: "11px", fontWeight: "800",
+              background: SS.gold, color: "#1A1208",
+              display: "flex", alignItems: "center", gap: "4px",
+            }}>
+              <Sparkles size={10} /> Nouveau
+            </span>
+          )}
+          {!epuise && total <= 3 && (
+            <span style={{
+              padding: "5px 12px", borderRadius: "20px",
+              fontSize: "11px", fontWeight: "700",
+              background: SS.danger, color: "#fff",
+            }}>
+              🔥 Dernières pièces
+            </span>
+          )}
         </div>
 
+        {/* Badge stock restant top-right */}
         {!epuise && total <= 10 && (
           <div style={{ position: "absolute", top: "12px", right: "12px" }}>
-            <span style={{ padding: "5px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: "700", background: "rgba(255,255,255,0.92)", color: SS.warning }}>
+            <span style={{
+              padding: "5px 10px", borderRadius: "20px",
+              fontSize: "11px", fontWeight: "700",
+              background: "rgba(255,255,255,0.92)", color: SS.warning,
+            }}>
               {total} restant{total > 1 ? "s" : ""}
             </span>
           </div>
         )}
 
+        {/* Bouton WA flottant au hover */}
         {!epuise && hovered && (
           <div style={{ position: "absolute", bottom: "12px", right: "12px" }}>
-            <button onClick={e => {
-              e.stopPropagation();
-              const msg = encodeURIComponent(`Bonjour Santa'Style ! 👋\nJe souhaite commander :\n\n🛍️ *${produit.nom}*\n💰 Prix : ${Number(produit.prix).toLocaleString("fr-FR")} GNF\n🔗 Lien : ${window.location.origin}/boutique/${produit.id}\n\nEst-ce disponible ?`);
-              window.open(`https://wa.me/${CONFIG.WHATSAPP_NUMBER || "224620762508"}?text=${msg}`, "_blank");
-            }}
-            style={{ width: "42px", height: "42px", borderRadius: "50%", background: "#25D366", border: "2px solid rgba(255,255,255,0.4)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 4px 16px rgba(37,211,102,0.5)" }}>
+            <button
+              onClick={envoyerWA}
+              style={{
+                width: "42px", height: "42px", borderRadius: "50%",
+                background: "#25D366", border: "2px solid rgba(255,255,255,0.4)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", boxShadow: "0 4px 16px rgba(37,211,102,0.5)",
+              }}
+            >
               <WAIcon size={20} />
             </button>
           </div>
         )}
       </div>
 
+      {/* Contenu */}
       <div style={{ padding: "14px 16px 16px" }}>
-        <div onClick={() => !epuise && onClick(produit)}
-          style={{ fontSize: "15px", fontWeight: "700", color: SS.text, marginBottom: "4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", cursor: epuise ? "default" : "pointer" }}>
+        <div
+          onClick={() => !epuise && onClick(produit)}
+          style={{
+            fontSize: "15px", fontWeight: "700", color: SS.text,
+            marginBottom: "4px", overflow: "hidden",
+            textOverflow: "ellipsis", whiteSpace: "nowrap",
+            cursor: epuise ? "default" : "pointer",
+          }}
+        >
           {produit.nom}
         </div>
+
         {produit.description && (
-          <div style={{ fontSize: "12px", color: SS.textMuted, marginBottom: "8px", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+          <div style={{
+            fontSize: "12px", color: SS.textMuted, marginBottom: "8px",
+            display: "-webkit-box", WebkitLineClamp: 1,
+            WebkitBoxOrient: "vertical", overflow: "hidden",
+          }}>
             {produit.description}
           </div>
         )}
+
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
-          {!produit.image_url || epuise
-            ? <span style={{ fontSize: "17px", fontWeight: "800", color: SS.goldLight }}>{Number(produit.prix).toLocaleString("fr-FR")} GNF</span>
-            : <span style={{ fontSize: "13px", color: SS.textDim, fontWeight: "500" }}>{Number(produit.prix).toLocaleString("fr-FR")} GNF</span>
-          }
+          {!produit.image_url || epuise ? (
+            <span style={{ fontSize: "17px", fontWeight: "800", color: SS.goldLight }}>
+              {Number(produit.prix).toLocaleString("fr-FR")} GNF
+            </span>
+          ) : (
+            <span style={{ fontSize: "13px", color: SS.textDim, fontWeight: "500" }}>
+              {Number(produit.prix).toLocaleString("fr-FR")} GNF
+            </span>
+          )}
           <BadgeStock total={total} />
         </div>
+
+        {/* Barre stock faible */}
         {total > 0 && total <= 10 && (
           <div style={{ marginBottom: "10px" }}>
             <div style={{ height: "3px", borderRadius: "2px", background: SS.border, overflow: "hidden" }}>
-              <div style={{ height: "100%", borderRadius: "2px", width: `${Math.min((total / 15) * 100, 100)}%`, background: total <= 3 ? SS.danger : SS.warning }} />
+              <div style={{
+                height: "100%", borderRadius: "2px",
+                width: `${Math.min((total / 15) * 100, 100)}%`,
+                background: total <= 3 ? SS.danger : SS.warning,
+                transition: "width 0.4s",
+              }} />
             </div>
           </div>
         )}
+
+        {/* Bouton Commander */}
         {!epuise && (
-          <button onClick={e => {
-            e.stopPropagation();
-            const msg = encodeURIComponent(`Bonjour Santa'Style ! 👋\nJe souhaite commander :\n\n🛍️ *${produit.nom}*\n💰 Prix : ${Number(produit.prix).toLocaleString("fr-FR")} GNF\n🔗 Lien : ${window.location.origin}/boutique/${produit.id}\n\nEst-ce disponible ?`);
-            window.open(`https://wa.me/${CONFIG.WHATSAPP_NUMBER || "224620762508"}?text=${msg}`, "_blank");
-          }}
-          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%", padding: "11px", borderRadius: "10px", border: "none", background: "#25D366", color: "#fff", fontSize: "13px", fontWeight: "700", cursor: "pointer", marginBottom: "8px", transition: "opacity 0.15s" }}
-          onMouseEnter={e => e.currentTarget.style.opacity = "0.88"}
-          onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
+          <button
+            onClick={envoyerWA}
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+              width: "100%", padding: "11px", borderRadius: "10px",
+              border: "none", background: "#25D366", color: "#fff",
+              fontSize: "13px", fontWeight: "700", cursor: "pointer",
+              marginBottom: "8px", transition: "opacity 0.15s",
+            }}
+            onMouseEnter={e => e.currentTarget.style.opacity = "0.88"}
+            onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+          >
             <WAIcon size={16} /> Commander
           </button>
         )}
-        <button onClick={() => onClick(produit)}
-          style={{ width: "100%", padding: "9px", borderRadius: "10px", background: "transparent", border: `1px solid ${SS.border}`, color: epuise ? SS.textDim : SS.goldLight, fontSize: "13px", fontWeight: "600", cursor: "pointer", transition: "all 0.15s" }}
-          onMouseEnter={e => { if (!epuise) { e.currentTarget.style.background = SS.surface; e.currentTarget.style.borderColor = SS.gold; } }}
-          onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = SS.border; }}>
+
+        {/* Bouton Voir détail */}
+        <button
+          onClick={() => onClick(produit)}
+          style={{
+            width: "100%", padding: "9px", borderRadius: "10px",
+            background: "transparent", border: `1px solid ${SS.border}`,
+            color: epuise ? SS.textDim : SS.goldLight,
+            fontSize: "13px", fontWeight: "600", cursor: "pointer", transition: "all 0.15s",
+          }}
+          onMouseEnter={e => {
+            if (!epuise) {
+              e.currentTarget.style.background  = SS.surface;
+              e.currentTarget.style.borderColor = SS.gold;
+            }
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background  = "transparent";
+            e.currentTarget.style.borderColor = SS.border;
+          }}
+        >
           Voir le détail
         </button>
       </div>
@@ -156,14 +297,26 @@ const CarteProduit = ({ produit, onClick }) => {
   );
 };
 
+// ── Page principale ────────────────────────────────────────────────
 const BoutiquePage = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [produits, setProduits]       = useState([]);
   const [categories, setCategories]   = useState([]);
   const [search, setSearch]           = useState("");
   const [selectedCat, setSelectedCat] = useState(null);
   const [filtreDispo, setFiltreDispo] = useState(false);
   const [loading, setLoading]         = useState(false);
+
+  // ✅ Lecture des paramètres URL
+  const filtreNouveau = searchParams.get("filtre") === "nouveau";
+  const searchParam   = searchParams.get("q") || "";
+
+  // Synchronise la barre de recherche avec ?q=
+  useEffect(() => {
+    if (searchParam) setSearch(searchParam);
+  }, [searchParam]);
 
   useEffect(() => { fetchAll(); }, []);
 
@@ -179,40 +332,92 @@ const BoutiquePage = () => {
       const [dP, dC, dS] = await Promise.all([rP.json(), rC.json(), rS.json()]);
       const produitsData  = Array.isArray(dP) ? dP : [];
       const stocksData    = Array.isArray(dS) ? dS : [];
-      setProduits(produitsData.map(p => ({ ...p, stocks: stocksData.filter(s => String(s.produit) === String(p.id)) })));
+      setProduits(produitsData.map(p => ({
+        ...p,
+        stocks: stocksData.filter(s => String(s.produit) === String(p.id)),
+      })));
       setCategories(Array.isArray(dC) ? dC : []);
     } catch (err) { console.error("Erreur boutique", err); }
     finally { setLoading(false); }
   };
 
+  // ✅ Filtre complet — intègre filtreNouveau depuis l'URL
   const filtered = produits.filter(p => {
     const total = p.stocks?.reduce((a, s) => a + s.quantite, 0) ?? 0;
-    return p.nom.toLowerCase().includes(search.toLowerCase())
-      && (selectedCat ? p.categorie === selectedCat : true)
-      && (filtreDispo ? total > 0 : true);
+    const ms    = p.nom.toLowerCase().includes(search.toLowerCase());
+    const mc    = selectedCat ? p.categorie === selectedCat : true;
+    const md    = filtreDispo ? total > 0 : true;
+    const mn    = filtreNouveau ? p.est_nouveau === true : true;
+    return ms && mc && md && mn;
   });
 
   const totalDispo   = produits.filter(p => (p.stocks?.reduce((a, s) => a + s.quantite, 0) ?? 0) > 0).length;
   const totalEpuises = produits.filter(p => (p.stocks?.reduce((a, s) => a + s.quantite, 0) ?? 0) === 0).length;
   const getCatNom    = id => categories.find(c => c.id === id)?.nom || "";
 
+  // ✅ Effacer le filtre nouveauté et retourner à tout
+  const effacerFiltreNouveau = () => {
+    searchParams.delete("filtre");
+    setSearchParams(searchParams);
+  };
+
   return (
     <div style={{ minHeight: "100vh", fontFamily: "var(--font-sans, sans-serif)" }}>
 
-      {/* ── HERO transparent — hérite du fond doré du Layout ── */}
-      <div style={{ paddingTop: "96px", paddingBottom: "60px", paddingLeft: "24px", paddingRight: "24px", textAlign: "center", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)", backgroundSize: "28px 28px", pointerEvents: "none" }} />
+      {/* ── Hero transparent — hérite du fond doré du Layout ── */}
+      <div style={{
+        paddingTop: "96px", paddingBottom: "60px",
+        paddingLeft: "24px", paddingRight: "24px",
+        textAlign: "center", position: "relative", overflow: "hidden",
+      }}>
+        <div style={{
+          position: "absolute", inset: 0,
+          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)",
+          backgroundSize: "28px 28px", pointerEvents: "none",
+        }} />
         <div style={{ position: "relative" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "5px 16px", borderRadius: "20px", background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)", fontSize: "11px", color: "rgba(255,255,255,0.9)", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "20px" }}>
-            <Sparkles size={11} /> Nouvelle Collection
+
+          {/* Badge dynamique */}
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: "6px",
+            padding: "5px 16px", borderRadius: "20px",
+            background: "rgba(255,255,255,0.15)",
+            border: "1px solid rgba(255,255,255,0.25)",
+            fontSize: "11px", color: "rgba(255,255,255,0.9)",
+            letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "20px",
+          }}>
+            <Sparkles size={11} />
+            {filtreNouveau ? "Nouveautés" : "Nouvelle Collection"}
           </div>
-          <h1 style={{ fontSize: "44px", fontWeight: "800", color: "#fff", margin: "0 0 12px", letterSpacing: "-0.03em", textShadow: "0 2px 24px rgba(0,0,0,0.15)" }}>
-            Santa'Style Boutique
+
+          {/* Titre dynamique */}
+          <h1 style={{
+            fontSize: "44px", fontWeight: "800", color: "#fff",
+            margin: "0 0 12px", letterSpacing: "-0.03em",
+            textShadow: "0 2px 24px rgba(0,0,0,0.15)",
+          }}>
+            {filtreNouveau ? "Nos Nouveautés" : "Santa'Style Boutique"}
           </h1>
-          <p style={{ fontSize: "16px", color: "rgba(255,255,255,0.72)", margin: "0 0 32px", fontWeight: "300", letterSpacing: "0.05em" }}>
-            Hommes · Femmes · Enfants
+
+          <p style={{
+            fontSize: "16px", color: "rgba(255,255,255,0.72)",
+            margin: "0 0 32px", fontWeight: "300", letterSpacing: "0.05em",
+          }}>
+            {filtreNouveau
+              ? "Les derniers articles ajoutés à la boutique"
+              : "Hommes · Femmes · Enfants"
+            }
           </p>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "20px", padding: "12px 28px", borderRadius: "40px", background: "rgba(255,255,255,0.13)", border: "1px solid rgba(255,255,255,0.2)", fontSize: "13px", color: "rgba(255,255,255,0.88)", backdropFilter: "blur(8px)", flexWrap: "wrap", justifyContent: "center" }}>
+
+          {/* Stats pill */}
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: "20px",
+            padding: "12px 28px", borderRadius: "40px",
+            background: "rgba(255,255,255,0.13)",
+            border: "1px solid rgba(255,255,255,0.2)",
+            fontSize: "13px", color: "rgba(255,255,255,0.88)",
+            backdropFilter: "blur(8px)", flexWrap: "wrap", justifyContent: "center",
+          }}>
             <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#4ade80", flexShrink: 0 }} />
               {totalDispo} articles disponibles
@@ -225,95 +430,216 @@ const BoutiquePage = () => {
         </div>
       </div>
 
-      {/* ── ZONE CRÈME — contenu boutique ── */}
-      {/* ✅ Pas de bords arrondis sur les côtés — juste le haut */}
+      {/* ── Zone crème ── */}
       <div style={{ background: SS.bg, borderRadius: "32px 32px 0 0" }}>
 
-        {/* Indicateur visuel de transition */}
+        {/* Indicateur */}
         <div style={{ display: "flex", justifyContent: "center", paddingTop: "12px", paddingBottom: "4px" }}>
-          <div style={{ width: "48px", height: "4px", borderRadius: "2px", background: `linear-gradient(90deg, ${SS.goldDark}, ${SS.gold})`, opacity: 0.6 }} />
+          <div style={{
+            width: "48px", height: "4px", borderRadius: "2px",
+            background: `linear-gradient(90deg, ${SS.goldDark}, ${SS.gold})`, opacity: 0.6,
+          }} />
         </div>
 
         <div style={{ maxWidth: "1300px", margin: "0 auto", padding: "28px 16px 60px" }}>
 
-          {/* Recherche */}
+          {/* Recherche + filtre disponibles */}
           <div style={{ display: "flex", gap: "10px", marginBottom: "16px", flexWrap: "wrap" }}>
-            <div style={{ flex: 1, minWidth: "220px", display: "flex", alignItems: "center", gap: "10px", background: "#fff", border: `1px solid ${SS.border}`, borderRadius: "12px", padding: "0 16px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+            <div style={{
+              flex: 1, minWidth: "220px", display: "flex", alignItems: "center", gap: "10px",
+              background: "#fff", border: `1px solid ${SS.border}`, borderRadius: "12px",
+              padding: "0 16px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+            }}>
               <Search size={16} color={SS.textDim} />
-              <input placeholder="Rechercher un article..."
+              <input
+                placeholder="Rechercher un article..."
                 style={{ flex: 1, background: "none", border: "none", outline: "none", color: SS.text, fontSize: "14px", padding: "13px 0" }}
-                value={search} onChange={e => setSearch(e.target.value)} />
-              {search && <button onClick={() => setSearch("")} style={{ background: "none", border: "none", cursor: "pointer", display: "flex" }}><X size={15} color={SS.textDim} /></button>}
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+              {search && (
+                <button onClick={() => setSearch("")} style={{ background: "none", border: "none", cursor: "pointer", display: "flex" }}>
+                  <X size={15} color={SS.textDim} />
+                </button>
+              )}
             </div>
-            <button onClick={() => setFiltreDispo(!filtreDispo)}
-              style={{ padding: "0 20px", borderRadius: "12px", cursor: "pointer", border: `1px solid ${filtreDispo ? SS.gold : SS.border}`, background: filtreDispo ? `${SS.gold}18` : "#fff", color: filtreDispo ? SS.goldDark : SS.textMuted, fontSize: "13px", fontWeight: "600", display: "flex", alignItems: "center", gap: "7px", transition: "all 0.15s", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+            <button
+              onClick={() => setFiltreDispo(!filtreDispo)}
+              style={{
+                padding: "0 20px", borderRadius: "12px", cursor: "pointer",
+                border: `1px solid ${filtreDispo ? SS.gold : SS.border}`,
+                background: filtreDispo ? `${SS.gold}18` : "#fff",
+                color: filtreDispo ? SS.goldDark : SS.textMuted,
+                fontSize: "13px", fontWeight: "600",
+                display: "flex", alignItems: "center", gap: "7px",
+                transition: "all 0.15s", boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+              }}
+            >
               <SlidersHorizontal size={15} /> Disponibles
             </button>
           </div>
 
-          {/* Catégories */}
+          {/* Filtres catégories */}
           <div style={{ display: "flex", gap: "8px", marginBottom: "20px", flexWrap: "wrap" }}>
-            <button onClick={() => setSelectedCat(null)}
-              style={{ padding: "8px 20px", borderRadius: "24px", fontSize: "13px", fontWeight: "700", border: `1px solid ${!selectedCat ? SS.gold : SS.border}`, background: !selectedCat ? SS.gold : "#fff", color: !selectedCat ? "#1A1208" : SS.textMuted, cursor: "pointer", transition: "all 0.15s" }}>
+            <button
+              onClick={() => setSelectedCat(null)}
+              style={{
+                padding: "8px 20px", borderRadius: "24px", fontSize: "13px", fontWeight: "700",
+                border: `1px solid ${!selectedCat ? SS.gold : SS.border}`,
+                background: !selectedCat ? SS.gold : "#fff",
+                color: !selectedCat ? "#1A1208" : SS.textMuted,
+                cursor: "pointer", transition: "all 0.15s",
+              }}
+            >
               Tout ({produits.length})
             </button>
             {categories.map(cat => {
               const count  = produits.filter(p => p.categorie === cat.id).length;
               const active = selectedCat === cat.id;
               return (
-                <button key={cat.id} onClick={() => setSelectedCat(active ? null : cat.id)}
-                  style={{ padding: "8px 20px", borderRadius: "24px", fontSize: "13px", fontWeight: "500", border: `1px solid ${active ? SS.gold : SS.border}`, background: active ? SS.gold : "#fff", color: active ? "#1A1208" : SS.textMuted, cursor: "pointer", transition: "all 0.15s" }}>
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCat(active ? null : cat.id)}
+                  style={{
+                    padding: "8px 20px", borderRadius: "24px", fontSize: "13px", fontWeight: "500",
+                    border: `1px solid ${active ? SS.gold : SS.border}`,
+                    background: active ? SS.gold : "#fff",
+                    color: active ? "#1A1208" : SS.textMuted,
+                    cursor: "pointer", transition: "all 0.15s",
+                  }}
+                >
                   {cat.nom} ({count})
                 </button>
               );
             })}
           </div>
 
-          {/* Résumé */}
+          {/* Résumé + badges filtres actifs */}
           <div style={{ display: "flex", gap: "8px", marginBottom: "24px", flexWrap: "wrap", alignItems: "center" }}>
             <span style={{ fontSize: "12px", color: SS.textMuted, padding: "5px 14px", borderRadius: "20px", background: "#fff", border: `1px solid ${SS.border}` }}>
               {filtered.length} article{filtered.length > 1 ? "s" : ""}
             </span>
-            {totalDispo > 0 && <span style={{ fontSize: "12px", color: SS.success, padding: "5px 14px", borderRadius: "20px", background: SS.successBg, border: `1px solid ${SS.success}40` }}>✓ {totalDispo} disponible{totalDispo > 1 ? "s" : ""}</span>}
-            {totalEpuises > 0 && <span style={{ fontSize: "12px", color: SS.danger, padding: "5px 14px", borderRadius: "20px", background: SS.dangerBg, border: `1px solid ${SS.danger}40` }}>{totalEpuises} épuisé{totalEpuises > 1 ? "s" : ""}</span>}
+
+            {/* ✅ Badge filtre Nouveautés actif */}
+            {filtreNouveau && (
+              <span style={{
+                fontSize: "12px", color: SS.goldDark,
+                padding: "5px 14px", borderRadius: "20px",
+                background: `${SS.gold}20`, border: `1px solid ${SS.gold}60`,
+                display: "flex", alignItems: "center", gap: "6px", fontWeight: "600",
+              }}>
+                <Sparkles size={11} color={SS.gold} />
+                Nouveautés uniquement
+                <button
+                  onClick={effacerFiltreNouveau}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: SS.goldLight, display: "flex", padding: 0, marginLeft: "2px" }}
+                >
+                  <X size={12} />
+                </button>
+              </span>
+            )}
+
+            {totalDispo > 0 && (
+              <span style={{ fontSize: "12px", color: SS.success, padding: "5px 14px", borderRadius: "20px", background: SS.successBg, border: `1px solid ${SS.success}40` }}>
+                ✓ {totalDispo} disponible{totalDispo > 1 ? "s" : ""}
+              </span>
+            )}
+            {totalEpuises > 0 && (
+              <span style={{ fontSize: "12px", color: SS.danger, padding: "5px 14px", borderRadius: "20px", background: SS.dangerBg, border: `1px solid ${SS.danger}40` }}>
+                {totalEpuises} épuisé{totalEpuises > 1 ? "s" : ""}
+              </span>
+            )}
             {selectedCat && (
-              <span style={{ fontSize: "12px", color: SS.gold, padding: "5px 14px", borderRadius: "20px", background: `${SS.gold}12`, border: `1px solid ${SS.gold}40`, display: "flex", alignItems: "center", gap: "6px" }}>
+              <span style={{
+                fontSize: "12px", color: SS.gold, padding: "5px 14px", borderRadius: "20px",
+                background: `${SS.gold}12`, border: `1px solid ${SS.gold}40`,
+                display: "flex", alignItems: "center", gap: "6px",
+              }}>
                 {getCatNom(selectedCat)}
-                <button onClick={() => setSelectedCat(null)} style={{ background: "none", border: "none", cursor: "pointer", color: SS.gold, display: "flex", padding: 0 }}><X size={12} /></button>
+                <button onClick={() => setSelectedCat(null)} style={{ background: "none", border: "none", cursor: "pointer", color: SS.gold, display: "flex", padding: 0 }}>
+                  <X size={12} />
+                </button>
               </span>
             )}
           </div>
 
-          {/* Grille */}
+          {/* ── Grille produits ── */}
           {loading ? (
             <div style={{ textAlign: "center", padding: "6rem 0", color: SS.textMuted }}>
-              <ShoppingBag size={48} color={`${SS.gold}40`} style={{ marginBottom: "16px", display: "block", margin: "0 auto 16px" }} />
-              <div style={{ fontSize: "15px" }}>Chargement...</div>
+              <ShoppingBag size={48} color={`${SS.gold}40`} style={{ display: "block", margin: "0 auto 16px" }} />
+              <div style={{ fontSize: "15px" }}>Chargement de la boutique...</div>
             </div>
           ) : filtered.length === 0 ? (
             <div style={{ textAlign: "center", padding: "6rem 0", color: SS.textMuted }}>
-              <Package size={48} color={`${SS.gold}40`} style={{ marginBottom: "16px", display: "block", margin: "0 auto 16px" }} />
-              <div style={{ fontSize: "18px", fontWeight: "600", color: SS.text, marginBottom: "8px" }}>Aucun article trouvé</div>
-              <button onClick={() => { setSearch(""); setSelectedCat(null); setFiltreDispo(false); }}
-                style={{ padding: "11px 24px", borderRadius: "10px", background: SS.gold, border: "none", color: "#1A1208", fontWeight: "700", cursor: "pointer", marginTop: "8px" }}>
-                Réinitialiser
-              </button>
+              <Package size={48} color={`${SS.gold}40`} style={{ display: "block", margin: "0 auto 16px" }} />
+              <div style={{ fontSize: "18px", fontWeight: "600", color: SS.text, marginBottom: "8px" }}>
+                {filtreNouveau ? "Aucune nouveauté pour le moment" : "Aucun article trouvé"}
+              </div>
+              {filtreNouveau ? (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+                  <div style={{ fontSize: "14px", color: SS.textMuted }}>
+                    Activez le badge "Nouveau" sur vos produits depuis l'administration.
+                  </div>
+                  <button
+                    onClick={effacerFiltreNouveau}
+                    style={{ padding: "11px 24px", borderRadius: "10px", background: SS.gold, border: "none", color: "#1A1208", fontWeight: "700", cursor: "pointer" }}
+                  >
+                    Voir tous les articles
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => { setSearch(""); setSelectedCat(null); setFiltreDispo(false); }}
+                  style={{ padding: "11px 24px", borderRadius: "10px", background: SS.gold, border: "none", color: "#1A1208", fontWeight: "700", cursor: "pointer", marginTop: "8px" }}
+                >
+                  Réinitialiser les filtres
+                </button>
+              )}
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: "20px" }}>
-              {filtered.map(p => <CarteProduit key={p.id} produit={p} onClick={() => navigate(`/boutique/${p.id}`)} />)}
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))",
+              gap: "20px",
+            }}>
+              {filtered.map(p => (
+                <CarteProduit
+                  key={p.id}
+                  produit={p}
+                  onClick={() => navigate(`/boutique/${p.id}`)}
+                />
+              ))}
             </div>
           )}
 
-          {/* Footer */}
+          {/* Footer boutique */}
           {!loading && filtered.length > 0 && (
-            <div style={{ marginTop: "64px", padding: "32px", borderRadius: "20px", background: `linear-gradient(135deg, ${SS.surface}, ${SS.card})`, border: `1px solid ${SS.border}`, textAlign: "center" }}>
-              <div style={{ fontSize: "20px", fontWeight: "700", color: SS.goldDark, marginBottom: "8px" }}>Vous cherchez quelque chose de spécifique ?</div>
-              <div style={{ fontSize: "14px", color: SS.textMuted, marginBottom: "20px" }}>Notre équipe répond rapidement sur WhatsApp.</div>
-              <button onClick={() => window.open(`https://wa.me/${CONFIG.WHATSAPP_NUMBER || "224620762508"}?text=${encodeURIComponent("Bonjour Santa'Style ! 👋\nJe cherche un article spécifique, pouvez-vous m'aider ?")}`, "_blank")}
-                style={{ display: "inline-flex", alignItems: "center", gap: "10px", padding: "14px 32px", borderRadius: "12px", border: "none", background: "#25D366", color: "#fff", fontSize: "15px", fontWeight: "700", cursor: "pointer", boxShadow: "0 4px 20px rgba(37,211,102,0.35)", transition: "opacity 0.15s" }}
+            <div style={{
+              marginTop: "64px", padding: "32px", borderRadius: "20px",
+              background: `linear-gradient(135deg, ${SS.surface}, ${SS.card})`,
+              border: `1px solid ${SS.border}`, textAlign: "center",
+            }}>
+              <div style={{ fontSize: "20px", fontWeight: "700", color: SS.goldDark, marginBottom: "8px" }}>
+                Vous cherchez quelque chose de spécifique ?
+              </div>
+              <div style={{ fontSize: "14px", color: SS.textMuted, marginBottom: "20px" }}>
+                Notre équipe répond rapidement sur WhatsApp.
+              </div>
+              <button
+                onClick={() => {
+                  const msg = encodeURIComponent("Bonjour Santa'Style ! 👋\nJe cherche un article spécifique, pouvez-vous m'aider ?");
+                  window.open(`https://wa.me/${CONFIG.WHATSAPP_NUMBER || "224620762508"}?text=${msg}`, "_blank");
+                }}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: "10px",
+                  padding: "14px 32px", borderRadius: "12px", border: "none",
+                  background: "#25D366", color: "#fff",
+                  fontSize: "15px", fontWeight: "700", cursor: "pointer",
+                  boxShadow: "0 4px 20px rgba(37,211,102,0.35)", transition: "opacity 0.15s",
+                }}
                 onMouseEnter={e => e.currentTarget.style.opacity = "0.88"}
-                onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
+                onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+              >
                 <WAIcon size={20} /> Nous contacter
               </button>
             </div>

@@ -42,7 +42,11 @@ const Navlinks = () => {
       title: "Boutique", path: "/boutique", icon: ShoppingBag, hasDropdown: true,
       subItems: [
         { title: "Tous les articles",  path: "/boutique",               icon: ShoppingBag },
-        { title: "Nouveautés",         path: "/boutique?filtre=nouveau", icon: Sparkles    },
+        {
+          title: "Nouveautés",
+          path: "/boutique?filtre=nouveau", // ✅ filtre sur est_nouveau=true
+          icon: Sparkles
+        },
         { title: "Hommes",             path: "/boutique?cat=hommes",     icon: Users       },
         { title: "Femmes",             path: "/boutique?cat=femmes",     icon: Users       },
       ],
