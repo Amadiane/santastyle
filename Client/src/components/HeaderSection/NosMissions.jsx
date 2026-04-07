@@ -29,7 +29,7 @@ export default function NosMissions() {
     {
       icon: <Star size={24} color={SS.gold} />,
       titre: "Sélection Premium",
-      texte: "Chaque article est soigneusement sélectionné auprès des meilleurs fournisseurs du Maroc, de Dubaï, du Mali et d'ailleurs pour vous garantir qualité et originalité.",
+      texte: "Chaque article est soigneusement sélectionné auprès des meilleurs fournisseurs du Maroc, de Dubaï et d'ailleurs pour vous garantir qualité et originalité.",
     },
     {
       icon: <Shield size={24} color={SS.gold} />,
@@ -60,7 +60,7 @@ export default function NosMissions() {
 
   const timeline = [
     { annee: "2015", titre: "Naissance de Santa'Style", texte: "Tout commence avec une passion pour la mode et l'envie de proposer aux femmes et hommes de Conakry des vêtements de qualité à des prix accessibles." },
-    { annee: "2018", titre: "Expansion des collections", texte: "Nos partenariats s'étendent au Maroc, à Dubaï et au Mali. Les collections s'enrichissent avec des pièces exclusives et des tissus d'exception." },
+    { annee: "2018", titre: "Expansion des collections", texte: "Nos partenariats s'étendent au Maroc, à Dubaï. Les collections s'enrichissent avec des pièces exclusives et des tissus d'exception." },
     { annee: "2021", titre: "Lancement digital", texte: "Santa'Style s'ouvre au monde digital. Commandes via WhatsApp, photos HD, livraison à domicile — la boutique vient à vous." },
     { annee: "Aujourd'hui", titre: "Une boutique de référence", texte: "Des centaines de clients satisfaits, une réputation construite sur la qualité et la confiance. Santa'Style continue de grandir avec vous." },
   ];
