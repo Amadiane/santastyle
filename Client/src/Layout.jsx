@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Outlet, useLocation, Navigate } from "react-router-dom";
 import Header from "./components/Header/Header";
 import Footer from "./components/Footer/Footer";
 import NavAdmin from "./components/Header/NavAdmin";
 import { I18nextProvider } from "react-i18next";
 import i18n from "./i18n";
-import React from "react";
 import { useTheme } from "./context/ThemeContext";
 
 const SIDEBAR_EXPANDED  = 240;
@@ -26,19 +25,27 @@ const LIGHT_TOKENS = {
   scrollThumb: "#C9A84C",
 };
 
+// ✅ ScrollToTop intégré directement dans le layout
+const useScrollToTop = () => {
+  const location = useLocation();
+  useEffect(() => {
+    const root = document.getElementById("root");
+    if (root) {
+      root.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [location.pathname, location.search]); // ✅ pathname ET searchParams
+};
+
 const App = () => {
   const location = useLocation();
   const token    = localStorage.getItem("access");
   const { tokens } = useTheme();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  React.useEffect(() => {
-    const rootElement = document.getElementById("root");
-    if (rootElement) rootElement.scrollTop = 0;
-    window.scrollTo(0, 0);
-    const timer = setTimeout(() => { window.scrollTo(0, 0); }, 0);
-    return () => clearTimeout(timer);
-  }, [location.pathname]);
+  // ✅ Remplace l'ancien useEffect — écoute aussi les changements de ?cat= etc.
+  useScrollToTop();
 
   const adminPaths = [
     "/ventes", "/listeContacts", "/listeRejoindre",
@@ -54,8 +61,8 @@ const App = () => {
 
   if (isAdminPage && !token) return <Navigate to="/login" replace />;
 
-  const sidebarW     = sidebarCollapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED;
-  const adminTokens  = tokens;
+  const sidebarW    = sidebarCollapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED;
+  const adminTokens = tokens;
 
   const baseStyles = `
     html { overflow: hidden; width: 100%; height: 100%; }
@@ -76,8 +83,6 @@ const App = () => {
     select option { background: ${adminTokens.surface}; color: ${adminTokens.text}; }
   `;
 
-  // ✅ Public : body = fond doré foncé pour que le header transparent
-  //    soit cohérent même avant que React monte
   const publicStyles = `
     ${baseStyles}
     body { background: #5C3D00; }
@@ -96,10 +101,14 @@ const App = () => {
 
       {isAdminPage ? (
 
-        // ── LAYOUT ADMIN ────────────────────────────────────────────
+        // ── LAYOUT ADMIN ─────────────────────────────────────────────
         <div style={{ background: adminTokens.bg, minHeight: "100vh", width: "100%", display: "flex" }}>
           <NavAdmin onToggle={setSidebarCollapsed} />
-          <main style={{ marginLeft: `${sidebarW}px`, flex: 1, minHeight: "100vh", transition: "margin-left 0.25s cubic-bezier(0.4,0,0.2,1)", position: "relative", overflow: "hidden" }}>
+          <main style={{
+            marginLeft: `${sidebarW}px`, flex: 1, minHeight: "100vh",
+            transition: "margin-left 0.25s cubic-bezier(0.4,0,0.2,1)",
+            position: "relative", overflow: "hidden",
+          }}>
             <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
               <div style={{ position: "absolute", top: 0, right: 0, width: "600px", height: "600px", borderRadius: "50%", background: `radial-gradient(circle, ${adminTokens.gold}08 0%, transparent 70%)` }} />
               <div style={{ position: "absolute", bottom: 0, left: 0, width: "500px", height: "500px", borderRadius: "50%", background: `radial-gradient(circle, ${adminTokens.gold}06 0%, transparent 70%)` }} />
@@ -112,14 +121,9 @@ const App = () => {
 
       ) : (
 
-        // ── LAYOUT PUBLIC ────────────────────────────────────────────
-        // ✅ Un seul fond continu — dégradé doré en haut, crème en bas
-        // Pas de bords arrondis, pas de rupture
+        // ── LAYOUT PUBLIC ─────────────────────────────────────────────
         <div style={{
-          minHeight: "100vh",
-          width: "100%",
-          // Dégradé vertical : brun doré → or → crème
-          // Le header transparent flotte dessus parfaitement
+          minHeight: "100vh", width: "100%",
           background: `linear-gradient(180deg,
             #4A3000 0%,
             #6B4A10 12%,
@@ -129,15 +133,12 @@ const App = () => {
             #F7F3EC 100%
           )`,
         }}>
-
-          {/* Header fixe transparent — PAS de fond propre, il hérite du dégradé */}
           {!isLoginPage && (
             <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50 }}>
               <Header logoColor="#C9A84C" />
             </div>
           )}
 
-          {/* Contenu — paddingTop 0, le hero gère son propre espace */}
           <main style={{ position: "relative", paddingBottom: "4rem" }}>
             <Outlet />
           </main>

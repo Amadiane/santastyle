@@ -19,19 +19,39 @@ class Categorie(models.Model):
 
 
 
+# class Produit(models.Model):
+
+#     nom = models.CharField(max_length=100)
+#     description = models.TextField(blank=True, null=True)
+#     prix = models.DecimalField(max_digits=10, decimal_places=2)
+#     categorie = models.ForeignKey(
+#         Categorie,
+#         on_delete=models.SET_NULL,
+#         null=True,
+#         related_name="produits"
+#     )
+#     image = CloudinaryField('Image', folder='produits', blank=True, null=True)
+#     est_nouveau = models.BooleanField(default=False)
+#     date_creation = models.DateTimeField(auto_now_add=True)
+
+#     def __str__(self):
+#         return self.nom
 class Produit(models.Model):
 
-    nom = models.CharField(max_length=100)
-    description = models.TextField(blank=True, null=True)
-    prix = models.DecimalField(max_digits=10, decimal_places=2)
-    categorie = models.ForeignKey(
-        Categorie,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name="produits"
-    )
-    image = CloudinaryField('Image', folder='produits', blank=True, null=True)
-    est_nouveau = models.BooleanField(default=False)
+    GENRE_CHOICES = [
+        ("homme",  "Homme"),
+        ("femme",  "Femme"),
+        ("enfant", "Enfant"),
+        ("mixte",  "Mixte"),  # accessoires, etc.
+    ]
+
+    nom           = models.CharField(max_length=100)
+    description   = models.TextField(blank=True, null=True)
+    prix          = models.DecimalField(max_digits=10, decimal_places=2)
+    categorie     = models.ForeignKey(Categorie, on_delete=models.SET_NULL, null=True, related_name="produits")
+    image         = CloudinaryField('Image', folder='produits', blank=True, null=True)
+    est_nouveau   = models.BooleanField(default=False)
+    genre         = models.CharField(max_length=10, choices=GENRE_CHOICES, default="mixte")  # ✅
     date_creation = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

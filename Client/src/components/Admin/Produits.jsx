@@ -8,6 +8,20 @@ import {
 import CONFIG from "../../config/config";
 import { useTheme } from "../../context/ThemeContext";
 
+const GENRE_OPTIONS = [
+  { value: "mixte",  label: "✨ Mixte / Accessoire" },
+  { value: "homme",  label: "👔 Homme" },
+  { value: "femme",  label: "👗 Femme" },
+  { value: "enfant", label: "🧒 Enfant" },
+];
+
+const GENRE_STYLE = {
+  homme:  { bg: "rgba(59,130,246,0.12)",  border: "rgba(59,130,246,0.3)",  color: "#1d4ed8" },
+  femme:  { bg: "rgba(236,72,153,0.12)",  border: "rgba(236,72,153,0.3)",  color: "#be185d" },
+  enfant: { bg: "rgba(34,197,94,0.12)",   border: "rgba(34,197,94,0.3)",   color: "#15803d" },
+  mixte:  { bg: "rgba(201,168,76,0.12)",  border: "rgba(201,168,76,0.3)",  color: "#8A6A20" },
+};
+
 const Produits = () => {
   const navigate = useNavigate();
   const { tokens: SS } = useTheme();
@@ -22,7 +36,10 @@ const Produits = () => {
   const [filterCat, setFilterCat]   = useState("");
   const [showForm, setShowForm]     = useState(false);
 
-  const emptyForm  = { nom: "", description: "", prix: "", categorie: "", image: null, est_nouveau: false };
+  const emptyForm = {
+    nom: "", description: "", prix: "", categorie: "",
+    image: null, est_nouveau: false, genre: "mixte",
+  };
   const emptyStock = { taille: "", couleur: "", quantite: "1" };
 
   const [form, setForm]                 = useState(emptyForm);
@@ -70,7 +87,6 @@ const Produits = () => {
     return data.secure_url;
   };
 
-  // ── Créer produit ────────────────────────────────────────────────
   const handleCreate = async (e) => {
     e.preventDefault();
     setSubmitting(true); setError(""); setSuccess("");
@@ -87,20 +103,18 @@ const Produits = () => {
           prix:        form.prix,
           categorie:   form.categorie || null,
           est_nouveau: form.est_nouveau,
+          genre:       form.genre,
           ...(imageUrl && { image: imageUrl }),
         }),
       });
 
-      // ✅ Debug 500 — log le contenu brut de l'erreur
       if (!resProduit.ok) {
         const txt = await resProduit.text();
-        console.error("Erreur création produit:", resProduit.status, txt);
+        console.error("Erreur création:", resProduit.status, txt);
         try {
           const json = JSON.parse(txt);
           setError(Object.entries(json).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join(" | "));
-        } catch {
-          setError(`Erreur ${resProduit.status} — vérifiez la console`);
-        }
+        } catch { setError(`Erreur ${resProduit.status} — vérifiez la console`); }
         return;
       }
 
@@ -133,14 +147,10 @@ const Produits = () => {
         : `⚠️ "${produit.nom}" créé — ajoutez un stock via Stocks`
       );
       setTimeout(() => setSuccess(""), 5000);
-    } catch (err) {
-      console.error("Exception création:", err);
-      setError(err.message || "Erreur serveur");
-    }
+    } catch (err) { setError(err.message || "Erreur serveur"); }
     finally { setSubmitting(false); }
   };
 
-  // ── Modifier produit ─────────────────────────────────────────────
   const handleUpdate = async (id) => {
     setUpdating(true); setError(""); setSuccess("");
     try {
@@ -153,6 +163,7 @@ const Produits = () => {
         prix:        editForm.prix,
         categorie:   editForm.categorie || null,
         est_nouveau: editForm.est_nouveau,
+        genre:       editForm.genre,
       };
       if (imageUrl) body.image = imageUrl;
 
@@ -168,9 +179,7 @@ const Produits = () => {
         try {
           const json = JSON.parse(txt);
           setError(Object.entries(json).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join(" | "));
-        } catch {
-          setError(`Erreur ${res.status} — vérifiez la console`);
-        }
+        } catch { setError(`Erreur ${res.status} — vérifiez la console`); }
         return;
       }
 
@@ -179,14 +188,10 @@ const Produits = () => {
       setEditingId(null); setEditImagePreview(null);
       setSuccess("Produit modifié !");
       setTimeout(() => setSuccess(""), 3000);
-    } catch (err) {
-      console.error("Exception update:", err);
-      setError(err.message || "Erreur serveur");
-    }
+    } catch (err) { setError(err.message || "Erreur serveur"); }
     finally { setUpdating(false); }
   };
 
-  // ── Supprimer produit ────────────────────────────────────────────
   const handleDelete = async (id) => {
     setDeletingId(id); setError("");
     try {
@@ -221,6 +226,17 @@ const Produits = () => {
       <div style={{ width: "18px", height: "18px", borderRadius: "50%", background: "#fff", position: "absolute", top: "3px", left: value ? "23px" : "3px", transition: "left 0.2s" }} />
     </button>
   );
+
+  const GenreBadge = ({ genre }) => {
+    if (!genre || genre === "mixte") return null;
+    const s = GENRE_STYLE[genre] || GENRE_STYLE.mixte;
+    const labels = { homme: "👔 Homme", femme: "👗 Femme", enfant: "🧒 Enfant" };
+    return (
+      <span style={{ padding: "2px 10px", borderRadius: "20px", background: s.bg, border: `1px solid ${s.border}`, fontSize: "11px", color: s.color, fontWeight: "600" }}>
+        {labels[genre]}
+      </span>
+    );
+  };
 
   return (
     <div style={{ minHeight: "100vh", background: SS.bg, padding: "2rem", color: SS.text, fontFamily: "var(--font-sans, sans-serif)" }}>
@@ -306,16 +322,25 @@ const Produits = () => {
                 <textarea placeholder="Description" rows={2}
                   style={{ ...inputStyle, resize: "none", marginBottom: "12px" }}
                   value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+
+                {/* Catégorie + Genre + Image */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
                   <select style={inputStyle} value={form.categorie}
                     onChange={e => setForm({ ...form, categorie: e.target.value })}>
                     <option value="">— Catégorie —</option>
                     {categories.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
                   </select>
+
+                  {/* ✅ Sélecteur Genre */}
+                  <select style={inputStyle} value={form.genre}
+                    onChange={e => setForm({ ...form, genre: e.target.value })}>
+                    {GENRE_OPTIONS.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}
+                  </select>
+
                   <label style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", borderRadius: "8px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.textMuted, cursor: "pointer" }}>
                     <ImageIcon size={16} color={SS.gold} />
                     <span style={{ fontSize: "13px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {form.image ? form.image.name : "Choisir une image"}
+                      {form.image ? form.image.name : "Image"}
                     </span>
                     <input type="file" accept="image/*" style={{ display: "none" }}
                       onChange={e => { const f = e.target.files[0]; if (f) { setForm({ ...form, image: f }); setImagePreview(URL.createObjectURL(f)); } }} />
@@ -332,7 +357,7 @@ const Produits = () => {
                 )}
               </div>
 
-              {/* ✅ Badge Nouveau */}
+              {/* Badge Nouveau */}
               <div style={{ marginBottom: "16px", padding: "14px 16px", borderRadius: "10px", background: SS.bg, border: `1px solid ${form.est_nouveau ? SS.gold + "60" : SS.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                   <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: `${SS.gold}18`, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -414,7 +439,7 @@ const Produits = () => {
           </div>
         </div>
 
-        {/* Grille */}
+        {/* ── Grille produits ── */}
         {loading ? (
           <div style={{ textAlign: "center", padding: "4rem", color: SS.textDim }}>Chargement...</div>
         ) : filtered.length === 0 ? (
@@ -479,7 +504,13 @@ const Produits = () => {
                         {categories.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
                       </select>
 
-                      {/* ✅ Toggle Nouveau en édition */}
+                      {/* ✅ Genre en édition */}
+                      <select style={inputSmStyle} value={editForm.genre || "mixte"}
+                        onChange={e => setEditForm({ ...editForm, genre: e.target.value })}>
+                        {GENRE_OPTIONS.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}
+                      </select>
+
+                      {/* Toggle Nouveau en édition */}
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", borderRadius: "8px", background: SS.bg, border: `1px solid ${editForm.est_nouveau ? SS.gold + "50" : SS.border}` }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
                           <Sparkles size={13} color={SS.gold} />
@@ -514,7 +545,6 @@ const Produits = () => {
                           </div>
                         )}
 
-                        {/* ✅ Badge Nouveau */}
                         {produit.est_nouveau && (
                           <div style={{ position: "absolute", top: "10px", left: "10px" }}>
                             <span style={{ padding: "4px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: "800", background: SS.gold, color: "#1A1208", display: "flex", alignItems: "center", gap: "4px" }}>
@@ -538,10 +568,19 @@ const Produits = () => {
                       </div>
 
                       <div style={{ padding: "12px 14px" }}>
-                        <div style={{ fontSize: "15px", fontWeight: "700", color: SS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "2px" }}>{produit.nom}</div>
-                        <div style={{ fontSize: "15px", fontWeight: "700", color: SS.goldLight, marginBottom: "6px" }}>{Number(produit.prix).toLocaleString("fr-FR")} GNF</div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
-                          <span style={{ padding: "2px 10px", borderRadius: "20px", background: `${SS.gold}18`, border: `1px solid ${SS.gold}35`, fontSize: "11px", color: SS.gold }}>{getCatNom(produit.categorie)}</span>
+                        <div style={{ fontSize: "15px", fontWeight: "700", color: SS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "4px" }}>
+                          {produit.nom}
+                        </div>
+                        <div style={{ fontSize: "15px", fontWeight: "700", color: SS.goldLight, marginBottom: "8px" }}>
+                          {Number(produit.prix).toLocaleString("fr-FR")} GNF
+                        </div>
+
+                        {/* ✅ Badges catégorie + genre */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px", flexWrap: "wrap" }}>
+                          <span style={{ padding: "2px 10px", borderRadius: "20px", background: `${SS.gold}18`, border: `1px solid ${SS.gold}35`, fontSize: "11px", color: SS.gold }}>
+                            {getCatNom(produit.categorie)}
+                          </span>
+                          <GenreBadge genre={produit.genre} />
                         </div>
 
                         {stocksList.length > 0 && (
@@ -577,7 +616,8 @@ const Produits = () => {
                                 categorie:   produit.categorie || "",
                                 imageUrl:    produit.image_url || null,
                                 image:       null,
-                                est_nouveau: produit.est_nouveau ?? false, // ✅
+                                est_nouveau: produit.est_nouveau ?? false,
+                                genre:       produit.genre || "mixte",
                               });
                             }}
                             style={{ flex: 1, padding: "8px", borderRadius: "7px", background: `${SS.gold}18`, border: `1px solid ${SS.gold}35`, color: SS.gold, fontSize: "13px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }}>
