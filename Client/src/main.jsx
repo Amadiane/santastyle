@@ -93,7 +93,7 @@ const router = createBrowserRouter(
       {/* <Route index element={<Home />} /> */}
       {/* <Route index element={<Navigate to="/" replace />} />
       <Route path="home" element={<Home />} /> */}
-      <Route index element={<Home />} />
+      <Route index element={<BoutiquePage  />} />
       <Route path="categories" element={<Categories />} />
       <Route path="createpost" element={<Createpost />} />
       <Route path="forgotpassword" element={<Forgetpassword />} />

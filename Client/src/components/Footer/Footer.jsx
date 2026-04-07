@@ -98,7 +98,7 @@ const Footer = () => {
     { label: "Nouveautés",        path: "/boutique?filtre=nouveau", icon: Sparkles    },
     { label: "Hommes",            path: "/boutique?cat=hommes",     icon: Package     },
     { label: "Femmes",            path: "/boutique?cat=femmes",     icon: Package     },
-    { label: "Enfants",           path: "/boutique?cat=enfants",    icon: Package     },
+    // { label: "Enfants",           path: "/boutique?cat=enfants",    icon: Package     },
   ];
 
   const infos = [
