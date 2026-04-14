@@ -2,12 +2,15 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Search, SlidersHorizontal, X, ShoppingBag, Package, Sparkles } from "lucide-react";
 import CONFIG from "../../config/config.js";
+import track from "../../utils/tracker";
+
+  
 
 const SS = {
-  bg: "#F7F3EC", surface: "#EDE5D0", card: "#E4D9C0",
-  border: "#D4C08A", borderHover: "#B89A50",
+  bg: "#FAFAFA", surface: "#F5F2EC", card: "#EDE8DC",
+  border: "#E0D9CC", borderHover: "#C9A84C",
   gold: "#C9A84C", goldLight: "#8A6A20", goldDark: "#5C3D00",
-  text: "#2C1A00", textMuted: "#8A6A20", textDim: "#B8A070",
+  text: "#1A1208", textMuted: "#7A5A18", textDim: "#B8A070",
   success: "#1A6B3C", successBg: "#D4EDDF",
   warning: "#92600A", warningBg: "#FEF3CC",
   danger: "#A32020", dangerBg: "#FDEAEA",
@@ -39,7 +42,6 @@ const BadgeStock = ({ total }) => {
 const GenreSelector = ({ onSelect }) => {
   const [hovered, setHovered] = useState(null);
 
-  // ✅ Seulement deux choix
   const choices = [
     { value: "hommes", icon: "👔", label: "Homme", sub: "Mode masculine",  borderColor: "rgba(59,130,246,0.5)", hoverBg: "#E6F1FB" },
     { value: "femmes", icon: "👗", label: "Femme",  sub: "Mode féminine",  borderColor: "rgba(236,72,153,0.5)", hoverBg: "#FBEAF0" },
@@ -48,20 +50,21 @@ const GenreSelector = ({ onSelect }) => {
   return (
     <div style={{
       position: "fixed", inset: 0, zIndex: 9999,
-      background: "linear-gradient(180deg, #4A3000 0%, #8A6A20 45%, #C9A84C 75%, #F0E8D5 100%)",
+      // ✅ Gradient clair : or lumineux → blanc cassé
+      background: "linear-gradient(180deg, #8A6A20 0%, #C9A84C 50%, #F5F2EC 100%)",
       display: "flex", alignItems: "center", justifyContent: "center", padding: "24px",
     }}>
       <div style={{
-        background: "rgba(247,243,236,0.98)", borderRadius: "24px",
+        background: "rgba(250,250,250,0.98)", borderRadius: "24px",
         padding: "40px 36px", maxWidth: "460px", width: "100%",
-        border: "1px solid #D4C08A",
-        boxShadow: "0 24px 64px rgba(92,61,0,0.3)",
+        border: "1px solid #E0D9CC",
+        boxShadow: "0 24px 64px rgba(92,61,0,0.15)",
       }}>
         {/* Logo */}
         <div style={{ display: "flex", justifyContent: "center", marginBottom: "28px" }}>
-          <div style={{ padding: "6px 18px 6px 8px", borderRadius: "30px", background: "linear-gradient(135deg, #5C3D00, #8A6A20)", display: "flex", alignItems: "center", gap: "8px" }}>
-            <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "1px solid rgba(201,168,76,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ color: "#C9A84C", fontSize: "14px", fontWeight: "900", fontFamily: "serif" }}>S</span>
+          <div style={{ padding: "6px 18px 6px 8px", borderRadius: "30px", background: "linear-gradient(135deg, #8A6A20, #C9A84C)", display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ color: "#fff", fontSize: "14px", fontWeight: "900", fontFamily: "serif" }}>S</span>
             </div>
             <span style={{ fontSize: "15px", fontWeight: "800", color: "#fff" }}>Santa'Style</span>
           </div>
@@ -74,7 +77,6 @@ const GenreSelector = ({ onSelect }) => {
           Que cherchez-vous aujourd'hui ?
         </div>
 
-        {/* ✅ Deux cartes côte à côte */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "16px" }}>
           {choices.map(c => (
             <button
@@ -89,7 +91,7 @@ const GenreSelector = ({ onSelect }) => {
                 background: hovered === c.value ? c.hoverBg : "#fff",
                 transition: "all 0.18s", outline: "none",
                 transform: hovered === c.value ? "translateY(-4px)" : "none",
-                boxShadow: hovered === c.value ? "0 10px 28px rgba(92,61,0,0.14)" : "none",
+                boxShadow: hovered === c.value ? "0 10px 28px rgba(92,61,0,0.10)" : "none",
               }}
             >
               <div style={{ fontSize: "44px", marginBottom: "12px", lineHeight: 1 }}>{c.icon}</div>
@@ -106,10 +108,10 @@ const GenreSelector = ({ onSelect }) => {
           onMouseLeave={e => e.currentTarget.style.opacity = "1"}
           style={{
             width: "100%", padding: "14px", borderRadius: "12px",
-            background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`,
+            background: `linear-gradient(135deg, ${SS.goldLight}, ${SS.gold})`,
             border: "none", color: "#fff", fontSize: "14px", fontWeight: "700",
             cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
-            boxShadow: "0 4px 16px rgba(201,168,76,0.4)", transition: "opacity 0.15s",
+            boxShadow: "0 4px 16px rgba(201,168,76,0.3)", transition: "opacity 0.15s",
           }}
         >
           <ShoppingBag size={16} /> Voir toute la boutique
@@ -131,6 +133,7 @@ const CarteProduit = ({ produit, onClick }) => {
   const isNew  = () => produit.est_nouveau === true;
 
   const envoyerWA = (e) => {
+    track("clic_whatsapp", { produit_id: produit.id, produit_nom: produit.nom });
     e.stopPropagation();
     const msg = encodeURIComponent(
       `Bonjour Santa'Style ! 👋\nJe souhaite commander :\n\n🛍️ *${produit.nom}*\n💰 Prix : ${Number(produit.prix).toLocaleString("fr-FR")} GNF\n🔗 Lien : ${window.location.origin}/boutique/${produit.id}\n\nEst-ce disponible ?`
@@ -141,7 +144,7 @@ const CarteProduit = ({ produit, onClick }) => {
   return (
     <div
       onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
-      style={{ background: "#fff", borderRadius: "18px", overflow: "hidden", transition: "all 0.25s cubic-bezier(0.4,0,0.2,1)", cursor: epuise ? "default" : "pointer", transform: hovered && !epuise ? "translateY(-6px)" : "none", boxShadow: hovered && !epuise ? `0 20px 48px ${SS.gold}25, 0 8px 16px rgba(0,0,0,0.08)` : "0 2px 12px rgba(0,0,0,0.07)", border: `1px solid ${hovered && !epuise ? SS.gold + "60" : SS.border}` }}
+      style={{ background: "#fff", borderRadius: "18px", overflow: "hidden", transition: "all 0.25s cubic-bezier(0.4,0,0.2,1)", cursor: epuise ? "default" : "pointer", transform: hovered && !epuise ? "translateY(-6px)" : "none", boxShadow: hovered && !epuise ? `0 20px 48px ${SS.gold}20, 0 8px 16px rgba(0,0,0,0.06)` : "0 2px 8px rgba(0,0,0,0.05)", border: `1px solid ${hovered && !epuise ? SS.gold + "60" : SS.border}` }}
     >
       <div onClick={() => !epuise && onClick(produit)}
         style={{ position: "relative", paddingBottom: "130%", background: `linear-gradient(135deg, ${SS.surface}, ${SS.card})`, overflow: "hidden" }}>
@@ -150,7 +153,7 @@ const CarteProduit = ({ produit, onClick }) => {
             <img src={produit.image_url} alt={produit.nom}
               style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top", transition: "transform 0.5s", transform: hovered && !epuise ? "scale(1.06)" : "scale(1)", filter: epuise ? "brightness(0.5) saturate(0.7)" : "brightness(1)" }}
               onError={e => { e.target.style.display = "none"; }} />
-            {!epuise && <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "80px", background: "linear-gradient(to top, rgba(0,0,0,0.55), transparent)", pointerEvents: "none" }} />}
+            {!epuise && <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "80px", background: "linear-gradient(to top, rgba(0,0,0,0.50), transparent)", pointerEvents: "none" }} />}
           </>
         ) : (
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "8px" }}>
@@ -259,7 +262,6 @@ const BoutiquePage = () => {
   const [filtreDispo, setFiltreDispo] = useState(false);
   const [loading, setLoading]         = useState(false);
 
-  // ✅ Sélecteur genre — une seule fois par session
   const [showGenreSelector, setShowGenreSelector] = useState(() => {
     return !sessionStorage.getItem("ss_genre_choisi");
   });
@@ -267,6 +269,16 @@ const BoutiquePage = () => {
   const filtreNouveau = searchParams.get("filtre") === "nouveau";
   const filtreGenre   = searchParams.get("cat") || "";
   const searchParam   = searchParams.get("q") || "";
+
+  useEffect(() => { track("visite_boutique"); }, []);
+
+  useEffect(() => {
+    if (filtreGenre) track("filtre_genre", { genre: filtreGenre });
+  }, [filtreGenre]);
+
+  useEffect(() => {
+    if (search.length > 2) track("recherche", { recherche: search });
+  }, [search]);
 
   useEffect(() => {
     if (searchParam) setSearch(searchParam);
@@ -307,7 +319,6 @@ const BoutiquePage = () => {
 
   const genreValue = filtreGenre ? filtreGenre.replace(/s$/, "") : "";
 
-  // ✅ Recherche intelligente — nom + description + catégorie
   const getCatNomRecherche = (id) => categories.find(c => c.id === id)?.nom || "";
 
   const filtered = produits.filter(p => {
@@ -333,7 +344,6 @@ const BoutiquePage = () => {
     setSearchParams(searchParams);
   };
 
-  // ✅ Titres dynamiques — sans enfants
   const heroTitre = filtreNouveau      ? "Nos Nouveautés"
     : filtreGenre === "hommes"         ? "Collection Hommes"
     : filtreGenre === "femmes"         ? "Collection Femmes"
@@ -350,21 +360,21 @@ const BoutiquePage = () => {
 
       <div style={{ minHeight: "100vh", fontFamily: "var(--font-sans, sans-serif)" }}>
 
-        {/* Hero */}
-        <div style={{ paddingTop: "96px", paddingBottom: "60px", paddingLeft: "24px", paddingRight: "24px", textAlign: "center", position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)", backgroundSize: "28px 28px", pointerEvents: "none" }} />
+        {/* ✅ Hero — gradient or lumineux au lieu du marron foncé */}
+        <div style={{ paddingTop: "96px", paddingBottom: "60px", paddingLeft: "24px", paddingRight: "24px", textAlign: "center", position: "relative", overflow: "hidden", background: "linear-gradient(135deg, #8A6A20 0%, #C9A84C 50%, #E8D89A 100%)" }}>
+          <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px)", backgroundSize: "28px 28px", pointerEvents: "none" }} />
           <div style={{ position: "relative" }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "5px 16px", borderRadius: "20px", background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)", fontSize: "11px", color: "rgba(255,255,255,0.9)", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "20px" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "5px 16px", borderRadius: "20px", background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.35)", fontSize: "11px", color: "rgba(255,255,255,0.95)", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "20px" }}>
               <Sparkles size={11} />
               {filtreNouveau ? "Nouveautés" : filtreGenre ? `Collection ${filtreGenre}` : "Nouvelle Collection"}
             </div>
-            <h1 style={{ fontSize: "44px", fontWeight: "800", color: "#fff", margin: "0 0 12px", letterSpacing: "-0.03em", textShadow: "0 2px 24px rgba(0,0,0,0.15)" }}>
+            <h1 style={{ fontSize: "44px", fontWeight: "800", color: "#fff", margin: "0 0 12px", letterSpacing: "-0.03em", textShadow: "0 2px 24px rgba(0,0,0,0.12)" }}>
               {heroTitre}
             </h1>
-            <p style={{ fontSize: "16px", color: "rgba(255,255,255,0.72)", margin: "0 0 32px", fontWeight: "300", letterSpacing: "0.05em" }}>
+            <p style={{ fontSize: "16px", color: "rgba(255,255,255,0.80)", margin: "0 0 32px", fontWeight: "300", letterSpacing: "0.05em" }}>
               {heroSous}
             </p>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "20px", padding: "12px 28px", borderRadius: "40px", background: "rgba(255,255,255,0.13)", border: "1px solid rgba(255,255,255,0.2)", fontSize: "13px", color: "rgba(255,255,255,0.88)", backdropFilter: "blur(8px)", flexWrap: "wrap", justifyContent: "center" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "20px", padding: "12px 28px", borderRadius: "40px", background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.3)", fontSize: "13px", color: "rgba(255,255,255,0.95)", backdropFilter: "blur(8px)", flexWrap: "wrap", justifyContent: "center" }}>
               <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                 <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#4ade80", flexShrink: 0 }} />
                 {totalDispo} articles disponibles
@@ -377,15 +387,15 @@ const BoutiquePage = () => {
           </div>
         </div>
 
-        {/* Zone crème */}
+        {/* ✅ Zone crème — fond très clair */}
         <div style={{ background: SS.bg, borderRadius: "32px 32px 0 0" }}>
           <div style={{ display: "flex", justifyContent: "center", paddingTop: "12px", paddingBottom: "4px" }}>
-            <div style={{ width: "48px", height: "4px", borderRadius: "2px", background: `linear-gradient(90deg, ${SS.goldDark}, ${SS.gold})`, opacity: 0.6 }} />
+            <div style={{ width: "48px", height: "4px", borderRadius: "2px", background: `linear-gradient(90deg, ${SS.goldLight}, ${SS.gold})`, opacity: 0.5 }} />
           </div>
 
           <div style={{ maxWidth: "1300px", margin: "0 auto", padding: "28px 16px 60px" }}>
 
-            {/* ✅ Filtres rapides genre — Tous / Hommes / Femmes */}
+            {/* Filtres rapides genre */}
             <div style={{ display: "flex", gap: "8px", marginBottom: "16px", flexWrap: "wrap", alignItems: "center" }}>
               <span style={{ fontSize: "12px", color: SS.textMuted, marginRight: "4px", fontWeight: "600" }}>Genre :</span>
               {[
@@ -424,7 +434,7 @@ const BoutiquePage = () => {
 
             {/* Recherche + disponibles */}
             <div style={{ display: "flex", gap: "10px", marginBottom: "16px", flexWrap: "wrap" }}>
-              <div style={{ flex: 1, minWidth: "220px", display: "flex", alignItems: "center", gap: "10px", background: "#fff", border: `1px solid ${SS.border}`, borderRadius: "12px", padding: "0 16px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+              <div style={{ flex: 1, minWidth: "220px", display: "flex", alignItems: "center", gap: "10px", background: "#fff", border: `1px solid ${SS.border}`, borderRadius: "12px", padding: "0 16px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
                 <Search size={16} color={SS.textDim} />
                 <input
                   placeholder="Rechercher un article, une catégorie..."
@@ -434,7 +444,7 @@ const BoutiquePage = () => {
                 {search && <button onClick={() => setSearch("")} style={{ background: "none", border: "none", cursor: "pointer", display: "flex" }}><X size={15} color={SS.textDim} /></button>}
               </div>
               <button onClick={() => setFiltreDispo(!filtreDispo)}
-                style={{ padding: "0 20px", borderRadius: "12px", cursor: "pointer", border: `1px solid ${filtreDispo ? SS.gold : SS.border}`, background: filtreDispo ? `${SS.gold}18` : "#fff", color: filtreDispo ? SS.goldDark : SS.textMuted, fontSize: "13px", fontWeight: "600", display: "flex", alignItems: "center", gap: "7px", transition: "all 0.15s", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+                style={{ padding: "0 20px", borderRadius: "12px", cursor: "pointer", border: `1px solid ${filtreDispo ? SS.gold : SS.border}`, background: filtreDispo ? `${SS.gold}18` : "#fff", color: filtreDispo ? SS.goldDark : SS.textMuted, fontSize: "13px", fontWeight: "600", display: "flex", alignItems: "center", gap: "7px", transition: "all 0.15s", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
                 <SlidersHorizontal size={15} /> Disponibles
               </button>
             </div>
@@ -494,7 +504,6 @@ const BoutiquePage = () => {
                 </span>
               )}
 
-              {/* Bouton rouvrir sélecteur */}
               <button
                 onClick={() => setShowGenreSelector(true)}
                 style={{ marginLeft: "auto", padding: "5px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: "600", background: SS.surface, border: `1px solid ${SS.border}`, color: SS.textMuted, cursor: "pointer", display: "flex", alignItems: "center", gap: "5px" }}>

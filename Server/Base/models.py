@@ -90,3 +90,42 @@ class Vente(models.Model):
     date_vente = models.DateTimeField(auto_now_add=True)
 
     vendeur = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+
+
+
+
+# boutique/tracking.py
+from django.db import models
+from django.utils import timezone
+
+class VisiteBoutique(models.Model):
+    """Track chaque visite/action sur le site public"""
+    
+    TYPE_CHOICES = [
+        ("visite_boutique",   "Visite boutique"),
+        ("visite_produit",    "Visite produit"),
+        ("clic_whatsapp",     "Clic WhatsApp"),
+        ("clic_commander",    "Clic Commander"),
+        ("filtre_genre",      "Filtre genre"),
+        ("filtre_categorie",  "Filtre catégorie"),
+        ("recherche",         "Recherche"),
+        ("visite_contact",    "Visite contact"),
+        ("visite_equipe",     "Visite équipe"),
+        ("visite_missions",   "Visite missions"),
+    ]
+
+    type_action  = models.CharField(max_length=50, choices=TYPE_CHOICES)
+    produit_id   = models.IntegerField(null=True, blank=True)
+    produit_nom  = models.CharField(max_length=200, blank=True)
+    genre        = models.CharField(max_length=20, blank=True)
+    categorie    = models.CharField(max_length=100, blank=True)
+    recherche    = models.CharField(max_length=200, blank=True)
+    ip           = models.GenericIPAddressField(null=True, blank=True)
+    user_agent   = models.TextField(blank=True)
+    created_at   = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.type_action} — {self.created_at.strftime('%d/%m %H:%M')}"

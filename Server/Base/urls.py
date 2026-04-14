@@ -1,7 +1,8 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (UserViewSet, LoginView, CategorieListCreateView, CategorieRetrieveUpdateDestroyView,
-ProduitListCreateView, ProduitRetrieveUpdateDestroyView, StockViewSet, VenteViewSet)
+ProduitListCreateView, ProduitRetrieveUpdateDestroyView, StockViewSet, VenteViewSet, tracker_action, stats_boutique)
+
 
 router = DefaultRouter()
 router.register("users", UserViewSet, basename="users")
@@ -15,5 +16,7 @@ urlpatterns = [
     path('categories/<int:pk>/', CategorieRetrieveUpdateDestroyView.as_view(), name='categorie-detail'),
     path('produits/', ProduitListCreateView.as_view(), name='produit-list-create'),
     path('produits/<int:pk>/',ProduitRetrieveUpdateDestroyView.as_view(), name='produit-detail'),
+    path("track/",       tracker_action, name="tracker_action"),
+    path("track/stats/", stats_boutique, name="stats_boutique"),
 
 ]

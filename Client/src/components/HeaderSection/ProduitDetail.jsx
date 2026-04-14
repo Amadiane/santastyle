@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Share2, Package, CheckCircle, AlertCircle, XCircle } from "lucide-react";
 import CONFIG from "../../config/config.js";
+import track from "../../utils/tracker";
 
 const SS = {
   bg:          "#F7F3EC",
@@ -45,6 +46,11 @@ const ProduitDetail = () => {
   const [couleursDispos, setCouleursDispos]   = useState([]);
   const [stockDispo, setStockDispo]           = useState(null);
   const [copied, setCopied]                   = useState(false);
+
+  useEffect(() => {
+  track("visite_produit", { produit_id: id, produit_nom: produit?.nom });
+}, []);
+
 
   useEffect(() => { fetchAll(); }, [id]);
 

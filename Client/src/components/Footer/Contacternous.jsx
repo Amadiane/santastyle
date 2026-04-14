@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect  } from "react";
 import { MapPin, Clock, MessageCircle, Send, Phone, Mail, CheckCircle } from "lucide-react";
+import track from "../../utils/tracker";
 
 const SS = {
   bg: "#F7F3EC", surface: "#EDE5D0", card: "#E4D9C0",
@@ -34,6 +35,8 @@ const ouvrirWA = (msg) => {
 };
 
 export default function Contact() {
+
+  useEffect(() => { track("visite_contact"); }, []);
   const [sujetChoisi, setSujetChoisi] = useState(null);
   const [messagePersonnalise, setMessagePersonnalise] = useState("");
   const [nom, setNom] = useState("");
@@ -85,10 +88,12 @@ export default function Contact() {
     { q: "Livrez-vous à domicile ?", r: "Oui, nous livrons partout à Conakry. Les frais et délais de livraison vous sont communiqués lors de la confirmation de commande." },
     { q: "Est-ce qu'on peut échanger un article ?", r: "Oui, l'échange est possible sous 24h après réception, si l'article est dans son état d'origine. Contactez-nous via WhatsApp." },
     { q: "Les prix incluent-ils la livraison ?", r: "Les prix affichés en boutique n'incluent pas la livraison. Le coût de livraison vous sera communiqué selon votre zone." },
-    { q: "D'où viennent vos articles ?", r: "Nos collections viennent du Maroc, de Dubaï et du Mali. Chaque article est sélectionné avec soin pour garantir qualité et originalité." },
+    { q: "D'où viennent vos articles ?", r: "Nos collections viennent du Maroc, de Dubaï. Chaque article est sélectionné avec soin pour garantir qualité et originalité." },
   ];
 
   const [faqOuverte, setFaqOuverte] = useState(null);
+
+  
 
   return (
     <div style={{ fontFamily: "var(--font-sans, sans-serif)", color: SS.text }}>

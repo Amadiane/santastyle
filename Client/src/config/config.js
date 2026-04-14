@@ -12,7 +12,8 @@ const CONFIG = {
   API_PRODUIT: `${BASE_URL}/api/produits/`,
   API_STOCK: `${BASE_URL}/api/stocks/`,
   API_VENTE: `${BASE_URL}/api/ventes/`,
-  
+  API_TRACK: `${BASE_URL}/api/track/`,
+  API_TRACK_STATS: `${BASE_URL}/api/track/stats/`,
 
 
 
