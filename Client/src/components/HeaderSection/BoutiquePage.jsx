@@ -15,7 +15,6 @@ const SS = {
   orange: "#C2450A", orangeBg: "#FEF0E6",
 };
 
-// ✅ Hommes / Femmes / Enfants / Accessoires
 const GENRE_CONFIG = {
   hommes:      { label: "👔 Hommes",      bg: "rgba(59,130,246,0.1)",  border: "rgba(59,130,246,0.3)",  color: "#1d4ed8" },
   femmes:      { label: "👗 Femmes",      bg: "rgba(236,72,153,0.1)",  border: "rgba(236,72,153,0.3)",  color: "#be185d" },
@@ -38,21 +37,19 @@ const BadgeStock = ({ total }) => {
   return              <span style={{ ...s, background: SS.successBg, color: SS.success, border: `1px solid ${SS.success}40` }}>✓ Disponible</span>;
 };
 
-// ── Sélecteur genre modernisé ──────────────────────────────────────
+// ── Sélecteur genre ────────────────────────────────────────────────
 const GenreSelector = ({ onSelect }) => {
   const [hovered, setHovered] = useState(null);
-
   const choices = [
-    { value: "hommes",      icon: "👔", label: "Homme",      sub: "Mode masculine",   borderColor: "rgba(59,130,246,0.5)",  hoverBg: "#E6F1FB" },
-    { value: "femmes",      icon: "👗", label: "Femme",      sub: "Mode féminine",    borderColor: "rgba(236,72,153,0.5)",  hoverBg: "#FBEAF0" },
-    { value: "enfants",     icon: "🧒", label: "Enfant",     sub: "Mode enfantine",   borderColor: "rgba(34,197,94,0.5)",   hoverBg: "#F0FDF4" },
+    { value: "hommes",      icon: "👔", label: "Homme",       sub: "Mode masculine",  borderColor: "rgba(59,130,246,0.5)",  hoverBg: "#E6F1FB" },
+    { value: "femmes",      icon: "👗", label: "Femme",       sub: "Mode féminine",   borderColor: "rgba(236,72,153,0.5)",  hoverBg: "#FBEAF0" },
+    { value: "enfants",     icon: "🧒", label: "Enfant",      sub: "Mode enfantine",  borderColor: "rgba(34,197,94,0.5)",   hoverBg: "#F0FDF4" },
     { value: "accessoires", icon: "👜", label: "Accessoires", sub: "Sacs & bijoux",   borderColor: "rgba(168,85,247,0.5)",  hoverBg: "#FAF5FF" },
   ];
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(255,252,245,0.97)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
       <div style={{ background: "#FFFFFF", borderRadius: "24px", padding: "40px 36px", maxWidth: "500px", width: "100%", border: "1px solid #EDE5CC", boxShadow: "0 24px 64px rgba(201,168,76,0.12), 0 4px 16px rgba(0,0,0,0.06)" }}>
-        {/* Logo */}
         <div style={{ display: "flex", justifyContent: "center", marginBottom: "28px" }}>
           <div style={{ padding: "6px 18px 6px 8px", borderRadius: "30px", background: "linear-gradient(135deg, #8A6A20, #C9A84C)", display: "flex", alignItems: "center", gap: "8px" }}>
             <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -61,11 +58,8 @@ const GenreSelector = ({ onSelect }) => {
             <span style={{ fontSize: "15px", fontWeight: "800", color: "#fff" }}>Santa'Style</span>
           </div>
         </div>
-
         <div style={{ fontSize: "26px", fontWeight: "800", color: SS.text, textAlign: "center", marginBottom: "8px" }}>Bienvenue !</div>
         <div style={{ fontSize: "15px", color: SS.textMuted, textAlign: "center", marginBottom: "28px" }}>Que cherchez-vous aujourd'hui ?</div>
-
-        {/* ✅ Grille 2x2 pour les 4 catégories */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
           {choices.map(c => (
             <button key={c.value} onClick={() => onSelect(c.value)}
@@ -77,14 +71,12 @@ const GenreSelector = ({ onSelect }) => {
             </button>
           ))}
         </div>
-
         <button onClick={() => onSelect("tout")}
           onMouseEnter={e => e.currentTarget.style.opacity = "0.88"}
           onMouseLeave={e => e.currentTarget.style.opacity = "1"}
           style={{ width: "100%", padding: "14px", borderRadius: "12px", background: `linear-gradient(135deg, ${SS.goldLight}, ${SS.gold})`, border: "none", color: "#fff", fontSize: "14px", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", boxShadow: "0 4px 16px rgba(201,168,76,0.25)", transition: "opacity 0.15s" }}>
           <ShoppingBag size={16} /> Voir toute la boutique
         </button>
-
         <div style={{ textAlign: "center", marginTop: "14px", fontSize: "12px", color: SS.textDim }}>
           Vous pourrez changer à tout moment depuis les filtres
         </div>
@@ -93,7 +85,7 @@ const GenreSelector = ({ onSelect }) => {
   );
 };
 
-// ── Carte produit modernisée ───────────────────────────────────────
+// ── Carte produit ──────────────────────────────────────────────────
 const CarteProduit = ({ produit, onClick }) => {
   const [hovered, setHovered] = useState(false);
   const total  = produit.stocks?.reduce((a, s) => a + s.quantite, 0) ?? 0;
@@ -110,8 +102,6 @@ const CarteProduit = ({ produit, onClick }) => {
   return (
     <div onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
       style={{ background: "#fff", borderRadius: "18px", overflow: "hidden", transition: "all 0.25s cubic-bezier(0.4,0,0.2,1)", cursor: epuise ? "default" : "pointer", transform: hovered && !epuise ? "translateY(-6px)" : "none", boxShadow: hovered && !epuise ? `0 20px 48px rgba(201,168,76,0.15), 0 8px 16px rgba(0,0,0,0.06)` : "0 1px 6px rgba(0,0,0,0.06)", border: `1px solid ${hovered && !epuise ? SS.gold + "60" : SS.border}` }}>
-
-      {/* Image */}
       <div onClick={() => !epuise && onClick(produit)}
         style={{ position: "relative", paddingBottom: "130%", background: SS.surface, overflow: "hidden" }}>
         {produit.image_url ? (
@@ -165,8 +155,6 @@ const CarteProduit = ({ produit, onClick }) => {
           </div>
         )}
       </div>
-
-      {/* Infos */}
       <div style={{ padding: "14px 16px 16px" }}>
         <div onClick={() => !epuise && onClick(produit)}
           style={{ fontSize: "15px", fontWeight: "700", color: SS.text, marginBottom: "4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", cursor: epuise ? "default" : "pointer" }}>
@@ -177,15 +165,12 @@ const CarteProduit = ({ produit, onClick }) => {
             {produit.description}
           </div>
         )}
-
-        {/* ✅ Prix toujours visible en gras doré */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
           <span style={{ fontSize: "16px", fontWeight: "800", color: SS.goldLight }}>
             {Number(produit.prix).toLocaleString("fr-FR")} GNF
           </span>
           <BadgeStock total={total} />
         </div>
-
         {total > 0 && total <= 10 && (
           <div style={{ marginBottom: "10px" }}>
             <div style={{ height: "3px", borderRadius: "2px", background: SS.border, overflow: "hidden" }}>
@@ -268,7 +253,6 @@ const BoutiquePage = () => {
     const mc = selectedCat ? p.categorie === selectedCat : true;
     const md = filtreDispo ? total > 0 : true;
     const mn = filtreNouveau ? p.est_nouveau === true : true;
-    // ✅ Gestion genre étendue : hommes / femmes / enfants / accessoires
     const mg = filtreGenre ? (p.genre === filtreGenre || p.genre === genreValue) : true;
     return ms && mc && md && mn && mg;
   });
@@ -278,9 +262,8 @@ const BoutiquePage = () => {
   const getCatNom    = id => categories.find(c => c.id === id)?.nom || "";
   const effacerFiltre = (param) => { searchParams.delete(param); setSearchParams(searchParams); };
 
-  // ✅ Titres dynamiques pour les 4 genres
   const heroTitre =
-    filtreNouveau            ? "Nos Nouveautés"
+    filtreNouveau               ? "Nos Nouveautés"
     : filtreGenre === "hommes"      ? "Collection Hommes"
     : filtreGenre === "femmes"      ? "Collection Femmes"
     : filtreGenre === "enfants"     ? "Collection Enfants"
@@ -288,20 +271,19 @@ const BoutiquePage = () => {
     : "Santa'Style Boutique";
 
   const heroSous =
-    filtreNouveau            ? "Les derniers articles ajoutés"
+    filtreNouveau               ? "Les derniers articles ajoutés"
     : filtreGenre === "hommes"      ? "Mode masculine · Élégance et style"
     : filtreGenre === "femmes"      ? "Mode féminine · Tendances & Raffinement"
     : filtreGenre === "enfants"     ? "Mode enfantine · Confort & Couleurs"
     : filtreGenre === "accessoires" ? "Sacs, bijoux & bien plus"
     : "Hommes · Femmes · Enfants · Accessoires";
 
-  // ✅ Tabs genre : Tous + 4 catégories
   const genreTabs = [
-    { val: "",           label: "Tous" },
-    { val: "hommes",     label: "👔 Hommes" },
-    { val: "femmes",     label: "👗 Femmes" },
-    { val: "enfants",    label: "🧒 Enfants" },
-    { val: "accessoires",label: "👜 Accessoires" },
+    { val: "",            label: "Tous" },
+    { val: "hommes",      label: "👔 Hommes" },
+    { val: "femmes",      label: "👗 Femmes" },
+    { val: "enfants",     label: "🧒 Enfants" },
+    { val: "accessoires", label: "👜 Accessoires" },
   ];
 
   return (
@@ -310,17 +292,14 @@ const BoutiquePage = () => {
 
       <div style={{ minHeight: "100vh", background: SS.bg, fontFamily: "var(--font-sans, sans-serif)" }}>
 
-        {/* ── Hero blanc avec titre dégradé ── */}
+        {/* Hero */}
         <div style={{ paddingTop: "96px", paddingBottom: "52px", paddingLeft: "24px", paddingRight: "24px", textAlign: "center", position: "relative", overflow: "hidden", background: SS.bg, borderBottom: `1px solid ${SS.border}` }}>
           <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(circle, ${SS.gold}12 1px, transparent 1px)`, backgroundSize: "28px 28px", pointerEvents: "none" }} />
           <div style={{ position: "relative" }}>
-            {/* Badge */}
             <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "5px 16px", borderRadius: "20px", background: `${SS.gold}12`, border: `1px solid ${SS.gold}35`, fontSize: "11px", color: SS.goldLight, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "20px", fontWeight: "700" }}>
               <Sparkles size={11} color={SS.gold} />
               {filtreNouveau ? "Nouveautés" : filtreGenre ? `Collection ${filtreGenre}` : "Nouvelle Collection"}
             </div>
-
-            {/* ✅ Titre avec dégradé textuel or */}
             <h1 style={{ fontSize: "46px", fontWeight: "900", margin: "0 0 12px", letterSpacing: "-0.03em", lineHeight: 1.1 }}>
               {filtreGenre || filtreNouveau ? (
                 <span style={{ color: SS.text }}>{heroTitre}</span>
@@ -331,29 +310,28 @@ const BoutiquePage = () => {
                 </>
               )}
             </h1>
-
             <p style={{ fontSize: "16px", color: SS.textMuted, margin: "0 0 32px", fontWeight: "400", letterSpacing: "0.04em" }}>
               {heroSous}
             </p>
-
-            {/* Barre infos */}
+            {/* ✅ Barre infos — "Sélection internationale" à la place d'une mention de pays */}
             <div style={{ display: "inline-flex", alignItems: "center", gap: "20px", padding: "12px 28px", borderRadius: "40px", background: SS.surface, border: `1px solid ${SS.border}`, fontSize: "13px", color: SS.textMuted, flexWrap: "wrap", justifyContent: "center" }}>
               <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                 <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#4ade80", flexShrink: 0 }} />
                 {totalDispo} articles disponibles
               </span>
               <span style={{ opacity: 0.3 }}>|</span>
-              <span>🚚 Livraison Conakry</span>
+              {/* ✅ "Sélection internationale" — neutre, sans pays */}
+              <span>🌍 Sélection internationale</span>
               <span style={{ opacity: 0.3 }}>|</span>
               <span>💬 Commande WhatsApp</span>
             </div>
           </div>
         </div>
 
-        {/* ── Contenu ── */}
+        {/* Contenu */}
         <div style={{ maxWidth: "1300px", margin: "0 auto", padding: "32px 16px 60px" }}>
 
-          {/* ✅ Tabs segmentés modernes — Tous / Hommes / Femmes / Enfants / Accessoires */}
+          {/* Tabs genre */}
           <div style={{ marginBottom: "20px" }}>
             <div style={{ display: "inline-flex", background: SS.surface, borderRadius: "12px", padding: "4px", border: `1px solid ${SS.border}`, flexWrap: "wrap", gap: "2px" }}>
               {genreTabs.map(tab => {
@@ -362,13 +340,7 @@ const BoutiquePage = () => {
                 return (
                   <button key={tab.val}
                     onClick={() => { const p = new URLSearchParams(searchParams); if (tab.val) p.set("cat", tab.val); else p.delete("cat"); setSearchParams(p); }}
-                    style={{
-                      padding: "8px 18px", borderRadius: "9px", fontSize: "13px", fontWeight: "600",
-                      border: "none", cursor: "pointer", transition: "all 0.15s",
-                      background: isActive ? (cfg ? cfg.bg : SS.gold) : "transparent",
-                      color: isActive ? (cfg ? cfg.color : "#1A1208") : SS.textMuted,
-                      boxShadow: isActive ? "0 1px 6px rgba(0,0,0,0.08)" : "none",
-                    }}>
+                    style={{ padding: "8px 18px", borderRadius: "9px", fontSize: "13px", fontWeight: "600", border: "none", cursor: "pointer", transition: "all 0.15s", background: isActive ? (cfg ? cfg.bg : SS.gold) : "transparent", color: isActive ? (cfg ? cfg.color : "#1A1208") : SS.textMuted, boxShadow: isActive ? "0 1px 6px rgba(0,0,0,0.08)" : "none" }}>
                     {tab.label}
                   </button>
                 );
@@ -376,7 +348,7 @@ const BoutiquePage = () => {
             </div>
           </div>
 
-          {/* Recherche + disponibles */}
+          {/* Recherche */}
           <div style={{ display: "flex", gap: "10px", marginBottom: "16px", flexWrap: "wrap" }}>
             <div style={{ flex: 1, minWidth: "220px", display: "flex", alignItems: "center", gap: "10px", background: "#fff", border: `1px solid ${SS.border}`, borderRadius: "12px", padding: "0 16px", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
               <Search size={16} color={SS.textDim} />
@@ -391,7 +363,7 @@ const BoutiquePage = () => {
             </button>
           </div>
 
-          {/* Catégories */}
+          {/* ✅ Catégories — affichage normal depuis la BDD, les noms viennent du backend */}
           <div style={{ display: "flex", gap: "8px", marginBottom: "20px", flexWrap: "wrap" }}>
             <button onClick={() => setSelectedCat(null)}
               style={{ padding: "8px 20px", borderRadius: "24px", fontSize: "13px", fontWeight: "700", border: `1px solid ${!selectedCat ? SS.gold : SS.border}`, background: !selectedCat ? SS.gold : "#fff", color: !selectedCat ? "#1A1208" : SS.textMuted, cursor: "pointer", transition: "all 0.15s" }}>
