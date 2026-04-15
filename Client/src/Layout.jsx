@@ -10,22 +10,6 @@ import { useTheme } from "./context/ThemeContext";
 const SIDEBAR_EXPANDED  = 240;
 const SIDEBAR_COLLAPSED = 64;
 
-const LIGHT_TOKENS = {
-  bg:          "#F7F3EC",
-  surface:     "#EDE5D0",
-  card:        "#E4D9C0",
-  border:      "#D4C08A",
-  gold:        "#C9A84C",
-  goldLight:   "#8A6A20",
-  goldDark:    "#5C3D00",
-  text:        "#2C1A00",
-  textMuted:   "#8A6A20",
-  textDim:     "#B8A070",
-  scrollTrack: "#EDE5D0",
-  scrollThumb: "#C9A84C",
-};
-
-// ✅ ScrollToTop intégré directement dans le layout
 const useScrollToTop = () => {
   const location = useLocation();
   useEffect(() => {
@@ -35,7 +19,7 @@ const useScrollToTop = () => {
     } else {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
-  }, [location.pathname, location.search]); // ✅ pathname ET searchParams
+  }, [location.pathname, location.search]);
 };
 
 const App = () => {
@@ -44,7 +28,6 @@ const App = () => {
   const { tokens } = useTheme();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  // ✅ Remplace l'ancien useEffect — écoute aussi les changements de ?cat= etc.
   useScrollToTop();
 
   const adminPaths = [
@@ -83,16 +66,17 @@ const App = () => {
     select option { background: ${adminTokens.surface}; color: ${adminTokens.text}; }
   `;
 
+  // ✅ Fond blanc uniforme — plus de gradient sombre
   const publicStyles = `
     ${baseStyles}
-    body { background: #5C3D00; }
-    #root { scrollbar-width: thin; scrollbar-color: #C9A84C #EDE5D0; }
+    body { background: #FFFFFF; }
+    #root { scrollbar-width: thin; scrollbar-color: #C9A84C #EDE5CC; }
     #root::-webkit-scrollbar { width: 8px; }
-    #root::-webkit-scrollbar-track { background: #EDE5D0; border-radius: 10px; }
-    #root::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #C9A84C 0%, #5C3D00 100%); border-radius: 10px; border: 2px solid #EDE5D0; }
+    #root::-webkit-scrollbar-track { background: #EDE5CC; border-radius: 10px; }
+    #root::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #C9A84C 0%, #8A6A20 100%); border-radius: 10px; border: 2px solid #EDE5CC; }
     html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
-    input::placeholder { color: #B8A070; }
-    select option { background: #EDE5D0; color: #2C1A00; }
+    input::placeholder { color: #C8A85A; }
+    select option { background: #FDFAF4; color: #1A1208; }
   `;
 
   return (
@@ -121,18 +105,8 @@ const App = () => {
 
       ) : (
 
-        // ── LAYOUT PUBLIC ─────────────────────────────────────────────
-        <div style={{
-          minHeight: "100vh", width: "100%",
-          background: `linear-gradient(180deg,
-            #4A3000 0%,
-            #6B4A10 12%,
-            #C9A84C 28%,
-            #E8D99A 38%,
-            #F7F3EC 48%,
-            #F7F3EC 100%
-          )`,
-        }}>
+        // ── LAYOUT PUBLIC — fond blanc uniforme ───────────────────────
+        <div style={{ minHeight: "100vh", width: "100%", background: "#FFFFFF" }}>
           {!isLoginPage && (
             <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50 }}>
               <Header logoColor="#C9A84C" />
