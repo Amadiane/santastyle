@@ -14,11 +14,8 @@ const useScrollToTop = () => {
   const location = useLocation();
   useEffect(() => {
     const root = document.getElementById("root");
-    if (root) {
-      root.scrollTo({ top: 0, behavior: "smooth" });
-    } else {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    if (root) root.scrollTo({ top: 0, behavior: "smooth" });
+    else window.scrollTo({ top: 0, behavior: "smooth" });
   }, [location.pathname, location.search]);
 };
 
@@ -30,13 +27,16 @@ const App = () => {
 
   useScrollToTop();
 
+  // ✅ vendeurDashboard et activity ajoutés
   const adminPaths = [
     "/ventes", "/listeContacts", "/listeRejoindre",
     "/listePostulantsCommunity", "/listPartners",
     "/listeAbonnement", "/platformPost", "/valeurPost",
-    "/dashboardAdmin", "/teamMessage", "/missionPost",
+    "/dashboardAdmin", "/vendeurDashboard",
+    "/teamMessage", "/missionPost",
     "/register-employee", "/homePost", "/stocks",
     "/servicePost", "/categories", "/produits",
+    "/activity",
   ];
 
   const isAdminPage = adminPaths.includes(location.pathname);
@@ -44,8 +44,7 @@ const App = () => {
 
   if (isAdminPage && !token) return <Navigate to="/login" replace />;
 
-  const sidebarW    = sidebarCollapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED;
-  const adminTokens = tokens;
+  const sidebarW = sidebarCollapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED;
 
   const baseStyles = `
     html { overflow: hidden; width: 100%; height: 100%; }
@@ -56,17 +55,16 @@ const App = () => {
 
   const adminStyles = `
     ${baseStyles}
-    body { background: ${adminTokens.bg}; }
-    #root { scrollbar-width: thin; scrollbar-color: ${adminTokens.scrollThumb} ${adminTokens.scrollTrack}; }
+    body { background: ${tokens.bg}; }
+    #root { scrollbar-width: thin; scrollbar-color: ${tokens.scrollThumb} ${tokens.scrollTrack}; }
     #root::-webkit-scrollbar { width: 8px; }
-    #root::-webkit-scrollbar-track { background: ${adminTokens.scrollTrack}; border-radius: 10px; }
-    #root::-webkit-scrollbar-thumb { background: linear-gradient(180deg, ${adminTokens.gold} 0%, ${adminTokens.goldDark} 100%); border-radius: 10px; border: 2px solid ${adminTokens.scrollTrack}; }
+    #root::-webkit-scrollbar-track { background: ${tokens.scrollTrack}; border-radius: 10px; }
+    #root::-webkit-scrollbar-thumb { background: linear-gradient(180deg, ${tokens.gold} 0%, ${tokens.goldDark} 100%); border-radius: 10px; border: 2px solid ${tokens.scrollTrack}; }
     html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
-    input::placeholder { color: ${adminTokens.textDim}; }
-    select option { background: ${adminTokens.surface}; color: ${adminTokens.text}; }
+    input::placeholder { color: ${tokens.textDim}; }
+    select option { background: ${tokens.surface}; color: ${tokens.text}; }
   `;
 
-  // ✅ Fond blanc uniforme — plus de gradient sombre
   const publicStyles = `
     ${baseStyles}
     body { background: #FFFFFF; }
@@ -84,9 +82,7 @@ const App = () => {
       <style>{isAdminPage ? adminStyles : publicStyles}</style>
 
       {isAdminPage ? (
-
-        // ── LAYOUT ADMIN ─────────────────────────────────────────────
-        <div style={{ background: adminTokens.bg, minHeight: "100vh", width: "100%", display: "flex" }}>
+        <div style={{ background: tokens.bg, minHeight: "100vh", width: "100%", display: "flex" }}>
           <NavAdmin onToggle={setSidebarCollapsed} />
           <main style={{
             marginLeft: `${sidebarW}px`, flex: 1, minHeight: "100vh",
@@ -94,29 +90,24 @@ const App = () => {
             position: "relative", overflow: "hidden",
           }}>
             <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-              <div style={{ position: "absolute", top: 0, right: 0, width: "600px", height: "600px", borderRadius: "50%", background: `radial-gradient(circle, ${adminTokens.gold}08 0%, transparent 70%)` }} />
-              <div style={{ position: "absolute", bottom: 0, left: 0, width: "500px", height: "500px", borderRadius: "50%", background: `radial-gradient(circle, ${adminTokens.gold}06 0%, transparent 70%)` }} />
+              <div style={{ position: "absolute", top: 0, right: 0, width: "600px", height: "600px", borderRadius: "50%", background: `radial-gradient(circle, ${tokens.gold}08 0%, transparent 70%)` }} />
+              <div style={{ position: "absolute", bottom: 0, left: 0, width: "500px", height: "500px", borderRadius: "50%", background: `radial-gradient(circle, ${tokens.gold}06 0%, transparent 70%)` }} />
             </div>
             <div style={{ position: "relative", maxWidth: "1600px", margin: "0 auto", padding: "36px 28px 40px" }}>
               <Outlet />
             </div>
           </main>
         </div>
-
       ) : (
-
-        // ── LAYOUT PUBLIC — fond blanc uniforme ───────────────────────
         <div style={{ minHeight: "100vh", width: "100%", background: "#FFFFFF" }}>
           {!isLoginPage && (
             <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50 }}>
               <Header logoColor="#C9A84C" />
             </div>
           )}
-
           <main style={{ position: "relative", paddingBottom: "4rem" }}>
             <Outlet />
           </main>
-
           {!isLoginPage && <Footer />}
         </div>
       )}

@@ -18,31 +18,13 @@ class Categorie(models.Model):
         return self.nom
 
 
-
-# class Produit(models.Model):
-
-#     nom = models.CharField(max_length=100)
-#     description = models.TextField(blank=True, null=True)
-#     prix = models.DecimalField(max_digits=10, decimal_places=2)
-#     categorie = models.ForeignKey(
-#         Categorie,
-#         on_delete=models.SET_NULL,
-#         null=True,
-#         related_name="produits"
-#     )
-#     image = CloudinaryField('Image', folder='produits', blank=True, null=True)
-#     est_nouveau = models.BooleanField(default=False)
-#     date_creation = models.DateTimeField(auto_now_add=True)
-
-#     def __str__(self):
-#         return self.nom
 class Produit(models.Model):
 
     GENRE_CHOICES = [
         ("homme",  "Homme"),
         ("femme",  "Femme"),
         ("enfant", "Enfant"),
-        ("mixte",  "Mixte"),  # accessoires, etc.
+        ("mixte",  "Mixte"),  
     ]
 
     nom           = models.CharField(max_length=100)
@@ -51,7 +33,7 @@ class Produit(models.Model):
     categorie     = models.ForeignKey(Categorie, on_delete=models.SET_NULL, null=True, related_name="produits")
     image         = CloudinaryField('Image', folder='produits', blank=True, null=True)
     est_nouveau   = models.BooleanField(default=False)
-    genre         = models.CharField(max_length=10, choices=GENRE_CHOICES, default="mixte")  # ✅
+    genre         = models.CharField(max_length=10, choices=GENRE_CHOICES, default="mixte") 
     date_creation = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -129,3 +111,37 @@ class VisiteBoutique(models.Model):
 
     def __str__(self):
         return f"{self.type_action} — {self.created_at.strftime('%d/%m %H:%M')}"
+
+
+
+from django.conf import settings
+from django.db import models
+ 
+class ActivityLog(models.Model):
+    ACTION_CHOICES = [
+        ("create",  "Création"),
+        ("update",  "Modification"),
+        ("delete",  "Suppression"),
+        ("vente",   "Vente"),
+        ("login",   "Connexion"),
+        ("logout",  "Déconnexion"),
+    ]
+ 
+    user        = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="activity_logs"
+    )
+    action      = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    model_name  = models.CharField(max_length=100, blank=True)
+    object_id   = models.IntegerField(null=True, blank=True)
+    description = models.TextField(blank=True)
+    created_at  = models.DateTimeField(auto_now_add=True)
+ 
+    class Meta:
+        ordering = ["-created_at"]
+ 
+    def __str__(self):
+        return f"{self.user} — {self.action} — {self.model_name}"
+ 

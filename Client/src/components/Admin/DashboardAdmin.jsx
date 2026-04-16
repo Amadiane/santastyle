@@ -2,9 +2,9 @@ import React, { useEffect, useState } from "react";
 import CONFIG from "../../config/config";
 import { Navigate } from "react-router-dom";
 import {
-  ShoppingBag, Users, MessageCircle, Search, TrendingUp,
-  Eye, Zap, Star, Clock, X, RefreshCw, BarChart3,
-  Sparkles, ArrowUpRight, Package, Filter
+  ShoppingBag, Users, MessageCircle, Search,
+  Eye, Zap, Star, RefreshCw, BarChart3,
+  Package, Filter
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 
@@ -43,17 +43,22 @@ const ICONS_MAP = {
 
 const DashboardAdmin = () => {
   const token = localStorage.getItem("access");
+  const user  = JSON.parse(localStorage.getItem("user") || "{}");
   const { tokens: SS } = useTheme();
-  const [stats, setStats]   = useState(null);
+
+  const [stats,   setStats]   = useState(null);
   const [loading, setLoading] = useState(true);
-  const [jours, setJours]   = useState(30);
+  const [jours,   setJours]   = useState(30);
   const [refresh, setRefresh] = useState(0);
 
   if (!token) return <Navigate to="/login" replace />;
+  // ✅ Vendeur → redirigé vers son propre dashboard
+  if (user?.role !== "admin") return <Navigate to="/vendeurDashboard" replace />;
 
   const fetchStats = async () => {
+    setLoading(true);
     try {
-      const res = await fetch(`${CONFIG.BASE_URL}/api/track/stats/?jours=${jours}`, {
+      const res = await fetch(`${CONFIG.API_TRACK_STATS}?jours=${jours}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) setStats(await res.json());
@@ -63,7 +68,6 @@ const DashboardAdmin = () => {
 
   useEffect(() => { fetchStats(); }, [jours, refresh]);
 
-  // Auto-refresh toutes les 30s
   useEffect(() => {
     const iv = setInterval(() => setRefresh(r => r + 1), 30000);
     return () => clearInterval(iv);
@@ -93,24 +97,18 @@ const DashboardAdmin = () => {
 
   if (!stats) return null;
 
-  const t = stats.totaux;
+  const t     = stats.totaux;
   const tauxWA = t.visite_boutique > 0
-    ? ((t.clic_whatsapp / t.visite_boutique) * 100).toFixed(1)
-    : 0;
-
-  // Hauteur max pour le graphe
-  const maxJour = stats.activite_jour.length > 0
-    ? Math.max(...stats.activite_jour.map(d => d.total))
-    : 1;
-
+    ? ((t.clic_whatsapp / t.visite_boutique) * 100).toFixed(1) : 0;
+  const maxJour  = stats.activite_jour.length > 0
+    ? Math.max(...stats.activite_jour.map(d => d.total)) : 1;
   const maxHeure = stats.heures.length > 0
-    ? Math.max(...stats.heures.map(h => h.total))
-    : 1;
+    ? Math.max(...stats.heures.map(h => h.total)) : 1;
 
   return (
     <div style={{ color: SS.text, fontFamily: "var(--font-sans, sans-serif)" }}>
 
-      {/* ── Header ── */}
+      {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "28px", flexWrap: "wrap", gap: "12px" }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
@@ -123,11 +121,9 @@ const DashboardAdmin = () => {
               <span style={{ fontSize: "11px", color: SS.success, fontWeight: "700" }}>Live</span>
             </div>
           </div>
-          <div style={{ fontSize: "13px", color: SS.textDim }}>Santa'Style · Statistiques en temps réel</div>
+          <div style={{ fontSize: "13px", color: SS.textDim }}>Santa'Style · Statistiques visiteurs en temps réel</div>
         </div>
-
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          {/* Période */}
           <div style={{ display: "flex", gap: "4px", background: SS.card, borderRadius: "10px", padding: "4px", border: `1px solid ${SS.border}` }}>
             {[7, 30, 90].map(j => (
               <button key={j} onClick={() => setJours(j)}
@@ -136,7 +132,6 @@ const DashboardAdmin = () => {
               </button>
             ))}
           </div>
-          {/* Refresh */}
           <button onClick={() => { setLoading(true); setRefresh(r => r + 1); }}
             style={{ padding: "8px", borderRadius: "10px", background: SS.surface, border: `1px solid ${SS.border}`, cursor: "pointer", display: "flex", alignItems: "center" }}>
             <RefreshCw size={16} color={SS.textMuted} />
@@ -144,26 +139,26 @@ const DashboardAdmin = () => {
         </div>
       </div>
 
-      {/* ── Métriques principales ── */}
+      {/* Métriques visiteurs */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "16px", marginBottom: "24px" }}>
-        {card("Visites boutique",  t.visite_boutique,  <ShoppingBag size={18} />, SS.gold,    `${stats.uniques} visiteurs uniques`)}
-        {card("Vues produits",     t.visite_produit,   <Eye size={18} />,         "#1d4ed8",  `${stats.top_produits.length} produits vus`)}
-        {card("Clics WhatsApp",    t.clic_whatsapp,    <WAIcon size={18} />,      "#25D366",  `${tauxWA}% des visiteurs`)}
-        {card("Recherches",        t.recherche,        <Search size={18} />,      SS.warning, `${stats.recherches.length} termes différents`)}
-        {card("Visites contact",   t.visite_contact,   <MessageCircle size={18} />, SS.success, "Page contact")}
-        {card("Filtres genre",     t.filtre_genre,     <Users size={18} />,       "#be185d",  "Homme / Femme")}
+        {card("Visites boutique", t.visite_boutique,  <ShoppingBag size={18} />, SS.gold,    `${stats.uniques} visiteurs uniques`)}
+        {card("Vues produits",    t.visite_produit,   <Eye size={18} />,         "#1d4ed8",  `${stats.top_produits.length} produits vus`)}
+        {card("Clics WhatsApp",   t.clic_whatsapp,    <WAIcon size={18} />,      "#25D366",  `${tauxWA}% des visiteurs`)}
+        {card("Recherches",       t.recherche,        <Search size={18} />,      SS.warning, `${stats.recherches.length} termes`)}
+        {card("Visites contact",  t.visite_contact,   <MessageCircle size={18} />, SS.success, "Page contact")}
+        {card("Filtres genre",    t.filtre_genre,     <Users size={18} />,       "#be185d",  "Hommes / Femmes")}
       </div>
 
-      {/* ── Taux de conversion ── */}
+      {/* Entonnoir de conversion */}
       <div style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "16px", padding: "24px", marginBottom: "24px" }}>
         <div style={{ fontSize: "13px", fontWeight: "700", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "20px" }}>
           Entonnoir de conversion
         </div>
-        <div style={{ display: "flex", gap: "0", alignItems: "stretch", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "stretch", flexWrap: "wrap" }}>
           {[
-            { label: "Visiteurs",    val: t.visite_boutique, color: SS.gold,    pct: 100 },
-            { label: "Vues produit", val: t.visite_produit,  color: "#1d4ed8",  pct: t.visite_boutique > 0 ? Math.round((t.visite_produit / t.visite_boutique) * 100) : 0 },
-            { label: "WhatsApp",     val: t.clic_whatsapp,   color: "#25D366",  pct: t.visite_boutique > 0 ? Math.round((t.clic_whatsapp / t.visite_boutique) * 100) : 0 },
+            { label: "Visiteurs",    val: t.visite_boutique, color: SS.gold,   pct: 100 },
+            { label: "Vues produit", val: t.visite_produit,  color: "#1d4ed8", pct: t.visite_boutique > 0 ? Math.round((t.visite_produit / t.visite_boutique) * 100) : 0 },
+            { label: "WhatsApp",     val: t.clic_whatsapp,   color: "#25D366", pct: t.visite_boutique > 0 ? Math.round((t.clic_whatsapp / t.visite_boutique) * 100) : 0 },
           ].map((s, i) => (
             <div key={i} style={{ flex: 1, minWidth: "140px", textAlign: "center", padding: "20px 16px", borderRight: i < 2 ? `1px solid ${SS.border}` : "none" }}>
               <div style={{ fontSize: "32px", fontWeight: "800", color: s.color, marginBottom: "4px" }}>{s.val.toLocaleString()}</div>
@@ -177,9 +172,8 @@ const DashboardAdmin = () => {
         </div>
       </div>
 
+      {/* Graphes activité */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "24px" }}>
-
-        {/* ── Activité par jour ── */}
         <div style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "16px", padding: "24px" }}>
           <div style={{ fontSize: "13px", fontWeight: "700", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "20px" }}>
             Activité — {jours} derniers jours
@@ -187,192 +181,183 @@ const DashboardAdmin = () => {
           {stats.activite_jour.length === 0 ? (
             <div style={{ textAlign: "center", padding: "2rem", color: SS.textDim }}>Aucune donnée</div>
           ) : (
-            <div style={{ display: "flex", alignItems: "flex-end", gap: "4px", height: "120px" }}>
-              {stats.activite_jour.slice(-30).map((d, i) => (
-                <div key={i} title={`${d.jour} : ${d.total} actions`}
-                  style={{ flex: 1, minWidth: "4px", borderRadius: "3px 3px 0 0", background: `linear-gradient(180deg, ${SS.gold}, ${SS.goldDark})`, height: `${Math.max((d.total / maxJour) * 100, 4)}%`, transition: "height 0.3s", cursor: "pointer", opacity: 0.85 }}
-                  onMouseEnter={e => { e.target.style.opacity = "1"; e.target.style.background = "#25D366"; }}
-                  onMouseLeave={e => { e.target.style.opacity = "0.85"; e.target.style.background = `linear-gradient(180deg, ${SS.gold}, ${SS.goldDark})`; }}
-                />
-              ))}
-            </div>
+            <>
+              <div style={{ display: "flex", alignItems: "flex-end", gap: "4px", height: "120px" }}>
+                {stats.activite_jour.slice(-30).map((d, i) => (
+                  <div key={i} title={`${d.jour} : ${d.total}`}
+                    style={{ flex: 1, minWidth: "4px", borderRadius: "3px 3px 0 0", background: `linear-gradient(180deg, ${SS.gold}, ${SS.goldDark})`, height: `${Math.max((d.total / maxJour) * 100, 4)}%`, cursor: "pointer", opacity: 0.85 }}
+                    onMouseEnter={e => { e.target.style.opacity = "1"; e.target.style.background = "#25D366"; }}
+                    onMouseLeave={e => { e.target.style.opacity = "0.85"; e.target.style.background = `linear-gradient(180deg, ${SS.gold}, ${SS.goldDark})`; }} />
+                ))}
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "8px" }}>
+                <span style={{ fontSize: "11px", color: SS.textDim }}>{stats.activite_jour[0]?.jour || ""}</span>
+                <span style={{ fontSize: "11px", color: SS.textDim }}>{stats.activite_jour[stats.activite_jour.length - 1]?.jour || ""}</span>
+              </div>
+            </>
           )}
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "8px" }}>
-            <span style={{ fontSize: "11px", color: SS.textDim }}>{stats.activite_jour[0]?.jour || ""}</span>
-            <span style={{ fontSize: "11px", color: SS.textDim }}>{stats.activite_jour[stats.activite_jour.length - 1]?.jour || ""}</span>
-          </div>
         </div>
 
-        {/* ── Heures de pointe ── */}
         <div style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "16px", padding: "24px" }}>
           <div style={{ fontSize: "13px", fontWeight: "700", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "20px" }}>
             Heures de pointe
           </div>
-          {stats.heures.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "2rem", color: SS.textDim }}>Aucune donnée</div>
-          ) : (
-            <div style={{ display: "flex", alignItems: "flex-end", gap: "2px", height: "120px" }}>
-              {Array.from({ length: 24 }, (_, h) => {
-                const data = stats.heures.find(x => x.heure === h);
-                const total = data?.total || 0;
-                return (
-                  <div key={h} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", height: "100%" }}>
-                    <div title={`${h}h : ${total} actions`}
-                      style={{ width: "100%", borderRadius: "2px 2px 0 0", background: total > maxHeure * 0.7 ? "#25D366" : total > 0 ? SS.gold : SS.card, height: `${total > 0 ? Math.max((total / maxHeure) * 100, 6) : 4}%`, transition: "height 0.3s", cursor: "pointer", marginTop: "auto" }} />
-                    {h % 6 === 0 && <span style={{ fontSize: "9px", color: SS.textDim }}>{h}h</span>}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          <div style={{ display: "flex", alignItems: "flex-end", gap: "2px", height: "120px" }}>
+            {Array.from({ length: 24 }, (_, h) => {
+              const data  = stats.heures.find(x => x.heure === h);
+              const total = data?.total || 0;
+              return (
+                <div key={h} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", height: "100%" }}>
+                  <div title={`${h}h : ${total}`}
+                    style={{ width: "100%", borderRadius: "2px 2px 0 0", background: total > maxHeure * 0.7 ? "#25D366" : total > 0 ? SS.gold : SS.card, height: `${total > 0 ? Math.max((total / maxHeure) * 100, 6) : 4}%`, marginTop: "auto" }} />
+                  {h % 6 === 0 && <span style={{ fontSize: "9px", color: SS.textDim }}>{h}h</span>}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
+      {/* Top produits / WA / recherches */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "20px", marginBottom: "24px" }}>
-
-        {/* ── Top produits vus ── */}
+        {/* Top produits vus */}
         <div style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "16px", padding: "24px" }}>
           <div style={{ fontSize: "13px", fontWeight: "700", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "16px" }}>
             🔥 Produits les plus vus
           </div>
-          {stats.top_produits.length === 0 ? (
-            <div style={{ color: SS.textDim, fontSize: "13px", textAlign: "center", padding: "1rem" }}>Aucune donnée</div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              {stats.top_produits.slice(0, 6).map((p, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <span style={{ width: "20px", fontSize: "12px", fontWeight: "800", color: i === 0 ? SS.gold : SS.textDim, flexShrink: 0 }}>#{i + 1}</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: "13px", fontWeight: "600", color: SS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.produit_nom || "—"}</div>
-                    <div style={{ height: "3px", borderRadius: "2px", background: SS.card, marginTop: "4px", overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${(p.total / stats.top_produits[0].total) * 100}%`, background: SS.gold, borderRadius: "2px" }} />
+          {stats.top_produits.length === 0
+            ? <div style={{ color: SS.textDim, fontSize: "13px", textAlign: "center", padding: "1rem" }}>Aucune donnée</div>
+            : <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {stats.top_produits.slice(0, 6).map((p, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <span style={{ width: "20px", fontSize: "12px", fontWeight: "800", color: i === 0 ? SS.gold : SS.textDim, flexShrink: 0 }}>#{i + 1}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: "13px", fontWeight: "600", color: SS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.produit_nom || "—"}</div>
+                      <div style={{ height: "3px", borderRadius: "2px", background: SS.card, marginTop: "4px", overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${(p.total / stats.top_produits[0].total) * 100}%`, background: SS.gold, borderRadius: "2px" }} />
+                      </div>
                     </div>
+                    <span style={{ fontSize: "12px", fontWeight: "700", color: SS.goldLight, flexShrink: 0 }}>{p.total}</span>
                   </div>
-                  <span style={{ fontSize: "12px", fontWeight: "700", color: SS.goldLight, flexShrink: 0 }}>{p.total}</span>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+          }
         </div>
 
-        {/* ── WhatsApp par produit ── */}
+        {/* WhatsApp par produit */}
         <div style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "16px", padding: "24px" }}>
           <div style={{ fontSize: "13px", fontWeight: "700", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "16px", display: "flex", alignItems: "center", gap: "6px" }}>
             <span style={{ color: "#25D366" }}><WAIcon size={14} /></span> Commandes WhatsApp
           </div>
-          {stats.wa_produits.length === 0 ? (
-            <div style={{ color: SS.textDim, fontSize: "13px", textAlign: "center", padding: "1rem" }}>Aucun clic WA</div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              {stats.wa_produits.slice(0, 6).map((p, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <div style={{ width: "28px", height: "28px", borderRadius: "8px", background: "#25D36618", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <span style={{ color: "#25D366" }}><WAIcon size={13} /></span>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: "13px", fontWeight: "600", color: SS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.produit_nom}</div>
-                    <div style={{ height: "3px", borderRadius: "2px", background: SS.card, marginTop: "4px", overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${(p.total / stats.wa_produits[0].total) * 100}%`, background: "#25D366", borderRadius: "2px" }} />
+          {stats.wa_produits.length === 0
+            ? <div style={{ color: SS.textDim, fontSize: "13px", textAlign: "center", padding: "1rem" }}>Aucun clic</div>
+            : <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {stats.wa_produits.slice(0, 6).map((p, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <div style={{ width: "28px", height: "28px", borderRadius: "8px", background: "#25D36618", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#25D366" }}>
+                      <WAIcon size={13} />
                     </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: "13px", fontWeight: "600", color: SS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.produit_nom}</div>
+                      <div style={{ height: "3px", borderRadius: "2px", background: SS.card, marginTop: "4px", overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${(p.total / stats.wa_produits[0].total) * 100}%`, background: "#25D366", borderRadius: "2px" }} />
+                      </div>
+                    </div>
+                    <span style={{ fontSize: "12px", fontWeight: "700", color: "#25D366", flexShrink: 0 }}>{p.total}</span>
                   </div>
-                  <span style={{ fontSize: "12px", fontWeight: "700", color: "#25D366", flexShrink: 0 }}>{p.total}</span>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+          }
         </div>
 
-        {/* ── Recherches populaires ── */}
+        {/* Recherches */}
         <div style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "16px", padding: "24px" }}>
           <div style={{ fontSize: "13px", fontWeight: "700", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "16px" }}>
             🔍 Recherches populaires
           </div>
-          {stats.recherches.length === 0 ? (
-            <div style={{ color: SS.textDim, fontSize: "13px", textAlign: "center", padding: "1rem" }}>Aucune recherche</div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              {stats.recherches.slice(0, 6).map((r, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <Search size={13} color={SS.gold} style={{ flexShrink: 0 }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: "13px", fontWeight: "600", color: SS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>"{r.recherche}"</div>
-                    <div style={{ height: "3px", borderRadius: "2px", background: SS.card, marginTop: "4px", overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${(r.total / stats.recherches[0].total) * 100}%`, background: SS.gold, borderRadius: "2px" }} />
+          {stats.recherches.length === 0
+            ? <div style={{ color: SS.textDim, fontSize: "13px", textAlign: "center", padding: "1rem" }}>Aucune recherche</div>
+            : <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {stats.recherches.slice(0, 6).map((r, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Search size={13} color={SS.gold} style={{ flexShrink: 0 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: "13px", fontWeight: "600", color: SS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>"{r.recherche}"</div>
+                      <div style={{ height: "3px", borderRadius: "2px", background: SS.card, marginTop: "4px", overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${(r.total / stats.recherches[0].total) * 100}%`, background: SS.gold, borderRadius: "2px" }} />
+                      </div>
                     </div>
+                    <span style={{ fontSize: "12px", fontWeight: "700", color: SS.goldLight, flexShrink: 0 }}>{r.total}</span>
                   </div>
-                  <span style={{ fontSize: "12px", fontWeight: "700", color: SS.goldLight, flexShrink: 0 }}>{r.total}</span>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+          }
         </div>
       </div>
 
+      {/* Répartition genre + activité en direct */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "24px" }}>
-
-        {/* ── Répartition genre ── */}
         <div style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "16px", padding: "24px" }}>
           <div style={{ fontSize: "13px", fontWeight: "700", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "16px" }}>
-            👔👗 Répartition par genre
+            Répartition par genre
           </div>
-          {stats.genres.length === 0 ? (
-            <div style={{ color: SS.textDim, fontSize: "13px", textAlign: "center", padding: "1rem" }}>Aucun filtre utilisé</div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              {stats.genres.map((g, i) => {
-                const total = stats.genres.reduce((a, x) => a + x.total, 0);
-                const pct   = Math.round((g.total / total) * 100);
-                const color = g.genre === "hommes" ? "#1d4ed8" : g.genre === "femmes" ? "#be185d" : SS.goldLight;
-                return (
-                  <div key={i}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                      <span style={{ fontSize: "14px", fontWeight: "700", color: SS.text }}>
-                        {g.genre === "hommes" ? "👔 Hommes" : g.genre === "femmes" ? "👗 Femmes" : g.genre}
-                      </span>
-                      <span style={{ fontSize: "14px", fontWeight: "800", color }}>{g.total} <span style={{ fontSize: "12px", fontWeight: "500", color: SS.textDim }}>({pct}%)</span></span>
+          {stats.genres.length === 0
+            ? <div style={{ color: SS.textDim, fontSize: "13px", textAlign: "center", padding: "1rem" }}>Aucun filtre</div>
+            : <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {stats.genres.map((g, i) => {
+                  const total = stats.genres.reduce((a, x) => a + x.total, 0);
+                  const pct   = Math.round((g.total / total) * 100);
+                  const color = g.genre === "hommes" ? "#1d4ed8" : g.genre === "femmes" ? "#be185d" : g.genre === "enfants" ? "#15803d" : "#7c3aed";
+                  return (
+                    <div key={i}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                        <span style={{ fontSize: "14px", fontWeight: "700", color: SS.text }}>
+                          {g.genre === "hommes" ? "👔 Hommes" : g.genre === "femmes" ? "👗 Femmes" : g.genre === "enfants" ? "🧒 Enfants" : "👜 " + g.genre}
+                        </span>
+                        <span style={{ fontSize: "14px", fontWeight: "800", color }}>
+                          {g.total} <span style={{ fontSize: "12px", fontWeight: "500", color: SS.textDim }}>({pct}%)</span>
+                        </span>
+                      </div>
+                      <div style={{ height: "8px", borderRadius: "4px", background: SS.card, overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${pct}%`, background: color, borderRadius: "4px", transition: "width 0.6s" }} />
+                      </div>
                     </div>
-                    <div style={{ height: "8px", borderRadius: "4px", background: SS.card, overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${pct}%`, background: color, borderRadius: "4px", transition: "width 0.6s" }} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+          }
         </div>
 
-        {/* ── Activité récente ── */}
         <div style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "16px", padding: "24px" }}>
           <div style={{ fontSize: "13px", fontWeight: "700", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "16px", display: "flex", alignItems: "center", gap: "6px" }}>
             <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: SS.success, display: "inline-block" }} />
             Activité en direct
           </div>
-          {stats.recentes.length === 0 ? (
-            <div style={{ color: SS.textDim, fontSize: "13px", textAlign: "center", padding: "1rem" }}>Aucune activité</div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "280px", overflowY: "auto" }}>
-              {stats.recentes.map((r, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 10px", borderRadius: "8px", background: SS.card }}>
-                  <div style={{ width: "28px", height: "28px", borderRadius: "8px", background: `${SS.gold}15`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: SS.gold }}>
-                    {ICONS_MAP[r.type_action] || <Zap size={14} />}
+          {stats.recentes.length === 0
+            ? <div style={{ color: SS.textDim, fontSize: "13px", textAlign: "center", padding: "1rem" }}>Aucune activité</div>
+            : <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "280px", overflowY: "auto" }}>
+                {stats.recentes.map((r, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 10px", borderRadius: "8px", background: SS.card }}>
+                    <div style={{ width: "28px", height: "28px", borderRadius: "8px", background: `${SS.gold}15`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: SS.gold }}>
+                      {ICONS_MAP[r.type_action] || <Zap size={14} />}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: "12px", fontWeight: "700", color: SS.text }}>{LABELS[r.type_action] || r.type_action}</div>
+                      {(r.produit_nom || r.recherche || r.genre) && (
+                        <div style={{ fontSize: "11px", color: SS.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {r.produit_nom || r.recherche || r.genre}
+                        </div>
+                      )}
+                    </div>
+                    <span style={{ fontSize: "11px", color: SS.textDim, flexShrink: 0 }}>{r.created_at}</span>
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: "12px", fontWeight: "700", color: SS.text }}>{LABELS[r.type_action] || r.type_action}</div>
-                    {(r.produit_nom || r.recherche || r.genre) && (
-                      <div style={{ fontSize: "11px", color: SS.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {r.produit_nom || r.recherche || r.genre}
-                      </div>
-                    )}
-                  </div>
-                  <span style={{ fontSize: "11px", color: SS.textDim, flexShrink: 0 }}>{r.created_at}</span>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+          }
         </div>
       </div>
 
-      {/* ── Toutes les actions ── */}
+      {/* Toutes les actions */}
       <div style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "16px", padding: "24px" }}>
         <div style={{ fontSize: "13px", fontWeight: "700", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "20px" }}>
           Toutes les actions — {jours} derniers jours

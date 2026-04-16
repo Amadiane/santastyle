@@ -20,16 +20,39 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
+# class LoginSerializer(TokenObtainPairSerializer):
+
+#     @classmethod
+#     def get_token(cls, user):
+#         token = super().get_token(user)
+
+#         token["username"] = user.username
+#         token["role"] = user.role
+
+#         return token
+
+# serializers.py — remplacer uniquement LoginSerializer
+
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+
 class LoginSerializer(TokenObtainPairSerializer):
+    """
+    Surcharge du serializer JWT pour inclure les infos utilisateur
+    dans la réponse : id, username, role, first_name, last_name.
+    """
 
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
+    def validate(self, attrs):
+        data = super().validate(attrs)
 
-        token["username"] = user.username
-        token["role"] = user.role
+        # ✅ Champs ajoutés à la réponse du login
+        data["id"]         = self.user.id
+        data["username"]   = self.user.username
+        data["role"]       = getattr(self.user, "role", "vendeur")
+        data["first_name"] = self.user.first_name or ""
+        data["last_name"]  = self.user.last_name  or ""
 
-        return token
+        return data
 
 
 
@@ -117,3 +140,26 @@ class VenteSerializer(serializers.ModelSerializer):
 
         validated_data["prix_total"] = produit.prix * quantite
         return super().create(validated_data)
+
+
+from rest_framework import serializers
+from .models import ActivityLog
+
+class ActivityLogSerializer(serializers.ModelSerializer):
+    user_username = serializers.SerializerMethodField()
+    user_role     = serializers.SerializerMethodField()
+ 
+    class Meta:
+        model  = ActivityLog
+        fields = [
+            "id", "user", "user_username", "user_role",
+            "action", "model_name", "object_id",
+            "description", "created_at",
+        ]
+ 
+    def get_user_username(self, obj):
+        return obj.user.username if obj.user else "Inconnu"
+ 
+    def get_user_role(self, obj):
+        return getattr(obj.user, "role", "—") if obj.user else "—"
+ 
