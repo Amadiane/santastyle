@@ -3,13 +3,22 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Package, DollarSign, Layers,
   Tag, Users, LogOut, ChevronLeft, ChevronRight,
-  Sun, Moon, Bell, User, Clock
+  Sun, Moon, Bell, Clock
 } from "lucide-react";
 import CONFIG from "../../config/config.js";
 import { useTheme } from "../../context/ThemeContext";
 
 const SIDEBAR_WIDTH     = 240;
-const SIDEBAR_COLLAPSED = 64;
+const SIDEBAR_COLLAPSED = 68;
+
+// ── Palette dorée Santa'Style — identique au DashboardAdmin ──
+const G = {
+  gold:      "#C9A84C",
+  goldLight: "#8A6A20",
+  goldDark:  "#5C3D00",
+  goldPale:  "#F7F2E8",
+  goldBorder:"#EDE5CC",
+};
 
 const NavAdmin = ({ onToggle }) => {
   const location  = useLocation();
@@ -19,12 +28,21 @@ const NavAdmin = ({ onToggle }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [counts, setCounts]       = useState({ contacts: 0, community: 0, newsletter: 0 });
 
-  // ✅ Rôle lu depuis localStorage
   const user    = JSON.parse(localStorage.getItem("user") || "{}");
   const isAdmin = user?.role === "admin";
 
+  // ── Initiales du nom connecté ─────────────────────────
+  const nomAffiche = [user?.first_name, user?.last_name].filter(Boolean).join(" ").trim()
+    || user?.username || "Utilisateur";
+  const initiales = () => {
+    const parts = nomAffiche.split(" ").filter(Boolean);
+    return parts.length >= 2
+      ? (parts[0][0] + parts[1][0]).toUpperCase()
+      : (nomAffiche[0] || "?").toUpperCase();
+  };
+
   useEffect(() => {
-    if (!isAdmin) return; // vendeur n'a pas accès à ces listes
+    if (!isAdmin) return;
     const fetchCounts = async () => {
       try {
         const r1 = await fetch(CONFIG.API_CONTACT_LIST);
@@ -50,44 +68,30 @@ const NavAdmin = ({ onToggle }) => {
     navigate("/login");
   };
 
-  // ✅ Sections adaptées au rôle
   const navSections = [
-    // Dashboard — pointe vers la bonne page selon le rôle
     {
       label: "Dashboard",
       items: [
-        {
-          path:  isAdmin ? "/dashboardAdmin" : "/vendeurDashboard",
-          label: "Tableau de bord",
-          icon:  LayoutDashboard,
-        },
+        { path: isAdmin ? "/dashboardAdmin" : "/vendeurDashboard", label: "Tableau de bord", icon: LayoutDashboard },
       ],
     },
-
-    // Boutique — visible pour admin ET vendeur
     {
       label: "Boutique",
       items: [
-        { path: "/categories", label: "Catégories", icon: Tag       },
-        { path: "/produits",   label: "Produits",   icon: Package   },
-        { path: "/stocks",     label: "Stocks",     icon: Layers    },
+        { path: "/categories", label: "Catégories", icon: Tag        },
+        { path: "/produits",   label: "Produits",   icon: Package    },
+        { path: "/stocks",     label: "Stocks",     icon: Layers     },
         { path: "/ventes",     label: "Ventes",     icon: DollarSign },
       ],
     },
-
-    // Équipe + Historique — admin seulement
     ...(isAdmin ? [
       {
         label: "Équipe",
-        items: [
-          { path: "/register-employee", label: "Employés",         icon: Users },
-        ],
+        items: [{ path: "/register-employee", label: "Employés", icon: Users }],
       },
       {
         label: "Supervision",
-        items: [
-          { path: "/activity", label: "Historique global", icon: Clock },
-        ],
+        items: [{ path: "/activity", label: "Historique global", icon: Clock }],
       },
     ] : []),
   ];
@@ -99,67 +103,128 @@ const NavAdmin = ({ onToggle }) => {
     <aside style={{
       position: "fixed", top: 0, left: 0, bottom: 0,
       width: `${w}px`,
-      background: tokens.navBg,
-      borderRight: `1px solid ${tokens.border}`,
+      background: tokens.bg,
+      borderRight: `1px solid ${G.goldBorder}`,
       display: "flex", flexDirection: "column",
       transition: "width 0.25s cubic-bezier(0.4,0,0.2,1)",
       zIndex: 200,
       overflow: "hidden",
     }}>
 
-      {/* Header sidebar */}
-      <div style={{ height: "64px", padding: "0 14px", display: "flex", alignItems: "center", gap: "10px", borderBottom: `1px solid ${tokens.border}`, flexShrink: 0 }}>
+      {/* ── Header — logo + nom app ── */}
+      <div style={{
+        height: "68px", padding: "0 14px",
+        display: "flex", alignItems: "center", gap: "10px",
+        borderBottom: `1px solid ${G.goldBorder}`,
+        flexShrink: 0,
+      }}>
         <Link to={isAdmin ? "/dashboardAdmin" : "/vendeurDashboard"} style={{ textDecoration: "none", flexShrink: 0 }}>
-          <div style={{ width: "36px", height: "36px", borderRadius: "9px", background: `linear-gradient(135deg, ${tokens.goldDark}, ${tokens.gold})`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 2px 10px ${tokens.gold}40` }}>
-            <span style={{ color: "#fff", fontSize: "18px", fontWeight: "900" }}>S</span>
+          {/* Logo identique à l'avatar du DashboardAdmin */}
+          <div style={{
+            width: "38px", height: "38px", borderRadius: "10px",
+            background: `linear-gradient(135deg, ${G.goldDark}, ${G.gold})`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: `0 4px 12px ${G.gold}40`,
+          }}>
+            <span style={{ color: "#fff", fontSize: "17px", fontWeight: "900", fontFamily: "serif" }}>S</span>
           </div>
         </Link>
 
         {!collapsed && (
           <div style={{ flex: 1, overflow: "hidden" }}>
-            <div style={{ fontSize: "15px", fontWeight: "700", color: tokens.goldDark, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <div style={{ fontSize: "15px", fontWeight: "800", color: G.goldDark, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", letterSpacing: "-0.01em" }}>
               Santa'Style
             </div>
-            {/* ✅ Rôle affiché */}
-            <div style={{ fontSize: "11px", color: tokens.textDim }}>
+            <div style={{ fontSize: "11px", color: G.goldLight, fontWeight: "500" }}>
               {isAdmin ? "Administration" : "Espace vendeur"}
             </div>
           </div>
         )}
 
-        <button onClick={toggle} style={{ width: "28px", height: "28px", borderRadius: "8px", border: `1px solid ${tokens.border}`, background: tokens.card, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginLeft: collapsed ? "auto" : 0, transition: "all 0.2s" }}>
-          {collapsed ? <ChevronRight size={14} color={tokens.textMuted} /> : <ChevronLeft size={14} color={tokens.textMuted} />}
+        <button onClick={toggle} style={{
+          width: "26px", height: "26px", borderRadius: "8px",
+          border: `1px solid ${G.goldBorder}`,
+          background: G.goldPale,
+          cursor: "pointer", display: "flex",
+          alignItems: "center", justifyContent: "center",
+          flexShrink: 0, marginLeft: collapsed ? "auto" : 0,
+          transition: "all 0.2s",
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = `${G.gold}20`; e.currentTarget.style.borderColor = G.gold; }}
+        onMouseLeave={e => { e.currentTarget.style.background = G.goldPale; e.currentTarget.style.borderColor = G.goldBorder; }}>
+          {collapsed
+            ? <ChevronRight size={13} color={G.goldLight} />
+            : <ChevronLeft  size={13} color={G.goldLight} />
+          }
         </button>
       </div>
 
-      {/* Navigation */}
-      <nav style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "12px 8px", display: "flex", flexDirection: "column", gap: "4px" }}>
+      {/* ── Navigation ── */}
+      <nav style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "10px 8px", display: "flex", flexDirection: "column", gap: "2px" }}>
         {navSections.map((section, si) => (
-          <div key={si} style={{ marginBottom: "8px" }}>
+          <div key={si} style={{ marginBottom: "6px" }}>
+
+            {/* Label section */}
             {!collapsed && (
-              <div style={{ fontSize: "10px", fontWeight: "800", color: tokens.textDim, textTransform: "uppercase", letterSpacing: "0.1em", padding: "6px 10px 4px", whiteSpace: "nowrap", overflow: "hidden" }}>
+              <div style={{
+                fontSize: "10px", fontWeight: "800", color: G.gold,
+                textTransform: "uppercase", letterSpacing: "0.12em",
+                padding: "8px 10px 4px",
+              }}>
                 {section.label}
               </div>
             )}
             {collapsed && si > 0 && (
-              <div style={{ height: "1px", background: tokens.border, margin: "6px 8px" }} />
+              <div style={{ height: "1px", background: G.goldBorder, margin: "8px 10px" }} />
             )}
+
             {section.items.map((item, ii) => {
               const isActive = location.pathname === item.path;
               const Icon     = item.icon;
               return (
                 <Link key={ii} to={item.path} title={collapsed ? item.label : ""}
-                  style={{ display: "flex", alignItems: "center", gap: collapsed ? 0 : "10px", padding: collapsed ? "10px 0" : "10px 12px", justifyContent: collapsed ? "center" : "flex-start", borderRadius: "10px", textDecoration: "none", background: isActive ? `linear-gradient(135deg, ${tokens.goldDark}, ${tokens.gold})` : "transparent", color: isActive ? "#fff" : tokens.textMuted, fontSize: "13px", fontWeight: "600", transition: "all 0.15s", position: "relative", overflow: "hidden" }}
-                  onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = `${tokens.gold}12`; e.currentTarget.style.color = tokens.gold; } }}
-                  onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = tokens.textMuted; } }}>
-                  <Icon size={18} style={{ flexShrink: 0 }} />
+                  style={{
+                    display: "flex", alignItems: "center",
+                    gap: collapsed ? 0 : "10px",
+                    padding: collapsed ? "11px 0" : "10px 12px",
+                    justifyContent: collapsed ? "center" : "flex-start",
+                    borderRadius: "12px",
+                    textDecoration: "none",
+                    // ✅ Actif : gradient doré identique aux accents du DashboardAdmin
+                    background: isActive
+                      ? `linear-gradient(135deg, ${G.goldDark}, ${G.gold})`
+                      : "transparent",
+                    color: isActive ? "#fff" : G.goldLight,
+                    fontSize: "13px", fontWeight: "600",
+                    transition: "all 0.15s",
+                    position: "relative",
+                    marginBottom: "2px",
+                  }}
+                  onMouseEnter={e => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = `${G.gold}15`;
+                      e.currentTarget.style.color = G.goldDark;
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = "transparent";
+                      e.currentTarget.style.color = G.goldLight;
+                    }
+                  }}>
+                  <Icon size={17} style={{ flexShrink: 0 }} />
                   {!collapsed && (
                     <span style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {item.label}
                     </span>
                   )}
+                  {/* Indicateur actif en mode plié */}
                   {collapsed && isActive && (
-                    <div style={{ position: "absolute", right: 0, top: "50%", transform: "translateY(-50%)", width: "3px", height: "20px", borderRadius: "2px 0 0 2px", background: tokens.gold }} />
+                    <div style={{
+                      position: "absolute", right: 0, top: "50%", transform: "translateY(-50%)",
+                      width: "3px", height: "22px", borderRadius: "2px 0 0 2px",
+                      background: G.gold,
+                    }} />
                   )}
                 </Link>
               );
@@ -168,22 +233,39 @@ const NavAdmin = ({ onToggle }) => {
         ))}
       </nav>
 
-      {/* Footer sidebar */}
-      <div style={{ borderTop: `1px solid ${tokens.border}`, padding: "10px 8px", display: "flex", flexDirection: "column", gap: "6px", flexShrink: 0 }}>
+      {/* ── Footer — profil + actions ── */}
+      <div style={{
+        borderTop: `1px solid ${G.goldBorder}`,
+        padding: "10px 8px",
+        display: "flex", flexDirection: "column", gap: "6px",
+        flexShrink: 0,
+      }}>
 
+        {/* Thème + notifs */}
         <div style={{ display: "flex", gap: "6px", justifyContent: collapsed ? "center" : "flex-start" }}>
           <button onClick={toggleTheme} title={isLight ? "Mode sombre" : "Mode clair"}
-            style={{ padding: "8px", borderRadius: "8px", border: `1px solid ${tokens.border}`, background: tokens.card, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {isLight ? <Moon size={15} color={tokens.gold} /> : <Sun size={15} color={tokens.gold} />}
+            style={{ padding: "7px", borderRadius: "9px", border: `1px solid ${G.goldBorder}`, background: G.goldPale, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
+            onMouseEnter={e => { e.currentTarget.style.background = `${G.gold}20`; e.currentTarget.style.borderColor = G.gold; }}
+            onMouseLeave={e => { e.currentTarget.style.background = G.goldPale; e.currentTarget.style.borderColor = G.goldBorder; }}>
+            {isLight
+              ? <Moon size={14} color={G.goldLight} />
+              : <Sun  size={14} color={G.gold} />
+            }
           </button>
 
-          {/* Notifications — admin seulement */}
           {isAdmin && !collapsed && (
-            <button title="Notifications"
-              style={{ padding: "8px", borderRadius: "8px", border: `1px solid ${tokens.border}`, background: tokens.card, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-              <Bell size={15} color={tokens.textMuted} />
+            <button title="Notifications" style={{ padding: "7px", borderRadius: "9px", border: `1px solid ${G.goldBorder}`, background: G.goldPale, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", transition: "all 0.15s" }}
+              onMouseEnter={e => { e.currentTarget.style.background = `${G.gold}20`; e.currentTarget.style.borderColor = G.gold; }}
+              onMouseLeave={e => { e.currentTarget.style.background = G.goldPale; e.currentTarget.style.borderColor = G.goldBorder; }}>
+              <Bell size={14} color={G.goldLight} />
               {totalNotifs > 0 && (
-                <span style={{ position: "absolute", top: "-4px", right: "-4px", width: "16px", height: "16px", borderRadius: "50%", background: tokens.gold, color: "#1A1208", fontSize: "9px", fontWeight: "700", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span style={{
+                  position: "absolute", top: "-4px", right: "-4px",
+                  width: "16px", height: "16px", borderRadius: "50%",
+                  background: G.gold, color: "#fff",
+                  fontSize: "9px", fontWeight: "800",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
                   {totalNotifs}
                 </span>
               )}
@@ -191,28 +273,56 @@ const NavAdmin = ({ onToggle }) => {
           )}
         </div>
 
-        {/* ✅ Profil avec nom réel + rôle */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: collapsed ? "8px 0" : "8px 10px", borderRadius: "10px", background: `${tokens.gold}10`, border: `1px solid ${tokens.gold}25`, justifyContent: collapsed ? "center" : "flex-start" }}>
-          <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: `linear-gradient(135deg, ${tokens.goldDark}, ${tokens.gold})`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <User size={16} color="#fff" />
+        {/* ✅ Profil — avatar avec initiales comme dans DashboardAdmin */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: "10px",
+          padding: collapsed ? "8px 0" : "10px 10px",
+          borderRadius: "12px",
+          background: `${G.gold}10`,
+          border: `1px solid ${G.goldBorder}`,
+          justifyContent: collapsed ? "center" : "flex-start",
+        }}>
+          {/* Avatar initiales */}
+          <div style={{
+            width: "32px", height: "32px", borderRadius: "9px",
+            background: `linear-gradient(135deg, ${G.goldDark}, ${G.gold})`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0,
+            fontSize: "13px", fontWeight: "800", color: "#fff",
+            boxShadow: `0 2px 8px ${G.gold}35`,
+          }}>
+            {initiales()}
           </div>
           {!collapsed && (
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: "13px", fontWeight: "700", color: tokens.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {user?.first_name && user?.last_name
-                  ? `${user.first_name} ${user.last_name}`
-                  : user?.username || "Utilisateur"}
+              <div style={{ fontSize: "13px", fontWeight: "700", color: G.goldDark, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {nomAffiche}
               </div>
-              <div style={{ fontSize: "11px", color: tokens.textDim }}>
+              <div style={{ fontSize: "10px", color: G.goldLight, fontWeight: "600" }}>
                 {isAdmin ? "Administrateur" : "Vendeur"}
               </div>
             </div>
           )}
         </div>
 
+        {/* Déconnexion */}
         <button onClick={handleLogout} title="Déconnexion"
-          style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "flex-start", gap: "8px", padding: collapsed ? "9px 0" : "9px 12px", borderRadius: "10px", border: `1px solid ${tokens.danger}40`, background: `${tokens.danger}12`, color: tokens.danger, fontSize: "13px", fontWeight: "600", cursor: "pointer", width: "100%" }}>
-          <LogOut size={16} style={{ flexShrink: 0 }} />
+          style={{
+            display: "flex", alignItems: "center",
+            justifyContent: collapsed ? "center" : "flex-start",
+            gap: "8px",
+            padding: collapsed ? "9px 0" : "9px 12px",
+            borderRadius: "10px",
+            border: `1px solid ${tokens.danger}35`,
+            background: `${tokens.danger}10`,
+            color: tokens.danger,
+            fontSize: "13px", fontWeight: "600",
+            cursor: "pointer", width: "100%",
+            transition: "all 0.15s",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = `${tokens.danger}20`; }}
+          onMouseLeave={e => { e.currentTarget.style.background = `${tokens.danger}10`; }}>
+          <LogOut size={15} style={{ flexShrink: 0 }} />
           {!collapsed && <span>Déconnexion</span>}
         </button>
       </div>
