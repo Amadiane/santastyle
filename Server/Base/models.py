@@ -24,7 +24,7 @@ class Produit(models.Model):
         ("homme",  "Homme"),
         ("femme",  "Femme"),
         ("enfant", "Enfant"),
-        ("mixte",  "Mixte"),  
+        ("mixte",  "Mixte"),
     ]
 
     nom           = models.CharField(max_length=100)
@@ -33,12 +33,21 @@ class Produit(models.Model):
     categorie     = models.ForeignKey(Categorie, on_delete=models.SET_NULL, null=True, related_name="produits")
     image         = CloudinaryField('Image', folder='produits', blank=True, null=True)
     est_nouveau   = models.BooleanField(default=False)
-    genre         = models.CharField(max_length=10, choices=GENRE_CHOICES, default="mixte") 
+    genre         = models.CharField(max_length=10, choices=GENRE_CHOICES, default="mixte")
     date_creation = models.DateTimeField(auto_now_add=True)
+
+    # ✅ Liens réseaux sociaux — tous facultatifs
+    video_tiktok    = models.URLField(blank=True, null=True, verbose_name="Vidéo TikTok")
+    video_instagram = models.URLField(blank=True, null=True, verbose_name="Vidéo Instagram / Reels")
+    video_facebook  = models.URLField(blank=True, null=True, verbose_name="Vidéo Facebook")
 
     def __str__(self):
         return self.nom
 
+    @property
+    def has_video(self):
+        """True si au moins un lien vidéo est renseigné."""
+        return any([self.video_tiktok, self.video_instagram, self.video_facebook])
 
 
 class Stock (models.Model):
