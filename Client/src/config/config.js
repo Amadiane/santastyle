@@ -2,7 +2,7 @@
 const BASE_URL =
   window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
     ? "http://127.0.0.1:8000"
-    : "https://tekacom.onrender.com"; // ton URL backend Render
+    : "https://santastyle.onrender.com"; // ton URL backend Render
 
 const CONFIG = {
   BASE_URL,
@@ -22,7 +22,7 @@ const CONFIG = {
 // 📸 Dossier media (pour les images directes)
 MEDIA_URL: `${BASE_URL}/media/`,
 
-CLOUDINARY_NAME: "dwuyq2eoz",
+CLOUDINARY_NAME: "ddsckcv3w",
 CLOUDINARY_UPLOAD_PRESET: "default", // 👈 le nom exact de ton preset UNSIGNED
   
 // CLOUDINARY_UPLOAD_PRESET: "ml_default", // 👈 nom exact du preset créé
