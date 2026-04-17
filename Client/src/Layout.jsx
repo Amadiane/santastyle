@@ -56,10 +56,10 @@ const App = () => {
   const adminStyles = `
     ${baseStyles}
     body { background: ${tokens.bg}; }
-    #root { scrollbar-width: thin; scrollbar-color: ${tokens.scrollThumb} ${tokens.scrollTrack}; }
+    #root { scrollbar-width: thin; scrollbar-color: #C9A84C ${tokens.scrollTrack || "#EDE5CC"}; }
     #root::-webkit-scrollbar { width: 8px; }
-    #root::-webkit-scrollbar-track { background: ${tokens.scrollTrack}; border-radius: 10px; }
-    #root::-webkit-scrollbar-thumb { background: linear-gradient(180deg, ${tokens.gold} 0%, ${tokens.goldDark} 100%); border-radius: 10px; border: 2px solid ${tokens.scrollTrack}; }
+    #root::-webkit-scrollbar-track { background: ${tokens.scrollTrack || "#EDE5CC"}; border-radius: 10px; }
+    #root::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #C9A84C 0%, #5C3D00 100%); border-radius: 10px; border: 2px solid ${tokens.scrollTrack || "#EDE5CC"}; }
     html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
     input::placeholder { color: ${tokens.textDim}; }
     select option { background: ${tokens.surface}; color: ${tokens.text}; }
@@ -86,6 +86,7 @@ const App = () => {
           <NavAdmin onToggle={setSidebarCollapsed} />
           <main style={{
             marginLeft: `${sidebarW}px`, flex: 1, minHeight: "100vh",
+            background: tokens.bg,
             transition: "margin-left 0.25s cubic-bezier(0.4,0,0.2,1)",
             position: "relative", overflow: "hidden",
           }}>

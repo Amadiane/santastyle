@@ -104,7 +104,7 @@ const NavAdmin = ({ onToggle }) => {
       position: "fixed", top: 0, left: 0, bottom: 0,
       width: `${w}px`,
       background: tokens.bg,
-      borderRight: `1px solid ${G.goldBorder}`,
+      borderRight: `1px solid ${tokens.border}`,
       display: "flex", flexDirection: "column",
       transition: "width 0.25s cubic-bezier(0.4,0,0.2,1)",
       zIndex: 200,
@@ -115,7 +115,7 @@ const NavAdmin = ({ onToggle }) => {
       <div style={{
         height: "68px", padding: "0 14px",
         display: "flex", alignItems: "center", gap: "10px",
-        borderBottom: `1px solid ${G.goldBorder}`,
+        borderBottom: `1px solid ${tokens.border}`,
         flexShrink: 0,
       }}>
         <Link to={isAdmin ? "/dashboardAdmin" : "/vendeurDashboard"} style={{ textDecoration: "none", flexShrink: 0 }}>
@@ -143,15 +143,15 @@ const NavAdmin = ({ onToggle }) => {
 
         <button onClick={toggle} style={{
           width: "26px", height: "26px", borderRadius: "8px",
-          border: `1px solid ${G.goldBorder}`,
-          background: G.goldPale,
+          border: `1px solid ${tokens.border}`,
+          background: tokens.surface,
           cursor: "pointer", display: "flex",
           alignItems: "center", justifyContent: "center",
           flexShrink: 0, marginLeft: collapsed ? "auto" : 0,
           transition: "all 0.2s",
         }}
-        onMouseEnter={e => { e.currentTarget.style.background = `${G.gold}20`; e.currentTarget.style.borderColor = G.gold; }}
-        onMouseLeave={e => { e.currentTarget.style.background = G.goldPale; e.currentTarget.style.borderColor = G.goldBorder; }}>
+        onMouseEnter={e => { e.currentTarget.style.background = `${G.gold}15`; e.currentTarget.style.borderColor = G.gold; }}
+        onMouseLeave={e => { e.currentTarget.style.background = tokens.surface; e.currentTarget.style.borderColor = tokens.border; }}>
           {collapsed
             ? <ChevronRight size={13} color={G.goldLight} />
             : <ChevronLeft  size={13} color={G.goldLight} />
@@ -175,7 +175,7 @@ const NavAdmin = ({ onToggle }) => {
               </div>
             )}
             {collapsed && si > 0 && (
-              <div style={{ height: "1px", background: G.goldBorder, margin: "8px 10px" }} />
+              <div style={{ height: "1px", background: tokens.border, margin: "8px 10px" }} />
             )}
 
             {section.items.map((item, ii) => {
@@ -235,7 +235,7 @@ const NavAdmin = ({ onToggle }) => {
 
       {/* ── Footer — profil + actions ── */}
       <div style={{
-        borderTop: `1px solid ${G.goldBorder}`,
+        borderTop: `1px solid ${tokens.border}`,
         padding: "10px 8px",
         display: "flex", flexDirection: "column", gap: "6px",
         flexShrink: 0,
@@ -244,9 +244,9 @@ const NavAdmin = ({ onToggle }) => {
         {/* Thème + notifs */}
         <div style={{ display: "flex", gap: "6px", justifyContent: collapsed ? "center" : "flex-start" }}>
           <button onClick={toggleTheme} title={isLight ? "Mode sombre" : "Mode clair"}
-            style={{ padding: "7px", borderRadius: "9px", border: `1px solid ${G.goldBorder}`, background: G.goldPale, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
-            onMouseEnter={e => { e.currentTarget.style.background = `${G.gold}20`; e.currentTarget.style.borderColor = G.gold; }}
-            onMouseLeave={e => { e.currentTarget.style.background = G.goldPale; e.currentTarget.style.borderColor = G.goldBorder; }}>
+            style={{ padding: "7px", borderRadius: "9px", border: `1px solid ${tokens.border}`, background: tokens.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
+            onMouseEnter={e => { e.currentTarget.style.background = `${G.gold}15`; e.currentTarget.style.borderColor = G.gold; }}
+            onMouseLeave={e => { e.currentTarget.style.background = tokens.surface; e.currentTarget.style.borderColor = tokens.border; }}>
             {isLight
               ? <Moon size={14} color={G.goldLight} />
               : <Sun  size={14} color={G.gold} />
@@ -254,9 +254,9 @@ const NavAdmin = ({ onToggle }) => {
           </button>
 
           {isAdmin && !collapsed && (
-            <button title="Notifications" style={{ padding: "7px", borderRadius: "9px", border: `1px solid ${G.goldBorder}`, background: G.goldPale, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", transition: "all 0.15s" }}
-              onMouseEnter={e => { e.currentTarget.style.background = `${G.gold}20`; e.currentTarget.style.borderColor = G.gold; }}
-              onMouseLeave={e => { e.currentTarget.style.background = G.goldPale; e.currentTarget.style.borderColor = G.goldBorder; }}>
+            <button title="Notifications" style={{ padding: "7px", borderRadius: "9px", border: `1px solid ${tokens.border}`, background: tokens.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", transition: "all 0.15s" }}
+              onMouseEnter={e => { e.currentTarget.style.background = `${G.gold}15`; e.currentTarget.style.borderColor = G.gold; }}
+              onMouseLeave={e => { e.currentTarget.style.background = tokens.surface; e.currentTarget.style.borderColor = tokens.border; }}>
               <Bell size={14} color={G.goldLight} />
               {totalNotifs > 0 && (
                 <span style={{
@@ -279,7 +279,7 @@ const NavAdmin = ({ onToggle }) => {
           padding: collapsed ? "8px 0" : "10px 10px",
           borderRadius: "12px",
           background: `${G.gold}10`,
-          border: `1px solid ${G.goldBorder}`,
+          border: `1px solid ${tokens.border}`,
           justifyContent: collapsed ? "center" : "flex-start",
         }}>
           {/* Avatar initiales */}

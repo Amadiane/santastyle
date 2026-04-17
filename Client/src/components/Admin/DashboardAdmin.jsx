@@ -30,7 +30,7 @@ const G = {
   goldLight: "#8A6A20",
   goldDark:  "#5C3D00",
   goldPale:  "#F7F2E8",
-  goldBorder:"#EDE5CC",
+  goldBorder:"#EDE5CC",  // valeur fixe — SS utilisé dans le composant via tokens
 };
 
 const DashboardAdmin = () => {
@@ -104,7 +104,7 @@ const DashboardAdmin = () => {
         <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: `${G.gold}20`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
           <BarChart3 size={24} color={G.gold} />
         </div>
-        <div style={{ color: G.goldLight, fontSize: "14px", fontWeight: "500" }}>Chargement des statistiques...</div>
+        <div style={{ color: SS.textMuted, fontSize: "14px", fontWeight: "500" }}>Chargement des statistiques...</div>
       </div>
     </div>
   );
@@ -118,7 +118,7 @@ const DashboardAdmin = () => {
   // ── Composants locaux ────────────────────────────────
   const StatCard = ({ label, value, icon, color, sub }) => (
     <div style={{
-      background: G.goldPale, border: `1px solid ${G.goldBorder}`,
+      background: SS.surface, border: `1px solid ${SS.border}`,
       borderRadius: "16px", padding: "20px",
       position: "relative", overflow: "hidden",
       transition: "transform 0.15s, box-shadow 0.15s",
@@ -127,35 +127,35 @@ const DashboardAdmin = () => {
     onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}>
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: color, borderRadius: "16px 16px 0 0" }} />
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "14px" }}>
-        <span style={{ fontSize: "11px", color: G.goldLight, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</span>
+        <span style={{ fontSize: "11px", color: SS.textMuted, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</span>
         <div style={{ width: "32px", height: "32px", borderRadius: "9px", background: `${color}15`, display: "flex", alignItems: "center", justifyContent: "center", color }}>
           {icon}
         </div>
       </div>
-      <div style={{ fontSize: "30px", fontWeight: "800", color: G.goldDark, lineHeight: 1, marginBottom: "6px", letterSpacing: "-0.02em" }}>
+      <div style={{ fontSize: "30px", fontWeight: "800", color: SS.text, lineHeight: 1, marginBottom: "6px", letterSpacing: "-0.02em" }}>
         {typeof value === "number" ? value.toLocaleString("fr-FR") : value}
       </div>
-      {sub && <div style={{ fontSize: "12px", color: G.goldLight }}>{sub}</div>}
+      {sub && <div style={{ fontSize: "12px", color: SS.textMuted }}>{sub}</div>}
     </div>
   );
 
   const SectionTitle = ({ children, icon }) => (
     <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
       {icon && <span style={{ color: G.gold, display: "flex" }}>{icon}</span>}
-      <span style={{ fontSize: "12px", fontWeight: "700", color: G.goldLight, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+      <span style={{ fontSize: "12px", fontWeight: "700", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.08em" }}>
         {children}
       </span>
     </div>
   );
 
   const Card = ({ children, style = {} }) => (
-    <div style={{ background: G.goldPale, border: `1px solid ${G.goldBorder}`, borderRadius: "16px", padding: "20px", ...style }}>
+    <div style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "16px", padding: "20px", ...style }}>
       {children}
     </div>
   );
 
   const CardInner = ({ children, style = {} }) => (
-    <div style={{ background: "#EDE5CC", borderRadius: "10px", padding: "10px 12px", ...style }}>
+    <div style={{ background: SS.card, borderRadius: "10px", padding: "10px 12px", ...style }}>
       {children}
     </div>
   );
@@ -163,10 +163,10 @@ const DashboardAdmin = () => {
   const BarRow = ({ label, value, max, color }) => (
     <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: "12px", fontWeight: "600", color: G.goldDark, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "4px" }}>
+        <div style={{ fontSize: "12px", fontWeight: "600", color: SS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "4px" }}>
           {label}
         </div>
-        <div style={{ height: "5px", borderRadius: "3px", background: G.goldBorder, overflow: "hidden" }}>
+        <div style={{ height: "5px", borderRadius: "3px", background: SS.border, overflow: "hidden" }}>
           <div style={{ height: "100%", width: `${Math.round((value / max) * 100)}%`, background: color, borderRadius: "3px", transition: "width 0.5s" }} />
         </div>
       </div>
@@ -175,7 +175,7 @@ const DashboardAdmin = () => {
   );
 
   return (
-    <div style={{ color: G.goldDark, fontFamily: "var(--font-sans, sans-serif)" }}>
+    <div style={{ color: SS.text, fontFamily: "var(--font-sans, sans-serif)" }}>
 
       {/* ════ HEADER ════ */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "28px", flexWrap: "wrap", gap: "16px" }}>
@@ -192,11 +192,11 @@ const DashboardAdmin = () => {
             {initiales()}
           </div>
           <div>
-            <div style={{ fontSize: "18px", fontWeight: "800", color: G.goldDark, lineHeight: 1.2 }}>
+            <div style={{ fontSize: "18px", fontWeight: "800", color: SS.text, lineHeight: 1.2 }}>
               {salut}, {nomAdmin}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
-              <span style={{ fontSize: "12px", color: G.goldLight }}>Administrateur · Santa'Style</span>
+              <span style={{ fontSize: "12px", color: SS.textMuted }}>Administrateur · Santa'Style</span>
               <span style={{ display: "flex", alignItems: "center", gap: "4px", padding: "2px 8px", borderRadius: "20px", background: `${"#1A6B3C"}15`, border: `1px solid ${"#1A6B3C"}35`, fontSize: "10px", fontWeight: "700", color: "#1A6B3C" }}>
                 <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#1A6B3C", display: "inline-block" }} />
                 Live
@@ -207,13 +207,13 @@ const DashboardAdmin = () => {
 
         {/* Contrôles */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <div style={{ display: "flex", background: "#EDE5CC", borderRadius: "10px", padding: "3px", border: `1px solid ${G.goldBorder}`, gap: "2px" }}>
+          <div style={{ display: "flex", background: SS.card, borderRadius: "10px", padding: "3px", border: `1px solid ${SS.border}`, gap: "2px" }}>
             {[7, 30, 90].map(j => (
               <button key={j} onClick={() => setJours(j)} style={{
                 padding: "6px 14px", borderRadius: "8px", border: "none",
                 fontSize: "12px", fontWeight: "700", cursor: "pointer",
                 background: jours === j ? G.gold : "transparent",
-                color: jours === j ? "#fff" : G.goldLight,
+                color: jours === j ? "#fff" : SS.textMuted,
                 transition: "all 0.15s",
               }}>
                 {j}j
@@ -222,10 +222,10 @@ const DashboardAdmin = () => {
           </div>
           <button onClick={() => { setLoading(true); setRefresh(r => r + 1); }}
             title="Actualiser"
-            style={{ padding: "9px", borderRadius: "10px", background: G.goldPale, border: `1px solid ${G.goldBorder}`, cursor: "pointer", display: "flex", alignItems: "center", transition: "background 0.15s" }}
-            onMouseEnter={e => e.currentTarget.style.background = "#EDE5CC"}
-            onMouseLeave={e => e.currentTarget.style.background = G.goldPale}>
-            <RefreshCw size={16} color={G.goldLight} />
+            style={{ padding: "9px", borderRadius: "10px", background: SS.surface, border: `1px solid ${SS.border}`, cursor: "pointer", display: "flex", alignItems: "center", transition: "background 0.15s" }}
+            onMouseEnter={e => e.currentTarget.style.background = SS.card}
+            onMouseLeave={e => e.currentTarget.style.background = SS.surface}>
+            <RefreshCw size={16} color={SS.textMuted} />
           </button>
         </div>
       </div>
@@ -242,18 +242,18 @@ const DashboardAdmin = () => {
       {/* ════ ENTONNOIR ════ */}
       <Card style={{ marginBottom: "20px" }}>
         <SectionTitle icon={<TrendingUp size={14} />}>Entonnoir de conversion</SectionTitle>
-        <div style={{ display: "flex", gap: "1px", background: G.goldBorder, borderRadius: "12px", overflow: "hidden" }}>
+        <div style={{ display: "flex", gap: "1px", background: SS.border, borderRadius: "12px", overflow: "hidden" }}>
           {[
             { label: "Visiteurs",    val: t.visite_boutique, color: G.gold,    pct: 100 },
             { label: "Vues produit", val: t.visite_produit,  color: "#3B82F6", pct: t.visite_boutique > 0 ? Math.round((t.visite_produit / t.visite_boutique) * 100) : 0 },
             { label: "Contact",      val: t.visite_contact,  color: "#1A6B3C", pct: t.visite_boutique > 0 ? Math.round((t.visite_contact / t.visite_boutique) * 100) : 0 },
           ].map((s, i) => (
-            <div key={i} style={{ flex: 1, textAlign: "center", padding: "20px 12px", background: G.goldPale }}>
+            <div key={i} style={{ flex: 1, textAlign: "center", padding: "20px 12px", background: SS.surface }}>
               <div style={{ fontSize: "28px", fontWeight: "800", color: s.color, marginBottom: "2px", letterSpacing: "-0.02em" }}>
                 {s.val.toLocaleString()}
               </div>
-              <div style={{ fontSize: "12px", color: G.goldLight, fontWeight: "600", marginBottom: "10px" }}>{s.label}</div>
-              <div style={{ height: "5px", borderRadius: "3px", background: "#EDE5CC" }}>
+              <div style={{ fontSize: "12px", color: SS.textMuted, fontWeight: "600", marginBottom: "10px" }}>{s.label}</div>
+              <div style={{ height: "5px", borderRadius: "3px", background: SS.card }}>
                 <div style={{ height: "100%", width: `${s.pct}%`, background: s.color, borderRadius: "3px", transition: "width 0.6s" }} />
               </div>
               <div style={{ fontSize: "11px", color: s.color, marginTop: "5px", fontWeight: "700" }}>{s.pct}%</div>
@@ -269,7 +269,7 @@ const DashboardAdmin = () => {
         <Card>
           <SectionTitle>Activité — {jours} derniers jours</SectionTitle>
           {stats.activite_jour.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "2rem", color: G.goldLight, fontSize: "13px" }}>Aucune donnée</div>
+            <div style={{ textAlign: "center", padding: "2rem", color: SS.textMuted, fontSize: "13px" }}>Aucune donnée</div>
           ) : (
             <>
               <div style={{ display: "flex", alignItems: "flex-end", gap: "3px", height: "100px" }}>
@@ -281,8 +281,8 @@ const DashboardAdmin = () => {
                 ))}
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px" }}>
-                <span style={{ fontSize: "10px", color: G.goldLight }}>{stats.activite_jour[0]?.jour || ""}</span>
-                <span style={{ fontSize: "10px", color: G.goldLight }}>{stats.activite_jour[stats.activite_jour.length - 1]?.jour || ""}</span>
+                <span style={{ fontSize: "10px", color: SS.textMuted }}>{stats.activite_jour[0]?.jour || ""}</span>
+                <span style={{ fontSize: "10px", color: SS.textMuted }}>{stats.activite_jour[stats.activite_jour.length - 1]?.jour || ""}</span>
               </div>
             </>
           )}
@@ -299,8 +299,8 @@ const DashboardAdmin = () => {
               return (
                 <div key={h} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", height: "100%" }}>
                   <div title={`${h}h : ${total}`}
-                    style={{ width: "100%", borderRadius: "2px 2px 0 0", background: isHot ? "#25D366" : total > 0 ? G.gold : "#EDE5CC", height: `${total > 0 ? Math.max((total / maxHeure) * 100, 6) : 4}%`, marginTop: "auto", transition: "height 0.3s" }} />
-                  {h % 6 === 0 && <span style={{ fontSize: "9px", color: G.goldLight, marginTop: "2px" }}>{h}h</span>}
+                    style={{ width: "100%", borderRadius: "2px 2px 0 0", background: isHot ? "#25D366" : total > 0 ? G.gold : SS.card, height: `${total > 0 ? Math.max((total / maxHeure) * 100, 6) : 4}%`, marginTop: "auto", transition: "height 0.3s" }} />
+                  {h % 6 === 0 && <span style={{ fontSize: "9px", color: SS.textMuted, marginTop: "2px" }}>{h}h</span>}
                 </div>
               );
             })}
@@ -315,7 +315,7 @@ const DashboardAdmin = () => {
         <Card>
           <SectionTitle icon={<Package size={14} />}>Produits les plus vus</SectionTitle>
           {stats.top_produits.length === 0 ? (
-            <div style={{ color: G.goldLight, fontSize: "12px", textAlign: "center", padding: "1rem" }}>Aucune donnée</div>
+            <div style={{ color: SS.textMuted, fontSize: "12px", textAlign: "center", padding: "1rem" }}>Aucune donnée</div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {stats.top_produits.slice(0, 8).map((p, i) => {
@@ -325,16 +325,16 @@ const DashboardAdmin = () => {
                   <div key={i}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
                       <span style={{ fontSize: "13px", width: "20px", flexShrink: 0, textAlign: "center" }}>
-                        {medals[i] || <span style={{ fontSize: "11px", color: G.goldLight }}>#{i + 1}</span>}
+                        {medals[i] || <span style={{ fontSize: "11px", color: SS.textMuted }}>#{i + 1}</span>}
                       </span>
-                      <span style={{ flex: 1, fontSize: "13px", fontWeight: "600", color: G.goldDark, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <span style={{ flex: 1, fontSize: "13px", fontWeight: "600", color: SS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {resoudreNomProduit(p)}
                       </span>
                       <span style={{ fontSize: "12px", fontWeight: "700", color: G.gold, flexShrink: 0 }}>
                         {p.total} vue{p.total > 1 ? "s" : ""}
                       </span>
                     </div>
-                    <div style={{ height: "4px", borderRadius: "2px", background: "#EDE5CC", marginLeft: "28px" }}>
+                    <div style={{ height: "4px", borderRadius: "2px", background: SS.card, marginLeft: "28px" }}>
                       <div style={{ height: "100%", width: `${pct}%`, background: i === 0 ? G.gold : i === 1 ? "#C0C0C0" : i === 2 ? "#CD7F32" : `${G.gold}60`, borderRadius: "2px", transition: "width 0.5s" }} />
                     </div>
                   </div>
@@ -348,7 +348,7 @@ const DashboardAdmin = () => {
         <Card>
           <SectionTitle icon={<Search size={13} />}>Recherches populaires</SectionTitle>
           {stats.recherches.length === 0
-            ? <div style={{ color: G.goldLight, fontSize: "12px", textAlign: "center", padding: "1rem" }}>Aucune recherche</div>
+            ? <div style={{ color: SS.textMuted, fontSize: "12px", textAlign: "center", padding: "1rem" }}>Aucune recherche</div>
             : stats.recherches.slice(0, 8).map((r, i) => (
                 <BarRow key={i} label={`"${r.recherche}"`} value={r.total} max={stats.recherches[0].total} color="#F59E0B" />
               ))
@@ -363,7 +363,7 @@ const DashboardAdmin = () => {
         <Card>
           <SectionTitle icon={<Users size={14} />}>Répartition par genre</SectionTitle>
           {stats.genres.length === 0
-            ? <div style={{ color: G.goldLight, fontSize: "12px", textAlign: "center", padding: "1rem" }}>Aucun filtre utilisé</div>
+            ? <div style={{ color: SS.textMuted, fontSize: "12px", textAlign: "center", padding: "1rem" }}>Aucun filtre utilisé</div>
             : stats.genres.map((g, i) => {
                 const total = stats.genres.reduce((a, x) => a + x.total, 0);
                 const pct   = Math.round((g.total / total) * 100);
@@ -372,12 +372,12 @@ const DashboardAdmin = () => {
                 return (
                   <div key={i} style={{ marginBottom: "14px" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
-                      <span style={{ fontSize: "13px", fontWeight: "600", color: G.goldDark }}>{cfg.label}</span>
+                      <span style={{ fontSize: "13px", fontWeight: "600", color: SS.text }}>{cfg.label}</span>
                       <span style={{ fontSize: "13px", fontWeight: "700", color: cfg.color }}>
-                        {g.total.toLocaleString()} <span style={{ fontSize: "11px", color: G.goldLight, fontWeight: "400" }}>({pct}%)</span>
+                        {g.total.toLocaleString()} <span style={{ fontSize: "11px", color: SS.textMuted, fontWeight: "400" }}>({pct}%)</span>
                       </span>
                     </div>
-                    <div style={{ height: "7px", borderRadius: "4px", background: "#EDE5CC" }}>
+                    <div style={{ height: "7px", borderRadius: "4px", background: SS.card }}>
                       <div style={{ height: "100%", width: `${pct}%`, background: cfg.color, borderRadius: "4px", transition: "width 0.5s" }} />
                     </div>
                   </div>
@@ -392,22 +392,22 @@ const DashboardAdmin = () => {
             Activité en direct
           </SectionTitle>
           {stats.recentes.length === 0
-            ? <div style={{ color: G.goldLight, fontSize: "12px", textAlign: "center", padding: "1rem" }}>Aucune activité</div>
+            ? <div style={{ color: SS.textMuted, fontSize: "12px", textAlign: "center", padding: "1rem" }}>Aucune activité</div>
             : <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "260px", overflowY: "auto" }}>
                 {stats.recentes.map((r, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 10px", borderRadius: "9px", background: "#EDE5CC" }}>
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 10px", borderRadius: "9px", background: SS.card }}>
                     <div style={{ width: "28px", height: "28px", borderRadius: "8px", background: `${G.gold}15`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: G.gold }}>
                       {ICONS_MAP[r.type_action] || <Zap size={14} />}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: "12px", fontWeight: "600", color: G.goldDark }}>{LABELS[r.type_action] || r.type_action}</div>
+                      <div style={{ fontSize: "12px", fontWeight: "600", color: SS.text }}>{LABELS[r.type_action] || r.type_action}</div>
                       {(r.produit_nom || r.recherche || r.genre) && (
-                        <div style={{ fontSize: "11px", color: G.goldLight, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <div style={{ fontSize: "11px", color: SS.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {r.produit_nom || r.recherche || r.genre}
                         </div>
                       )}
                     </div>
-                    <span style={{ fontSize: "10px", color: G.goldLight, flexShrink: 0 }}>{r.created_at}</span>
+                    <span style={{ fontSize: "10px", color: SS.textMuted, flexShrink: 0 }}>{r.created_at}</span>
                   </div>
                 ))}
               </div>
@@ -423,19 +423,19 @@ const DashboardAdmin = () => {
             <div key={key} style={{
               display: "flex", alignItems: "center", gap: "10px",
               padding: "12px 14px", borderRadius: "12px",
-              background: "#EDE5CC", border: `1px solid ${G.goldBorder}`,
+              background: SS.card, border: `1px solid ${SS.border}`,
               transition: "border-color 0.15s",
             }}
             onMouseEnter={e => e.currentTarget.style.borderColor = G.gold + "60"}
-            onMouseLeave={e => e.currentTarget.style.borderColor = G.goldBorder}>
+            onMouseLeave={e => e.currentTarget.style.borderColor = SS.border}>
               <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: `${G.gold}12`, display: "flex", alignItems: "center", justifyContent: "center", color: G.gold, flexShrink: 0 }}>
                 {ICONS_MAP[key]}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: "10px", color: G.goldLight, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "2px", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: "600" }}>
+                <div style={{ fontSize: "10px", color: SS.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "2px", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: "600" }}>
                   {label}
                 </div>
-                <div style={{ fontSize: "20px", fontWeight: "800", color: G.goldDark, lineHeight: 1, letterSpacing: "-0.01em" }}>
+                <div style={{ fontSize: "20px", fontWeight: "800", color: SS.text, lineHeight: 1, letterSpacing: "-0.01em" }}>
                   {(t[key] || 0).toLocaleString("fr-FR")}
                 </div>
               </div>
