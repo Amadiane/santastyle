@@ -25,7 +25,7 @@ MEDIA_URL: `${BASE_URL}/media/`,
 CLOUDINARY_NAME: "ddsckcv3w",
 CLOUDINARY_UPLOAD_PRESET: "default", // 👈 le nom exact de ton preset UNSIGNED
   
-// CLOUDINARY_UPLOAD_PRESET: "ml_default", // 👈 nom exact du preset créé
+
 };
 
 export default CONFIG;
