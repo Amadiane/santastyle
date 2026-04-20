@@ -7,9 +7,33 @@ import {
 import CONFIG from "../../config/config";
 import { useTheme } from "../../context/ThemeContext";
 
+// Hook responsive
+const useResponsive = () => {
+  const [viewport, setViewport] = useState({
+    isMobile: window.innerWidth < 768,
+    isTablet: window.innerWidth >= 768 && window.innerWidth < 1024,
+    isDesktop: window.innerWidth >= 1024,
+  });
+  
+  useEffect(() => {
+    const handleResize = () => {
+      setViewport({
+        isMobile: window.innerWidth < 768,
+        isTablet: window.innerWidth >= 768 && window.innerWidth < 1024,
+        isDesktop: window.innerWidth >= 1024,
+      });
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+  
+  return viewport;
+};
+
 const Ventes = () => {
   const navigate = useNavigate();
   const { tokens: SS } = useTheme();
+  const { isMobile, isTablet } = useResponsive();
 
   const [ventes, setVentes]       = useState([]);
   const [produits, setProduits]   = useState([]);
@@ -31,7 +55,6 @@ const Ventes = () => {
   const [couleursDisponibles, setCouleursDisponibles] = useState([]);
   const [stockDisponible, setStockDisponible]         = useState(null);
 
-  // ✅ Token récupéré une seule fois
   const token = localStorage.getItem("access");
   const headers = {
     Authorization: `Bearer ${token}`,
@@ -42,7 +65,6 @@ const Ventes = () => {
   const fetchVentes = async () => {
     setLoading(true);
     try {
-      // ✅ CONFIG.API_VENTE au lieu de BASE_URL/api/ventes/
       const res  = await fetch(CONFIG.API_VENTE, { headers });
       const data = await res.json();
       if (res.ok) setVentes(data);
@@ -53,7 +75,6 @@ const Ventes = () => {
 
   const fetchProduits = async () => {
     try {
-      // ✅ CONFIG.API_PRODUIT — lecture publique, pas besoin de token
       const res  = await fetch(CONFIG.API_PRODUIT);
       const data = await res.json();
       if (res.ok) setProduits(Array.isArray(data) ? data : data.results || []);
@@ -62,7 +83,6 @@ const Ventes = () => {
 
   const fetchStocks = async () => {
     try {
-      // ✅ CONFIG.API_STOCK au lieu de BASE_URL/api/stocks/
       const res  = await fetch(CONFIG.API_STOCK, { headers });
       const data = await res.json();
       if (res.ok) setStocks(Array.isArray(data) ? data : data.results || []);
@@ -87,7 +107,6 @@ const Ventes = () => {
     setCouleursDisponibles([]); setStockDisponible(null);
   }, [form.produit]);
 
-  // ── Couleurs disponibles selon taille ───────────────────
   useEffect(() => {
     if (!form.produit || !form.taille) {
       setCouleursDisponibles([]); setStockDisponible(null); return;
@@ -100,7 +119,6 @@ const Ventes = () => {
     setStockDisponible(null);
   }, [form.taille]);
 
-  // ── Stock disponible selon couleur ───────────────────────
   useEffect(() => {
     if (!form.produit || !form.taille || !form.couleur) {
       setStockDisponible(null); return;
@@ -127,7 +145,6 @@ const Ventes = () => {
     }
     setSubmitting(true); setError(""); setSuccess("");
     try {
-      // ✅ CONFIG.API_VENTE
       const res = await fetch(CONFIG.API_VENTE, {
         method: "POST",
         headers,
@@ -161,7 +178,6 @@ const Ventes = () => {
   const handleDelete = async (id) => {
     setDeletingId(id); setError("");
     try {
-      // ✅ CONFIG.API_VENTE + id
       const res = await fetch(`${CONFIG.API_VENTE}${id}/`, {
         method: "DELETE",
         headers,
@@ -202,9 +218,9 @@ const Ventes = () => {
 
   // ── Styles partagés ──────────────────────────────────────
   const inputStyle = {
-    width: "100%", padding: "10px 14px", borderRadius: "8px",
+    width: "100%", padding: isMobile ? "9px 12px" : "10px 14px", borderRadius: "8px",
     background: SS.card, border: `1px solid ${SS.border}`,
-    color: SS.text, fontSize: "14px", outline: "none",
+    color: SS.text, fontSize: isMobile ? "13px" : "14px", outline: "none",
     boxSizing: "border-box",
   };
 
@@ -227,29 +243,31 @@ const Ventes = () => {
   });
 
   return (
-    <div style={{ minHeight: "100vh", background: SS.bg, padding: "2rem", color: SS.text, fontFamily: "var(--font-sans, sans-serif)" }}>
+    <div style={{ minHeight: "100vh", background: SS.bg, padding: isMobile ? "1rem" : "2rem", color: SS.text, fontFamily: "var(--font-sans, sans-serif)" }}>
       <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
 
         {/* Fil d'Ariane */}
-        <div style={{ display: "flex", gap: "6px", alignItems: "center", marginBottom: "6px" }}>
-          <span style={{ fontSize: "12px", color: SS.textDim }}>Gestion</span>
-          <span style={{ fontSize: "12px", color: SS.textDim }}>/</span>
-          <span style={{ fontSize: "12px", color: SS.gold }}>Ventes</span>
-        </div>
+        {!isMobile && (
+          <div style={{ display: "flex", gap: "6px", alignItems: "center", marginBottom: "6px" }}>
+            <span style={{ fontSize: "12px", color: SS.textDim }}>Gestion</span>
+            <span style={{ fontSize: "12px", color: SS.textDim }}>/</span>
+            <span style={{ fontSize: "12px", color: SS.gold }}>Ventes</span>
+          </div>
+        )}
 
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem", flexWrap: "wrap", gap: "12px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <div style={{ display: "flex", alignItems: isMobile ? "flex-start" : "center", justifyContent: "space-between", marginBottom: "1.5rem", flexWrap: "wrap", gap: "12px", flexDirection: isMobile ? "column" : "row" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", width: isMobile ? "100%" : "auto" }}>
             <button onClick={() => navigate("/dashboardAdmin")}
               style={{ padding: "8px 10px", borderRadius: "8px", border: `1px solid ${SS.border}`, background: SS.card, cursor: "pointer", display: "flex", alignItems: "center", color: SS.textMuted }}>
               <ArrowLeft size={18} />
             </button>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: `${SS.gold}20`, border: `1px solid ${SS.gold}50`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
+              <div style={{ width: isMobile ? "34px" : "38px", height: isMobile ? "34px" : "38px", borderRadius: "10px", background: `${SS.gold}20`, border: `1px solid ${SS.gold}50`, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <ShoppingBag size={19} color={SS.gold} />
               </div>
-              <div>
-                <div style={{ fontSize: "20px", fontWeight: "600", color: SS.goldLight, lineHeight: 1.2 }}>Ventes</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: isMobile ? "18px" : "20px", fontWeight: "600", color: SS.goldLight, lineHeight: 1.2 }}>Ventes</div>
                 <div style={{ fontSize: "12px", color: SS.textDim }}>
                   {ventes.length} transaction{ventes.length > 1 ? "s" : ""}
                 </div>
@@ -258,26 +276,26 @@ const Ventes = () => {
           </div>
 
           <button onClick={() => { setShowForm(!showForm); setError(""); }}
-            style={{ background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`, border: "none", borderRadius: "8px", padding: "10px 20px", color: "#1A1208", fontWeight: "600", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", boxShadow: `0 2px 12px ${SS.gold}30` }}>
+            style={{ background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`, border: "none", borderRadius: "8px", padding: isMobile ? "9px 16px" : "10px 20px", color: "#1A1208", fontWeight: "600", fontSize: isMobile ? "13px" : "14px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", boxShadow: `0 2px 12px ${SS.gold}30`, width: isMobile ? "100%" : "auto", justifyContent: isMobile ? "center" : "flex-start" }}>
             <Plus size={16} /> Nouvelle vente
           </button>
         </div>
 
         {/* Stats */}
         {!loading && ventes.length > 0 && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px", marginBottom: "20px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px", marginBottom: "20px" }}>
             {[
               { label: "Chiffre d'affaires", value: `${totalCA.toLocaleString("fr-FR")} GNF`, icon: <TrendingUp size={20} />, color: SS.gold      },
               { label: "Transactions",       value: ventes.length,                              icon: <ShoppingBag size={20} />, color: SS.goldLight },
               { label: "Unités vendues",     value: totalUnites,                                icon: <Package size={20} />,     color: SS.success   },
             ].map((s, i) => (
-              <div key={i} style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "14px", padding: "16px 20px", display: "flex", alignItems: "center", gap: "14px" }}>
+              <div key={i} style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "14px", padding: isMobile ? "14px 16px" : "16px 20px", display: "flex", alignItems: "center", gap: "14px" }}>
                 <div style={{ width: "42px", height: "42px", borderRadius: "10px", background: `${s.color}20`, border: `1px solid ${s.color}40`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <span style={{ color: s.color }}>{s.icon}</span>
                 </div>
-                <div>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: "11px", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "4px" }}>{s.label}</div>
-                  <div style={{ fontSize: "18px", fontWeight: "600", color: SS.goldLight }}>{s.value}</div>
+                  <div style={{ fontSize: isMobile ? "16px" : "18px", fontWeight: "600", color: SS.goldLight, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.value}</div>
                 </div>
               </div>
             ))}
@@ -286,13 +304,13 @@ const Ventes = () => {
 
         {/* Alertes */}
         {error && (
-          <div style={{ padding: "12px 16px", borderRadius: "10px", background: `${SS.danger}18`, border: `1px solid ${SS.danger}40`, color: SS.danger, fontSize: "14px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+          <div style={{ padding: "12px 16px", borderRadius: "10px", background: `${SS.danger}18`, border: `1px solid ${SS.danger}40`, color: SS.danger, fontSize: isMobile ? "13px" : "14px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
             <span>{error}</span>
             <button onClick={() => setError("")} style={{ background: "none", border: "none", cursor: "pointer", color: SS.danger }}><X size={15} /></button>
           </div>
         )}
         {success && (
-          <div style={{ padding: "12px 16px", borderRadius: "10px", background: `${SS.success}18`, border: `1px solid ${SS.success}40`, color: SS.success, fontSize: "14px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+          <div style={{ padding: "12px 16px", borderRadius: "10px", background: `${SS.success}18`, border: `1px solid ${SS.success}40`, color: SS.success, fontSize: isMobile ? "13px" : "14px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
             <span>{success}</span>
             <button onClick={() => setSuccess("")} style={{ background: "none", border: "none", cursor: "pointer", color: SS.success }}><X size={15} /></button>
           </div>
@@ -300,13 +318,13 @@ const Ventes = () => {
 
         {/* Formulaire nouvelle vente */}
         {showForm && (
-          <div style={{ background: SS.surface, border: `1px solid ${SS.gold}50`, borderRadius: "14px", padding: "20px", marginBottom: "20px", boxShadow: `0 4px 24px ${SS.gold}10` }}>
+          <div style={{ background: SS.surface, border: `1px solid ${SS.gold}50`, borderRadius: "14px", padding: isMobile ? "16px" : "20px", marginBottom: "20px", boxShadow: `0 4px 24px ${SS.gold}10` }}>
             <div style={{ fontSize: "15px", fontWeight: "600", color: SS.goldLight, marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
               <ShoppingBag size={16} color={SS.gold} /> Nouvelle vente
             </div>
 
             <form onSubmit={handleCreate}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
 
                 <div>
                   <label style={labelStyle}>Produit</label>
@@ -359,19 +377,19 @@ const Ventes = () => {
               {prixEstime && (
                 <div style={{ padding: "12px 16px", borderRadius: "8px", background: `${SS.gold}12`, border: `1px solid ${SS.gold}35`, display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
                   <span style={{ fontSize: "13px", color: SS.textMuted }}>Prix total estimé</span>
-                  <span style={{ fontSize: "18px", fontWeight: "700", color: SS.goldLight }}>{prixEstime} GNF</span>
+                  <span style={{ fontSize: isMobile ? "16px" : "18px", fontWeight: "700", color: SS.goldLight }}>{prixEstime} GNF</span>
                 </div>
               )}
 
-              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", flexDirection: isMobile ? "column" : "row" }}>
                 <button type="button"
                   onClick={() => { setShowForm(false); setForm(emptyForm); }}
-                  style={{ padding: "10px 20px", borderRadius: "8px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.textMuted, cursor: "pointer", fontSize: "14px" }}>
+                  style={{ padding: "10px 20px", borderRadius: "8px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.textMuted, cursor: "pointer", fontSize: "14px", width: isMobile ? "100%" : "auto" }}>
                   Annuler
                 </button>
                 <button type="submit"
                   disabled={submitting || stockDisponible === 0}
-                  style={{ padding: "10px 20px", borderRadius: "8px", background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`, border: "none", color: "#1A1208", fontWeight: "600", fontSize: "14px", cursor: submitting || stockDisponible === 0 ? "not-allowed" : "pointer", opacity: submitting || stockDisponible === 0 ? 0.5 : 1 }}>
+                  style={{ padding: "10px 20px", borderRadius: "8px", background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`, border: "none", color: "#1A1208", fontWeight: "600", fontSize: "14px", cursor: submitting || stockDisponible === 0 ? "not-allowed" : "pointer", opacity: submitting || stockDisponible === 0 ? 0.5 : 1, width: isMobile ? "100%" : "auto" }}>
                   {submitting ? "Enregistrement..." : "Enregistrer la vente"}
                 </button>
               </div>
@@ -381,9 +399,9 @@ const Ventes = () => {
 
         {/* Filtres */}
         <div style={{ display: "flex", gap: "10px", marginBottom: "14px", flexWrap: "wrap" }}>
-          <div style={{ flex: 1, minWidth: "200px", display: "flex", alignItems: "center", gap: "10px", background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "8px", padding: "0 14px" }}>
+          <div style={{ flex: 1, minWidth: isMobile ? "100%" : "200px", display: "flex", alignItems: "center", gap: "10px", background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "8px", padding: "0 14px" }}>
             <Search size={15} color={SS.textDim} />
-            <input placeholder="Rechercher (produit, taille, couleur, vendeur)..."
+            <input placeholder={isMobile ? "Rechercher..." : "Rechercher (produit, taille, couleur, vendeur)..."}
               style={{ flex: 1, background: "none", border: "none", outline: "none", color: SS.text, fontSize: "14px", padding: "10px 0" }}
               value={search} onChange={e => setSearch(e.target.value)} />
             {search && (
@@ -392,9 +410,9 @@ const Ventes = () => {
               </button>
             )}
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "8px", padding: "0 14px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "8px", padding: "0 14px", minWidth: isMobile ? "100%" : "auto" }}>
             <ChevronDown size={14} color={SS.textDim} />
-            <select style={{ background: "none", border: "none", outline: "none", color: SS.text, fontSize: "14px", padding: "10px 0" }}
+            <select style={{ background: "none", border: "none", outline: "none", color: SS.text, fontSize: "14px", padding: "10px 0", flex: 1 }}
               value={filterProduit} onChange={e => setFilterProduit(e.target.value)}>
               <option value="">Tous les produits</option>
               {produits.map(p => <option key={p.id} value={String(p.id)}>{p.nom}</option>)}
@@ -408,7 +426,7 @@ const Ventes = () => {
           {filterProduit || search ? " — filtrés" : ""}
         </div>
 
-        {/* Tableau */}
+        {/* Tableau Desktop / Cards Mobile */}
         {loading ? (
           <div style={{ textAlign: "center", padding: "4rem", color: SS.textDim }}>
             <ShoppingBag size={40} color={`${SS.gold}40`} style={{ display: "block", margin: "0 auto 12px" }} />
@@ -419,10 +437,74 @@ const Ventes = () => {
             <Package size={40} color={`${SS.gold}30`} style={{ display: "block", margin: "0 auto 12px" }} />
             Aucune vente trouvée
           </div>
-        ) : (
-          <div style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "14px", overflow: "hidden" }}>
+        ) : isMobile ? (
+          // ✅ MOBILE : Cards
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {filtered.map((vente) => {
+              const stockRestant = getStockRestant(vente);
+              return (
+                <div key={vente.id} style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "14px", padding: "14px" }}>
+                  {/* Produit */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
+                    <div style={{ flex: 1, minWidth: 0, marginRight: "8px" }}>
+                      <div style={{ fontSize: "15px", fontWeight: "700", color: SS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "4px" }}>
+                        {vente.produit_nom || `#${vente.produit}`}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginBottom: "4px" }}>
+                        <span style={{ padding: "2px 8px", borderRadius: "5px", background: `${SS.gold}18`, border: `1px solid ${SS.gold}35`, fontSize: "11px", color: SS.gold, fontWeight: "500" }}>
+                          {vente.taille}
+                        </span>
+                        <span style={{ fontSize: "12px", color: SS.textMuted }}>{vente.couleur}</span>
+                        <span style={{ fontSize: "11px", color: SS.textMuted }}>· Qté {vente.quantite}</span>
+                      </div>
+                    </div>
+                    {confirmDeleteId === vente.id ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                        <button onClick={() => handleDelete(vente.id)} disabled={deletingId === vente.id}
+                          style={{ padding: "4px 10px", borderRadius: "6px", background: `${SS.danger}25`, border: `1px solid ${SS.danger}50`, color: SS.danger, fontSize: "11px", cursor: "pointer" }}>
+                          {deletingId === vente.id ? "..." : "Confirmer"}
+                        </button>
+                        <button onClick={() => setConfirmDeleteId(null)}
+                          style={{ padding: "4px 10px", borderRadius: "6px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.textMuted, fontSize: "11px", cursor: "pointer" }}>
+                          Annuler
+                        </button>
+                      </div>
+                    ) : (
+                      <button onClick={() => setConfirmDeleteId(vente.id)}
+                        style={{ padding: "6px", borderRadius: "6px", background: `${SS.danger}18`, border: `1px solid ${SS.danger}35`, color: SS.danger, cursor: "pointer", display: "flex", alignItems: "center" }}>
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
 
-            {/* En-tête colonnes */}
+                  {/* Prix + Stock */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                    <div style={{ fontSize: "16px", fontWeight: "700", color: SS.goldLight }}>
+                      {Number(vente.prix_total).toLocaleString("fr-FR")} GNF
+                    </div>
+                    {stockRestant === null
+                      ? <span style={{ color: SS.textDim, fontSize: "12px" }}>—</span>
+                      : <span style={stockBadgeStyle(stockRestant)}>
+                          {stockRestant} restant{stockRestant > 1 ? "s" : ""}
+                        </span>
+                    }
+                  </div>
+
+                  {/* Vendeur + Date */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "11px", color: SS.textMuted }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <User size={12} color={SS.gold} />
+                      <span>{vente.vendeur_nom || "—"}</span>
+                    </div>
+                    <span>{new Date(vente.date_vente).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })} · {new Date(vente.date_vente).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          // ✅ DESKTOP : Tableau
+          <div style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "14px", overflow: "hidden" }}>
             <div style={{ display: "grid", gridTemplateColumns: "2fr 1.6fr 0.7fr 1.6fr 1.4fr 1.6fr 1.2fr", padding: "12px 20px", borderBottom: `1px solid ${SS.border}`, background: SS.card }}>
               {["Produit", "Taille / Couleur", "Qté", "Prix total", "Stock restant", "Vendeur", "Date"].map((h, i) => (
                 <div key={i} style={{ fontSize: "11px", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: "700", textAlign: i === 6 ? "right" : "left" }}>
@@ -431,7 +513,6 @@ const Ventes = () => {
               ))}
             </div>
 
-            {/* Lignes */}
             {filtered.map((vente, i) => {
               const stockRestant = getStockRestant(vente);
               const isLast = i === filtered.length - 1;
@@ -441,12 +522,10 @@ const Ventes = () => {
                   onMouseEnter={e => e.currentTarget.style.background = SS.card}
                   onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
 
-                  {/* Produit */}
                   <div style={{ fontSize: "14px", color: SS.text, fontWeight: "500", paddingRight: "8px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {vente.produit_nom || `#${vente.produit}`}
                   </div>
 
-                  {/* Taille / Couleur */}
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
                     <span style={{ padding: "2px 8px", borderRadius: "5px", background: `${SS.gold}18`, border: `1px solid ${SS.gold}35`, fontSize: "12px", color: SS.gold, fontWeight: "500" }}>
                       {vente.taille}
@@ -454,17 +533,14 @@ const Ventes = () => {
                     <span style={{ fontSize: "12px", color: SS.textMuted }}>{vente.couleur}</span>
                   </div>
 
-                  {/* Quantité */}
                   <div style={{ fontSize: "15px", fontWeight: "600", color: SS.text }}>
                     {vente.quantite}
                   </div>
 
-                  {/* Prix total */}
                   <div style={{ fontSize: "14px", fontWeight: "700", color: SS.goldLight }}>
                     {Number(vente.prix_total).toLocaleString("fr-FR")} GNF
                   </div>
 
-                  {/* Stock restant */}
                   <div>
                     {stockRestant === null
                       ? <span style={{ color: SS.textDim, fontSize: "12px" }}>—</span>
@@ -474,7 +550,6 @@ const Ventes = () => {
                     }
                   </div>
 
-                  {/* Vendeur */}
                   <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
                     <div style={{ width: "26px", height: "26px", borderRadius: "50%", background: `${SS.gold}18`, border: `1px solid ${SS.gold}35`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       <User size={13} color={SS.gold} />
@@ -484,7 +559,6 @@ const Ventes = () => {
                     </span>
                   </div>
 
-                  {/* Date + Actions */}
                   <div style={{ textAlign: "right" }}>
                     {confirmDeleteId === vente.id ? (
                       <div style={{ display: "flex", gap: "6px", justifyContent: "flex-end" }}>
