@@ -3,7 +3,7 @@ import CONFIG from "../../config/config";
 import { Navigate } from "react-router-dom";
 import {
   ShoppingBag, Users, MessageCircle, Search,
-  Eye, RefreshCw, BarChart3, Package, TrendingUp, Clock, Award
+  Eye, RefreshCw, BarChart3, Package, TrendingUp, Clock, Award, Zap
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 
