@@ -7,6 +7,29 @@ import {
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 
+// Hook pour détecter mobile/tablette
+const useResponsive = () => {
+  const [viewport, setViewport] = useState({
+    isMobile: window.innerWidth < 768,
+    isTablet: window.innerWidth >= 768 && window.innerWidth < 1024,
+    isDesktop: window.innerWidth >= 1024,
+  });
+  
+  useEffect(() => {
+    const handleResize = () => {
+      setViewport({
+        isMobile: window.innerWidth < 768,
+        isTablet: window.innerWidth >= 768 && window.innerWidth < 1024,
+        isDesktop: window.innerWidth >= 1024,
+      });
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+  
+  return viewport;
+};
+
 // ✅ Métriques conservées — sans WA (toujours 0), sans visite_equipe/missions/commander/filtre_categorie
 const LABELS = {
   visite_boutique: "Visite boutique",
@@ -37,6 +60,7 @@ const DashboardAdmin = () => {
   const token = localStorage.getItem("access");
   const user  = JSON.parse(localStorage.getItem("user") || "{}");
   const { tokens: SS } = useTheme();
+  const { isMobile, isTablet } = useResponsive();
 
   const [stats,    setStats]    = useState(null);
   const [produits, setProduits] = useState({}); // ✅ map id → nom
@@ -119,7 +143,7 @@ const DashboardAdmin = () => {
   const StatCard = ({ label, value, icon, color, sub }) => (
     <div style={{
       background: SS.surface, border: `1px solid ${SS.border}`,
-      borderRadius: "16px", padding: "20px",
+      borderRadius: "16px", padding: isMobile ? "16px" : "20px",
       position: "relative", overflow: "hidden",
       transition: "transform 0.15s, box-shadow 0.15s",
     }}
@@ -132,7 +156,7 @@ const DashboardAdmin = () => {
           {icon}
         </div>
       </div>
-      <div style={{ fontSize: "30px", fontWeight: "800", color: SS.text, lineHeight: 1, marginBottom: "6px", letterSpacing: "-0.02em" }}>
+      <div style={{ fontSize: isMobile ? "24px" : "30px", fontWeight: "800", color: SS.text, lineHeight: 1, marginBottom: "6px", letterSpacing: "-0.02em" }}>
         {typeof value === "number" ? value.toLocaleString("fr-FR") : value}
       </div>
       {sub && <div style={{ fontSize: "12px", color: SS.textMuted }}>{sub}</div>}
@@ -142,20 +166,14 @@ const DashboardAdmin = () => {
   const SectionTitle = ({ children, icon }) => (
     <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
       {icon && <span style={{ color: G.gold, display: "flex" }}>{icon}</span>}
-      <span style={{ fontSize: "12px", fontWeight: "700", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+      <span style={{ fontSize: isMobile ? "11px" : "12px", fontWeight: "700", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.08em" }}>
         {children}
       </span>
     </div>
   );
 
   const Card = ({ children, style = {} }) => (
-    <div style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "16px", padding: "20px", ...style }}>
-      {children}
-    </div>
-  );
-
-  const CardInner = ({ children, style = {} }) => (
-    <div style={{ background: SS.card, borderRadius: "10px", padding: "10px 12px", ...style }}>
+    <div style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "16px", padding: isMobile ? "16px" : "20px", ...style }}>
       {children}
     </div>
   );
@@ -163,40 +181,56 @@ const DashboardAdmin = () => {
   const BarRow = ({ label, value, max, color }) => (
     <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: "12px", fontWeight: "600", color: SS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "4px" }}>
+        <div style={{ fontSize: isMobile ? "11px" : "12px", fontWeight: "600", color: SS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "4px" }}>
           {label}
         </div>
         <div style={{ height: "5px", borderRadius: "3px", background: SS.border, overflow: "hidden" }}>
           <div style={{ height: "100%", width: `${Math.round((value / max) * 100)}%`, background: color, borderRadius: "3px", transition: "width 0.5s" }} />
         </div>
       </div>
-      <span style={{ fontSize: "12px", fontWeight: "700", color, flexShrink: 0, minWidth: "28px", textAlign: "right" }}>{value}</span>
+      <span style={{ fontSize: isMobile ? "11px" : "12px", fontWeight: "700", color, flexShrink: 0, minWidth: "28px", textAlign: "right" }}>{value}</span>
     </div>
   );
+
+  // Colonnes responsive
+  const getGridCols = () => {
+    if (isMobile) return "1fr";
+    if (isTablet) return "1fr 1fr";
+    return "1fr 1fr";
+  };
+
+  const getKPIGridCols = () => {
+    if (isMobile) return "1fr";
+    if (isTablet) return "repeat(2, 1fr)";
+    return "repeat(auto-fill, minmax(190px, 1fr))";
+  };
 
   return (
     <div style={{ color: SS.text, fontFamily: "var(--font-sans, sans-serif)" }}>
 
       {/* ════ HEADER ════ */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "28px", flexWrap: "wrap", gap: "16px" }}>
+      <div style={{ display: "flex", alignItems: isMobile ? "flex-start" : "center", justifyContent: "space-between", marginBottom: "28px", flexWrap: "wrap", gap: "16px", flexDirection: isMobile ? "column" : "row" }}>
 
         {/* Profil admin */}
-        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "14px", width: isMobile ? "100%" : "auto" }}>
           <div style={{
-            width: "52px", height: "52px", borderRadius: "14px",
+            width: isMobile ? "44px" : "52px", 
+            height: isMobile ? "44px" : "52px", 
+            borderRadius: "14px",
             background: `linear-gradient(135deg, ${G.goldDark}, ${G.gold})`,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "20px", fontWeight: "800", color: "#fff",
+            fontSize: isMobile ? "18px" : "20px", 
+            fontWeight: "800", color: "#fff",
             boxShadow: `0 4px 16px ${G.gold}40`, flexShrink: 0,
           }}>
             {initiales()}
           </div>
-          <div>
-            <div style={{ fontSize: "18px", fontWeight: "800", color: SS.text, lineHeight: 1.2 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: isMobile ? "16px" : "18px", fontWeight: "800", color: SS.text, lineHeight: 1.2 }}>
               {salut}, {nomAdmin}
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
-              <span style={{ fontSize: "12px", color: SS.textMuted }}>Administrateur · Santa'Style</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px", flexWrap: "wrap" }}>
+              <span style={{ fontSize: isMobile ? "11px" : "12px", color: SS.textMuted }}>Administrateur · Santa'Style</span>
               <span style={{ display: "flex", alignItems: "center", gap: "4px", padding: "2px 8px", borderRadius: "20px", background: `${"#1A6B3C"}15`, border: `1px solid ${"#1A6B3C"}35`, fontSize: "10px", fontWeight: "700", color: "#1A6B3C" }}>
                 <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#1A6B3C", display: "inline-block" }} />
                 Live
@@ -206,15 +240,17 @@ const DashboardAdmin = () => {
         </div>
 
         {/* Contrôles */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <div style={{ display: "flex", background: SS.card, borderRadius: "10px", padding: "3px", border: `1px solid ${SS.border}`, gap: "2px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", width: isMobile ? "100%" : "auto" }}>
+          <div style={{ display: "flex", background: SS.card, borderRadius: "10px", padding: "3px", border: `1px solid ${SS.border}`, gap: "2px", flex: isMobile ? 1 : "none" }}>
             {[7, 30, 90].map(j => (
               <button key={j} onClick={() => setJours(j)} style={{
-                padding: "6px 14px", borderRadius: "8px", border: "none",
+                padding: isMobile ? "6px 10px" : "6px 14px", 
+                borderRadius: "8px", border: "none",
                 fontSize: "12px", fontWeight: "700", cursor: "pointer",
                 background: jours === j ? G.gold : "transparent",
                 color: jours === j ? "#fff" : SS.textMuted,
                 transition: "all 0.15s",
+                flex: isMobile ? 1 : "none",
               }}>
                 {j}j
               </button>
@@ -231,7 +267,7 @@ const DashboardAdmin = () => {
       </div>
 
       {/* ════ KPI VISITEURS ════ */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: "14px", marginBottom: "20px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: getKPIGridCols(), gap: "14px", marginBottom: "20px" }}>
         <StatCard label="Visites boutique" value={t.visite_boutique} icon={<ShoppingBag size={16} />} color={G.gold}    sub={`${stats.uniques} visiteurs uniques`} />
         <StatCard label="Vues produits"    value={t.visite_produit}  icon={<Eye size={16} />}         color="#3B82F6"   sub={`${stats.top_produits.length} produits consultés`} />
         <StatCard label="Recherches"       value={t.recherche}       icon={<Search size={16} />}      color="#F59E0B"   sub={`${stats.recherches.length} termes uniques`} />
@@ -242,14 +278,14 @@ const DashboardAdmin = () => {
       {/* ════ ENTONNOIR ════ */}
       <Card style={{ marginBottom: "20px" }}>
         <SectionTitle icon={<TrendingUp size={14} />}>Entonnoir de conversion</SectionTitle>
-        <div style={{ display: "flex", gap: "1px", background: SS.border, borderRadius: "12px", overflow: "hidden" }}>
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? "10px" : "1px", background: isMobile ? "transparent" : SS.border, borderRadius: "12px", overflow: "hidden" }}>
           {[
             { label: "Visiteurs",    val: t.visite_boutique, color: G.gold,    pct: 100 },
             { label: "Vues produit", val: t.visite_produit,  color: "#3B82F6", pct: t.visite_boutique > 0 ? Math.round((t.visite_produit / t.visite_boutique) * 100) : 0 },
             { label: "Contact",      val: t.visite_contact,  color: "#1A6B3C", pct: t.visite_boutique > 0 ? Math.round((t.visite_contact / t.visite_boutique) * 100) : 0 },
           ].map((s, i) => (
-            <div key={i} style={{ flex: 1, textAlign: "center", padding: "20px 12px", background: SS.surface }}>
-              <div style={{ fontSize: "28px", fontWeight: "800", color: s.color, marginBottom: "2px", letterSpacing: "-0.02em" }}>
+            <div key={i} style={{ flex: 1, textAlign: "center", padding: isMobile ? "16px" : "20px 12px", background: SS.surface, borderRadius: isMobile ? "12px" : "0", border: isMobile ? `1px solid ${SS.border}` : "none" }}>
+              <div style={{ fontSize: isMobile ? "24px" : "28px", fontWeight: "800", color: s.color, marginBottom: "2px", letterSpacing: "-0.02em" }}>
                 {s.val.toLocaleString()}
               </div>
               <div style={{ fontSize: "12px", color: SS.textMuted, fontWeight: "600", marginBottom: "10px" }}>{s.label}</div>
@@ -263,7 +299,7 @@ const DashboardAdmin = () => {
       </Card>
 
       {/* ════ GRAPHES ════ */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "20px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: getGridCols(), gap: "14px", marginBottom: "20px" }}>
 
         {/* Activité par jour */}
         <Card>
@@ -309,7 +345,7 @@ const DashboardAdmin = () => {
       </div>
 
       {/* ════ TOP PRODUITS + RECHERCHES ════ */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "20px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: getGridCols(), gap: "14px", marginBottom: "20px" }}>
 
         {/* ✅ Top produits vus — affichage par nom avec rang médaillé */}
         <Card>
@@ -327,7 +363,7 @@ const DashboardAdmin = () => {
                       <span style={{ fontSize: "13px", width: "20px", flexShrink: 0, textAlign: "center" }}>
                         {medals[i] || <span style={{ fontSize: "11px", color: SS.textMuted }}>#{i + 1}</span>}
                       </span>
-                      <span style={{ flex: 1, fontSize: "13px", fontWeight: "600", color: SS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <span style={{ flex: 1, fontSize: isMobile ? "12px" : "13px", fontWeight: "600", color: SS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {resoudreNomProduit(p)}
                       </span>
                       <span style={{ fontSize: "12px", fontWeight: "700", color: G.gold, flexShrink: 0 }}>
@@ -357,7 +393,7 @@ const DashboardAdmin = () => {
       </div>
 
       {/* ════ GENRE + ACTIVITÉ EN DIRECT ════ */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "20px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: getGridCols(), gap: "14px", marginBottom: "20px" }}>
 
         {/* Répartition genre */}
         <Card>
@@ -372,8 +408,8 @@ const DashboardAdmin = () => {
                 return (
                   <div key={i} style={{ marginBottom: "14px" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
-                      <span style={{ fontSize: "13px", fontWeight: "600", color: SS.text }}>{cfg.label}</span>
-                      <span style={{ fontSize: "13px", fontWeight: "700", color: cfg.color }}>
+                      <span style={{ fontSize: isMobile ? "12px" : "13px", fontWeight: "600", color: SS.text }}>{cfg.label}</span>
+                      <span style={{ fontSize: isMobile ? "12px" : "13px", fontWeight: "700", color: cfg.color }}>
                         {g.total.toLocaleString()} <span style={{ fontSize: "11px", color: SS.textMuted, fontWeight: "400" }}>({pct}%)</span>
                       </span>
                     </div>
@@ -400,7 +436,7 @@ const DashboardAdmin = () => {
                       {ICONS_MAP[r.type_action] || <Zap size={14} />}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: "12px", fontWeight: "600", color: SS.text }}>{LABELS[r.type_action] || r.type_action}</div>
+                      <div style={{ fontSize: isMobile ? "11px" : "12px", fontWeight: "600", color: SS.text }}>{LABELS[r.type_action] || r.type_action}</div>
                       {(r.produit_nom || r.recherche || r.genre) && (
                         <div style={{ fontSize: "11px", color: SS.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {r.produit_nom || r.recherche || r.genre}
@@ -418,7 +454,7 @@ const DashboardAdmin = () => {
       {/* ════ TOUTES LES ACTIONS ════ */}
       <Card>
         <SectionTitle icon={<Award size={14} />}>Toutes les actions — {jours} derniers jours</SectionTitle>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
           {Object.entries(LABELS).map(([key, label]) => (
             <div key={key} style={{
               display: "flex", alignItems: "center", gap: "10px",
@@ -435,7 +471,7 @@ const DashboardAdmin = () => {
                 <div style={{ fontSize: "10px", color: SS.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "2px", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: "600" }}>
                   {label}
                 </div>
-                <div style={{ fontSize: "20px", fontWeight: "800", color: SS.text, lineHeight: 1, letterSpacing: "-0.01em" }}>
+                <div style={{ fontSize: isMobile ? "18px" : "20px", fontWeight: "800", color: SS.text, lineHeight: 1, letterSpacing: "-0.01em" }}>
                   {(t[key] || 0).toLocaleString("fr-FR")}
                 </div>
               </div>
