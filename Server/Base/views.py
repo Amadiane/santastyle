@@ -363,6 +363,7 @@
 
 
 # views.py
+# boutique/views.py
 
 from rest_framework import viewsets, generics, permissions, filters, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -405,7 +406,7 @@ class LoginView(TokenObtainPairView):
 
 
 # ════════════════════════════════════════════════════════════
-#  CATÉGORIES — ✅ mixin ajouté sur les deux views
+#  CATÉGORIES
 # ════════════════════════════════════════════════════════════
 
 class CategorieListCreateView(ActivityLogMixin, generics.ListCreateAPIView):
@@ -418,7 +419,6 @@ class CategorieListCreateView(ActivityLogMixin, generics.ListCreateAPIView):
             return [permissions.AllowAny()]
         return [permissions.IsAuthenticated()]
 
-    # ✅ Branche le log via le hook générique
     def perform_create(self, serializer):
         self.perform_create_generic(serializer)
 
@@ -441,37 +441,64 @@ class CategorieRetrieveUpdateDestroyView(ActivityLogMixin, generics.RetrieveUpda
 
 
 # ════════════════════════════════════════════════════════════
-#  PRODUITS — ViewSet avec mixin (inchangé)
+#  PRODUITS — ✅ VENDEUR PEUT CRÉER/MODIFIER
 # ════════════════════════════════════════════════════════════
 
 class ProduitViewSet(ActivityLogMixin, viewsets.ModelViewSet):
+    """
+    Permissions :
+    - GET (lecture) : Public (AllowAny)
+    - POST (création) : Vendeur OU Admin
+    - PUT/PATCH (modification) : Vendeur OU Admin
+    - DELETE (suppression) : Admin SEULEMENT
+    """
     queryset           = Produit.objects.all()
     serializer_class   = ProduitSerializer
     log_model_name     = "Produit"
 
     def get_permissions(self):
-        if self.request.method in permissions.SAFE_METHODS:
+        # ✅ Lecture publique
+        if self.request.method in permissions.SAFE_METHODS:  # GET, HEAD, OPTIONS
             return [permissions.AllowAny()]
-        return [permissions.IsAuthenticated(), IsAdminOrReadOnly()]
+        
+        # ✅ Suppression : Admin seulement
+        if self.request.method == "DELETE":
+            return [permissions.IsAuthenticated(), IsAdmin()]
+        
+        # ✅ Création/Modification : Vendeur OU Admin
+        return [permissions.IsAuthenticated(), IsVendeur()]
 
 
 # ════════════════════════════════════════════════════════════
-#  STOCKS — ✅ mixin ajouté
+#  STOCKS — ✅ VENDEUR PEUT CRÉER/MODIFIER
 # ════════════════════════════════════════════════════════════
 
 class StockViewSet(ActivityLogMixin, viewsets.ModelViewSet):
+    """
+    Permissions :
+    - GET (lecture) : Public (AllowAny)
+    - POST/PUT/PATCH (création/modification) : Vendeur OU Admin
+    - DELETE (suppression) : Admin SEULEMENT
+    """
     queryset           = Stock.objects.all()
     serializer_class   = StockSerializer
     log_model_name     = "Stock"
 
     def get_permissions(self):
+        # ✅ Lecture publique
         if self.request.method in permissions.SAFE_METHODS:
             return [permissions.AllowAny()]
-        return [permissions.IsAuthenticated()]
+        
+        # ✅ Suppression : Admin seulement
+        if self.request.method == "DELETE":
+            return [permissions.IsAuthenticated(), IsAdmin()]
+        
+        # ✅ Création/Modification : Vendeur OU Admin
+        return [permissions.IsAuthenticated(), IsVendeur()]
 
 
 # ════════════════════════════════════════════════════════════
-#  VENTES — mixin déjà présent, perform_create personnalisé
+#  VENTES — VENDEUR PEUT CRÉER
 # ════════════════════════════════════════════════════════════
 
 class VenteViewSet(ActivityLogMixin, viewsets.ModelViewSet):
@@ -493,36 +520,23 @@ class VenteViewSet(ActivityLogMixin, viewsets.ModelViewSet):
 
 
 # ════════════════════════════════════════════════════════════
-#  ACTIVITÉ — lecture seule, filtrée par rôle
+#  ACTIVITÉ — LECTURE GLOBALE
 # ════════════════════════════════════════════════════════════
-
-# Dans views.py — remplacer uniquement ActivityLogViewSet par ceci
-
-from rest_framework import viewsets, filters
-from rest_framework.permissions import IsAuthenticated
-from .models import ActivityLog
-from .serializers import ActivityLogSerializer
-
 
 class ActivityLogViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Historique GLOBAL — tous les utilisateurs authentifiés voient tout.
-    Filtres disponibles :
-      ?action=create|update|delete|vente
-      ?model=Produit|Stock|Categorie|Vente
-      ?user=<id>   (filtre optionnel, admin seulement)
     """
     serializer_class   = ActivityLogSerializer
     permission_classes = [IsAuthenticated]
     filter_backends    = [filters.SearchFilter, filters.OrderingFilter]
     search_fields      = ["description", "model_name", "user__username"]
     ordering_fields    = ["created_at"]
-    ordering           = ["-created_at"]  # plus récent en premier
+    ordering           = ["-created_at"]
 
     def get_queryset(self):
         user = self.request.user
-        # ✅ GLOBAL — tout le monde voit tous les logs
-        qs = ActivityLog.objects.select_related("user")
+        qs   = ActivityLog.objects.select_related("user")
 
         # Filtre optionnel par user (admin seulement)
         user_id = self.request.query_params.get("user")
@@ -543,7 +557,7 @@ class ActivityLogViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 # ════════════════════════════════════════════════════════════
-#  TRACKING BOUTIQUE (public)
+#  TRACKING BOUTIQUE (PUBLIC)
 # ════════════════════════════════════════════════════════════
 
 from django.http import JsonResponse
