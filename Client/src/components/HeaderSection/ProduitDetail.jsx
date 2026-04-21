@@ -4,6 +4,29 @@ import { ArrowLeft, Share2, Package, CheckCircle, AlertCircle, XCircle, Play } f
 import CONFIG from "../../config/config.js";
 import track from "../../utils/tracker";
 
+// Hook responsive
+const useResponsive = () => {
+  const [viewport, setViewport] = useState({
+    isMobile: window.innerWidth < 768,
+    isTablet: window.innerWidth >= 768 && window.innerWidth < 1024,
+    isDesktop: window.innerWidth >= 1024,
+  });
+  
+  useEffect(() => {
+    const handleResize = () => {
+      setViewport({
+        isMobile: window.innerWidth < 768,
+        isTablet: window.innerWidth >= 768 && window.innerWidth < 1024,
+        isDesktop: window.innerWidth >= 1024,
+      });
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+  
+  return viewport;
+};
+
 // ── Palette identique à BoutiquePage ─────────────────────────────
 const SS = {
   bg:          "#FFFFFF",
@@ -54,7 +77,7 @@ const InstagramIcon = ({ size = 16 }) => (
 );
 
 // ── Section vidéos réseaux sociaux ────────────────────────────────
-const VideoSection = ({ produit }) => {
+const VideoSection = ({ produit, isMobile }) => {
   const videos = [
     produit.video_tiktok    && { url: produit.video_tiktok,    label: "Voir sur TikTok",    icon: <TikTokIcon size={16} />,    bg: "#010101", color: "#fff" },
     produit.video_instagram && { url: produit.video_instagram, label: "Voir sur Instagram", icon: <InstagramIcon size={16} />, bg: "linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)", color: "#fff" },
@@ -71,7 +94,7 @@ const VideoSection = ({ produit }) => {
           <Play size={14} color={SS.gold} />
         </div>
         <div>
-          <div style={{ fontSize: "13px", fontWeight: "700", color: SS.text }}>Vu sur les réseaux</div>
+          <div style={{ fontSize: isMobile ? "12px" : "13px", fontWeight: "700", color: SS.text }}>Vu sur les réseaux</div>
           <div style={{ fontSize: "11px", color: SS.textMuted }}>Ce produit a été présenté en vidéo</div>
         </div>
       </div>
@@ -79,7 +102,7 @@ const VideoSection = ({ produit }) => {
       <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: "8px" }}>
         {videos.map((v, i) => (
           <a key={i} href={v.url} target="_blank" rel="noopener noreferrer"
-            style={{ display: "flex", alignItems: "center", gap: "10px", padding: "11px 14px", borderRadius: "10px", background: v.bg, color: v.color, textDecoration: "none", fontSize: "13px", fontWeight: "700", transition: "opacity 0.15s" }}
+            style={{ display: "flex", alignItems: "center", gap: "10px", padding: isMobile ? "10px 12px" : "11px 14px", borderRadius: "10px", background: v.bg, color: v.color, textDecoration: "none", fontSize: isMobile ? "12px" : "13px", fontWeight: "700", transition: "opacity 0.15s" }}
             onMouseEnter={e => e.currentTarget.style.opacity = "0.88"}
             onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
             {v.icon}
@@ -98,6 +121,7 @@ const VideoSection = ({ produit }) => {
 const ProduitDetail = () => {
   const { id }   = useParams();
   const navigate = useNavigate();
+  const { isMobile, isTablet } = useResponsive();
 
   const [produit, setProduit]                 = useState(null);
   const [stocks, setStocks]                   = useState([]);
@@ -187,17 +211,17 @@ const ProduitDetail = () => {
   };
 
   const btnStyle = (selected, disabled = false) => ({
-    padding: "8px 18px", borderRadius: "8px",
+    padding: isMobile ? "7px 14px" : "8px 18px", borderRadius: "8px",
     border: `1px solid ${selected ? SS.gold : SS.border}`,
     background: selected ? SS.gold : SS.surface,
     color: selected ? "#1A1208" : disabled ? SS.textDim : SS.text,
-    fontSize: "13px", fontWeight: "600",
+    fontSize: isMobile ? "12px" : "13px", fontWeight: "600",
     cursor: disabled ? "not-allowed" : "pointer",
     opacity: disabled ? 0.4 : 1, transition: "all 0.15s",
   });
 
   if (loading) return (
-    <div style={{ minHeight: "100vh", background: SS.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ minHeight: "100vh", background: SS.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
       <div style={{ textAlign: "center", color: SS.textMuted }}>
         <Package size={48} color={`${SS.gold}50`} style={{ marginBottom: "12px" }} />
         <div style={{ fontSize: "15px" }}>Chargement...</div>
@@ -206,7 +230,7 @@ const ProduitDetail = () => {
   );
 
   if (!produit || produit.detail) return (
-    <div style={{ minHeight: "100vh", background: SS.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ minHeight: "100vh", background: SS.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
       <div style={{ textAlign: "center" }}>
         <div style={{ fontSize: "16px", color: SS.text, marginBottom: "16px" }}>Produit introuvable</div>
         <button onClick={() => navigate("/boutique")}
@@ -220,26 +244,26 @@ const ProduitDetail = () => {
   const b = getBadge();
 
   return (
-    <div style={{ minHeight: "100vh", background: SS.bg, fontFamily: "var(--font-sans, sans-serif)" }}>
+    <div style={{ minHeight: "100vh", background: SS.bg, fontFamily: "var(--font-sans, sans-serif)", paddingTop: isMobile ? "60px" : "0" }}>
 
       {/* Breadcrumb */}
-      <div style={{ background: SS.surface, borderBottom: `1px solid ${SS.border}`, padding: "12px 24px" }}>
-        <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", alignItems: "center", gap: "8px" }}>
+      <div style={{ background: SS.surface, borderBottom: `1px solid ${SS.border}`, padding: isMobile ? "10px 16px" : "12px 24px" }}>
+        <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", alignItems: "center", gap: "8px", overflow: "hidden" }}>
           <button onClick={() => navigate("/boutique")}
-            style={{ display: "flex", alignItems: "center", gap: "6px", background: "none", border: "none", color: SS.textMuted, cursor: "pointer", fontSize: "13px" }}>
-            <ArrowLeft size={15} /> Boutique
+            style={{ display: "flex", alignItems: "center", gap: "6px", background: "none", border: "none", color: SS.textMuted, cursor: "pointer", fontSize: isMobile ? "12px" : "13px", flexShrink: 0 }}>
+            <ArrowLeft size={15} /> {!isMobile && "Boutique"}
           </button>
-          <span style={{ color: SS.textDim }}>/</span>
-          {getCatNom(produit.categorie) && <>
+          <span style={{ color: SS.textDim }}>/ </span>
+          {!isMobile && getCatNom(produit.categorie) && <>
             <span style={{ color: SS.textDim, fontSize: "13px" }}>{getCatNom(produit.categorie)}</span>
             <span style={{ color: SS.textDim }}>/</span>
           </>}
-          <span style={{ color: SS.gold, fontSize: "13px", fontWeight: "500" }}>{produit.nom}</span>
+          <span style={{ color: SS.gold, fontSize: isMobile ? "12px" : "13px", fontWeight: "500", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{produit.nom}</span>
         </div>
       </div>
 
-      <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "32px 16px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "48px", alignItems: "start" }}>
+      <div style={{ maxWidth: "1100px", margin: "0 auto", padding: isMobile ? "20px 16px" : "32px 16px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? "24px" : "48px", alignItems: "start" }}>
 
           {/* IMAGE */}
           <div>
@@ -254,7 +278,7 @@ const ProduitDetail = () => {
                 </div>
               )}
               {totalStock > 0 && totalStock <= 3 && (
-                <div style={{ position: "absolute", top: "14px", left: "14px", padding: "4px 14px", borderRadius: "20px", background: SS.danger, color: "#fff", fontSize: "12px", fontWeight: "700" }}>
+                <div style={{ position: "absolute", top: "14px", left: "14px", padding: "4px 14px", borderRadius: "20px", background: SS.danger, color: "#fff", fontSize: isMobile ? "11px" : "12px", fontWeight: "700" }}>
                   Dernières pièces !
                 </div>
               )}
@@ -266,7 +290,7 @@ const ProduitDetail = () => {
             </div>
 
             <button onClick={handlePartager}
-              style={{ marginTop: "12px", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", padding: "11px", borderRadius: "10px", background: SS.surface, border: `1px solid ${SS.border}`, color: SS.textMuted, fontSize: "13px", fontWeight: "500", cursor: "pointer" }}>
+              style={{ marginTop: "12px", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", padding: isMobile ? "10px" : "11px", borderRadius: "10px", background: SS.surface, border: `1px solid ${SS.border}`, color: SS.textMuted, fontSize: isMobile ? "12px" : "13px", fontWeight: "500", cursor: "pointer" }}>
               <Share2 size={15} />
               {copied ? "✓ Lien copié !" : "Partager ce produit"}
             </button>
@@ -281,10 +305,10 @@ const ProduitDetail = () => {
                   {getCatNom(produit.categorie)}
                 </div>
               )}
-              <h1 style={{ fontSize: "28px", fontWeight: "700", color: SS.text, margin: "0 0 10px", lineHeight: 1.2 }}>
+              <h1 style={{ fontSize: isMobile ? "24px" : "28px", fontWeight: "700", color: SS.text, margin: "0 0 10px", lineHeight: 1.2 }}>
                 {produit.nom}
               </h1>
-              <div style={{ fontSize: "28px", fontWeight: "700", color: SS.goldLight }}>
+              <div style={{ fontSize: isMobile ? "24px" : "28px", fontWeight: "700", color: SS.goldLight }}>
                 {Number(produit.prix).toLocaleString("fr-FR")} GNF
               </div>
             </div>
@@ -292,17 +316,17 @@ const ProduitDetail = () => {
             {/* Badge stock */}
             <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", borderRadius: "10px", background: b.bg, border: `1px solid ${b.color}40` }}>
               <span style={{ color: b.color }}>{b.icon}</span>
-              <span style={{ fontSize: "14px", fontWeight: "600", color: b.color }}>{b.label}</span>
+              <span style={{ fontSize: isMobile ? "13px" : "14px", fontWeight: "600", color: b.color }}>{b.label}</span>
             </div>
 
             {produit.description && (
-              <div style={{ fontSize: "14px", color: SS.textMuted, lineHeight: 1.7, padding: "14px 16px", borderRadius: "10px", background: SS.surface, border: `1px solid ${SS.border}` }}>
+              <div style={{ fontSize: isMobile ? "13px" : "14px", color: SS.textMuted, lineHeight: 1.7, padding: "14px 16px", borderRadius: "10px", background: SS.surface, border: `1px solid ${SS.border}` }}>
                 {produit.description}
               </div>
             )}
 
             {/* ✅ Section vidéos réseaux sociaux */}
-            <VideoSection produit={produit} />
+            <VideoSection produit={produit} isMobile={isMobile} />
 
             {/* Tailles */}
             {taillesDispos.length > 0 && (
@@ -346,7 +370,7 @@ const ProduitDetail = () => {
 
             {/* Stock sélection */}
             {stockDispo !== null && (
-              <div style={{ padding: "10px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: "500", background: stockDispo === 0 ? SS.dangerBg : SS.successBg, border: `1px solid ${stockDispo === 0 ? SS.danger : SS.success}40`, color: stockDispo === 0 ? SS.danger : SS.success }}>
+              <div style={{ padding: "10px 14px", borderRadius: "8px", fontSize: isMobile ? "12px" : "13px", fontWeight: "500", background: stockDispo === 0 ? SS.dangerBg : SS.successBg, border: `1px solid ${stockDispo === 0 ? SS.danger : SS.success}40`, color: stockDispo === 0 ? SS.danger : SS.success }}>
                 {stockDispo === 0 ? "Cette combinaison est épuisée" : `${stockDispo} pièce${stockDispo > 1 ? "s" : ""} disponible${stockDispo > 1 ? "s" : ""}`}
               </div>
             )}
@@ -354,16 +378,19 @@ const ProduitDetail = () => {
             {/* Bouton WhatsApp */}
             {totalStock > 0 && (
               <button onClick={handleWhatsApp}
-                style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", width: "100%", padding: "16px", borderRadius: "12px", border: "none", background: "#25D366", color: "#fff", fontSize: "16px", fontWeight: "700", cursor: "pointer", boxShadow: "0 4px 20px rgba(37,211,102,0.3)" }}>
-                <WAIcon size={22} />
-                {selectedTaille && selectedCouleur
-                  ? `Commander — ${selectedTaille} / ${selectedCouleur}`
-                  : "Demander la disponibilité"
-                }
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", width: "100%", padding: isMobile ? "14px" : "16px", borderRadius: "12px", border: "none", background: "#25D366", color: "#fff", fontSize: isMobile ? "14px" : "16px", fontWeight: "700", cursor: "pointer", boxShadow: "0 4px 20px rgba(37,211,102,0.3)" }}>
+                <WAIcon size={isMobile ? 18 : 22} />
+                {isMobile ? (
+                  selectedTaille && selectedCouleur ? "Commander" : "Disponibilité"
+                ) : (
+                  selectedTaille && selectedCouleur
+                    ? `Commander — ${selectedTaille} / ${selectedCouleur}`
+                    : "Demander la disponibilité"
+                )}
               </button>
             )}
 
-            <div style={{ textAlign: "center", fontSize: "12px", color: SS.textDim }}>
+            <div style={{ textAlign: "center", fontSize: isMobile ? "11px" : "12px", color: SS.textDim }}>
               {selectedTaille && selectedCouleur
                 ? "Le lien de ce produit sera inclus dans votre message"
                 : "Sélectionnez taille et couleur, ou contactez-nous directement"
@@ -377,9 +404,9 @@ const ProduitDetail = () => {
                 { icon: "✅", text: "Commande confirmée via WhatsApp" },
                 { icon: "🔄", text: "Échange possible sous 24h" },
               ].map((item, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", borderBottom: i < 2 ? `1px solid ${SS.border}` : "none" }}>
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: "12px", padding: isMobile ? "10px 14px" : "12px 16px", borderBottom: i < 2 ? `1px solid ${SS.border}` : "none" }}>
                   <span style={{ fontSize: "18px" }}>{item.icon}</span>
-                  <span style={{ fontSize: "13px", color: SS.textMuted }}>{item.text}</span>
+                  <span style={{ fontSize: isMobile ? "12px" : "13px", color: SS.textMuted }}>{item.text}</span>
                 </div>
               ))}
             </div>

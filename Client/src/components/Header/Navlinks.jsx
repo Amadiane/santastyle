@@ -1,6 +1,29 @@
 import React, { useEffect, useState, useRef } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Search, Menu, X, Users, ChevronDown, ArrowRight, ShoppingBag, Sparkles, Phone, Info, Baby, Gem } from "lucide-react";
+import { Search, Menu, X, Users, ChevronDown, ArrowRight, ShoppingBag, Sparkles, Phone, Info } from "lucide-react";
+
+// Hook responsive
+const useResponsive = () => {
+  const [viewport, setViewport] = useState({
+    isMobile: window.innerWidth < 768,
+    isTablet: window.innerWidth >= 768 && window.innerWidth < 1024,
+    isDesktop: window.innerWidth >= 1024,
+  });
+  
+  useEffect(() => {
+    const handleResize = () => {
+      setViewport({
+        isMobile: window.innerWidth < 768,
+        isTablet: window.innerWidth >= 768 && window.innerWidth < 1024,
+        isDesktop: window.innerWidth >= 1024,
+      });
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+  
+  return viewport;
+};
 
 const NAV = {
   bg:        "rgba(255,255,255,0.97)",
@@ -22,6 +45,7 @@ const WAsvg = ({ size = 14, color = "currentColor" }) => (
 
 const Navlinks = () => {
   const navigate = useNavigate();
+  const { isMobile, isDesktop } = useResponsive();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen]         = useState(false);
   const [scrolled, setScrolled]             = useState(false);
@@ -48,7 +72,6 @@ const Navlinks = () => {
   const onEnter = (i) => { if (dropdownTimeout.current) clearTimeout(dropdownTimeout.current); setActiveDropdown(i); };
   const onLeave = () => { dropdownTimeout.current = setTimeout(() => setActiveDropdown(null), 300); };
 
-  // ✅ Dropdown Boutique réduit : 4 genres en grille 2×2 + lien nouveautés
   const navItems = [
     {
       title: "Boutique", path: "/boutique", hasDropdown: true,
@@ -78,151 +101,154 @@ const Navlinks = () => {
   return (
     <>
       {/* ── BARRE NAV ── */}
-      <div style={{ background: NAV.bg, backdropFilter: "blur(20px)", borderBottom: `1px solid ${NAV.border}`, boxShadow: scrolled ? "0 2px 16px rgba(201,168,76,0.10)" : "none", transition: "box-shadow 0.3s", width: "100%" }}>
-        <div style={{ maxWidth: "1500px", margin: "0 auto", padding: "10px 32px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ background: NAV.bg, backdropFilter: "blur(20px)", borderBottom: `1px solid ${NAV.border}`, boxShadow: scrolled ? "0 2px 16px rgba(201,168,76,0.10)" : "none", transition: "box-shadow 0.3s", width: "100%", position: "relative", zIndex: 100 }}>
+        <div style={{ maxWidth: "1500px", margin: "0 auto", padding: isMobile ? "8px 16px" : "10px 32px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
 
           {/* Logo */}
           <a href="/" style={{ textDecoration: "none" }}>
-            <div style={{ padding: "6px 16px 6px 8px", borderRadius: "30px", display: "flex", alignItems: "center", gap: "8px", background: "linear-gradient(135deg, #8A6A20, #C9A84C)", boxShadow: "0 2px 12px rgba(201,168,76,0.3)", transition: "opacity 0.2s" }}
+            <div style={{ padding: isMobile ? "5px 12px 5px 6px" : "6px 16px 6px 8px", borderRadius: "30px", display: "flex", alignItems: "center", gap: isMobile ? "6px" : "8px", background: "linear-gradient(135deg, #8A6A20, #C9A84C)", boxShadow: "0 2px 12px rgba(201,168,76,0.3)", transition: "opacity 0.2s" }}
               onMouseEnter={e => e.currentTarget.style.opacity = "0.88"}
               onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
-              <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <span style={{ color: "#fff", fontSize: "14px", fontWeight: "900", fontFamily: "serif", lineHeight: 1 }}>S</span>
+              <div style={{ width: isMobile ? "24px" : "28px", height: isMobile ? "24px" : "28px", borderRadius: "50%", background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <span style={{ color: "#fff", fontSize: isMobile ? "12px" : "14px", fontWeight: "900", fontFamily: "serif", lineHeight: 1 }}>S</span>
               </div>
               <div>
-                <div style={{ fontSize: "14px", fontWeight: "800", color: "#fff", letterSpacing: "-0.02em", lineHeight: 1.1, whiteSpace: "nowrap" }}>Santa'Style</div>
-                <div style={{ fontSize: "8px", color: "rgba(255,255,255,0.7)", letterSpacing: "0.14em", textTransform: "uppercase", lineHeight: 1, marginTop: "2px" }}>Mode · Accessoires</div>
+                <div style={{ fontSize: isMobile ? "12px" : "14px", fontWeight: "800", color: "#fff", letterSpacing: "-0.02em", lineHeight: 1.1, whiteSpace: "nowrap" }}>Santa'Style</div>
+                <div style={{ fontSize: isMobile ? "7px" : "8px", color: "rgba(255,255,255,0.7)", letterSpacing: "0.14em", textTransform: "uppercase", lineHeight: 1, marginTop: "2px" }}>Mode · Accessoires</div>
               </div>
             </div>
           </a>
 
           {/* Nav desktop */}
-          <nav style={{ display: "flex", alignItems: "center", gap: "2px" }} ref={dropdownRef}>
-            {navItems.map((item, idx) => {
-              if (item.title === "Boutique") return (
-                <div key={idx} style={{ position: "relative" }}
-                  onMouseEnter={() => onEnter(idx)} onMouseLeave={onLeave}>
-                  <button style={{ display: "flex", alignItems: "center", gap: "5px", padding: "8px 14px", borderRadius: "10px", background: activeDropdown === idx ? hoverBg : "transparent", border: "none", cursor: "pointer", color: NAV.goldDark, fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", transition: "all 0.2s" }}>
-                    {item.title}
-                    <ChevronDown size={12} style={{ transition: "transform 0.25s", transform: activeDropdown === idx ? "rotate(180deg)" : "none", color: activeDropdown === idx ? NAV.gold : "inherit" }} />
-                  </button>
+          {isDesktop && (
+            <nav style={{ display: "flex", alignItems: "center", gap: "2px" }} ref={dropdownRef}>
+              {navItems.map((item, idx) => {
+                if (item.title === "Boutique") return (
+                  <div key={idx} style={{ position: "relative" }}
+                    onMouseEnter={() => onEnter(idx)} onMouseLeave={onLeave}>
+                    <button style={{ display: "flex", alignItems: "center", gap: "5px", padding: "8px 14px", borderRadius: "10px", background: activeDropdown === idx ? hoverBg : "transparent", border: "none", cursor: "pointer", color: NAV.goldDark, fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", transition: "all 0.2s" }}>
+                      {item.title}
+                      <ChevronDown size={12} style={{ transition: "transform 0.25s", transform: activeDropdown === idx ? "rotate(180deg)" : "none", color: activeDropdown === idx ? NAV.gold : "inherit" }} />
+                    </button>
 
-                  {/* ✅ Dropdown compact — grille 2×2 + nouveautés */}
-                  {activeDropdown === idx && (
-                    <div style={{ position: "absolute", top: "calc(100% + 10px)", left: "50%", transform: "translateX(-50%)", width: "260px", zIndex: 200 }}
-                      onMouseEnter={() => onEnter(idx)} onMouseLeave={onLeave}>
-                      {/* Flèche */}
-                      <div style={{ position: "absolute", top: "-5px", left: "50%", transform: "translateX(-50%) rotate(45deg)", width: "10px", height: "10px", background: "#FFFFFF", border: `1px solid ${NAV.border}`, borderBottom: "none", borderRight: "none" }} />
-                      <div style={{ background: "#FFFFFF", border: `1px solid ${NAV.border}`, borderRadius: "16px", overflow: "hidden", boxShadow: "0 16px 40px rgba(201,168,76,0.16), 0 4px 12px rgba(0,0,0,0.06)" }}>
-                        {/* Barre or */}
-                        <div style={{ height: "2px", background: "linear-gradient(90deg, #8A6A20, #C9A84C, #E8C96A, #C9A84C, #8A6A20)" }} />
-
-                        <div style={{ padding: "10px" }}>
-                          {/* ✅ Lien Nouveautés en haut — pleine largeur */}
-                          <NavLink to="/boutique?filtre=nouveau" onClick={() => setActiveDropdown(null)}
-                            style={{ display: "flex", alignItems: "center", gap: "8px", padding: "9px 12px", borderRadius: "10px", textDecoration: "none", background: "rgba(201,168,76,0.08)", border: `1px solid ${NAV.border}`, marginBottom: "8px", transition: "background 0.15s" }}
-                            onMouseEnter={e => e.currentTarget.style.background = "rgba(201,168,76,0.15)"}
-                            onMouseLeave={e => e.currentTarget.style.background = "rgba(201,168,76,0.08)"}>
-                            <Sparkles size={14} color={NAV.gold} />
-                            <span style={{ fontSize: "13px", fontWeight: "700", color: NAV.goldDark }}>Nouveautés</span>
-                            <span style={{ marginLeft: "auto", fontSize: "10px", padding: "2px 8px", borderRadius: "20px", background: NAV.gold, color: "#fff", fontWeight: "700" }}>New</span>
-                          </NavLink>
-
-                          {/* ✅ Grille 2×2 genres — compact */}
-                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5px" }}>
-                            {genreLinks.map((g, i) => (
-                              <NavLink key={i} to={g.path} onClick={() => setActiveDropdown(null)}
-                                style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "9px 8px", borderRadius: "9px", textDecoration: "none", background: g.bg, border: `1px solid ${g.border}`, color: g.color, fontSize: "12px", fontWeight: "700", gap: "4px", transition: "opacity 0.15s" }}
-                                onMouseEnter={e => e.currentTarget.style.opacity = "0.75"}
-                                onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
-                                {g.label}
-                              </NavLink>
-                            ))}
+                    {activeDropdown === idx && (
+                      <div style={{ position: "absolute", top: "calc(100% + 10px)", left: "50%", transform: "translateX(-50%)", width: "260px", zIndex: 200 }}
+                        onMouseEnter={() => onEnter(idx)} onMouseLeave={onLeave}>
+                        <div style={{ position: "absolute", top: "-5px", left: "50%", transform: "translateX(-50%) rotate(45deg)", width: "10px", height: "10px", background: "#FFFFFF", border: `1px solid ${NAV.border}`, borderBottom: "none", borderRight: "none" }} />
+                        <div style={{ background: "#FFFFFF", border: `1px solid ${NAV.border}`, borderRadius: "16px", overflow: "hidden", boxShadow: "0 16px 40px rgba(201,168,76,0.16), 0 4px 12px rgba(0,0,0,0.06)" }}>
+                          <div style={{ height: "2px", background: "linear-gradient(90deg, #8A6A20, #C9A84C, #E8C96A, #C9A84C, #8A6A20)" }} />
+                          <div style={{ padding: "10px" }}>
+                            <NavLink to="/boutique?filtre=nouveau" onClick={() => setActiveDropdown(null)}
+                              style={{ display: "flex", alignItems: "center", gap: "8px", padding: "9px 12px", borderRadius: "10px", textDecoration: "none", background: "rgba(201,168,76,0.08)", border: `1px solid ${NAV.border}`, marginBottom: "8px", transition: "background 0.15s" }}
+                              onMouseEnter={e => e.currentTarget.style.background = "rgba(201,168,76,0.15)"}
+                              onMouseLeave={e => e.currentTarget.style.background = "rgba(201,168,76,0.08)"}>
+                              <Sparkles size={14} color={NAV.gold} />
+                              <span style={{ fontSize: "13px", fontWeight: "700", color: NAV.goldDark }}>Nouveautés</span>
+                              <span style={{ marginLeft: "auto", fontSize: "10px", padding: "2px 8px", borderRadius: "20px", background: NAV.gold, color: "#fff", fontWeight: "700" }}>New</span>
+                            </NavLink>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5px" }}>
+                              {genreLinks.map((g, i) => (
+                                <NavLink key={i} to={g.path} onClick={() => setActiveDropdown(null)}
+                                  style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "9px 8px", borderRadius: "9px", textDecoration: "none", background: g.bg, border: `1px solid ${g.border}`, color: g.color, fontSize: "12px", fontWeight: "700", gap: "4px", transition: "opacity 0.15s" }}
+                                  onMouseEnter={e => e.currentTarget.style.opacity = "0.75"}
+                                  onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
+                                  {g.label}
+                                </NavLink>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              );
+                    )}
+                  </div>
+                );
 
-              if (item.hasDropdown) return (
-                <div key={idx} style={{ position: "relative" }}
-                  onMouseEnter={() => onEnter(idx)} onMouseLeave={onLeave}>
-                  <button style={{ display: "flex", alignItems: "center", gap: "5px", padding: "8px 14px", borderRadius: "10px", background: activeDropdown === idx ? hoverBg : "transparent", border: "none", cursor: "pointer", color: NAV.goldDark, fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", transition: "all 0.2s" }}>
-                    {item.title}
-                    <ChevronDown size={12} style={{ transition: "transform 0.25s", transform: activeDropdown === idx ? "rotate(180deg)" : "none" }} />
-                  </button>
-                  {activeDropdown === idx && (
-                    <div style={{ position: "absolute", top: "calc(100% + 10px)", left: "50%", transform: "translateX(-50%)", width: "200px", zIndex: 200 }}
-                      onMouseEnter={() => onEnter(idx)} onMouseLeave={onLeave}>
-                      <div style={{ position: "absolute", top: "-5px", left: "50%", transform: "translateX(-50%) rotate(45deg)", width: "10px", height: "10px", background: "#FFFFFF", border: `1px solid ${NAV.border}`, borderBottom: "none", borderRight: "none" }} />
-                      <div style={{ background: "#FFFFFF", border: `1px solid ${NAV.border}`, borderRadius: "14px", overflow: "hidden", boxShadow: "0 16px 40px rgba(201,168,76,0.14)" }}>
-                        <div style={{ height: "2px", background: "linear-gradient(90deg, #8A6A20, #C9A84C, #E8C96A)" }} />
-                        <div style={{ padding: "6px" }}>
-                          {item.subItems.map((sub, i) => {
-                            const Icon = sub.icon;
-                            return (
-                              <NavLink key={i} to={sub.path} onClick={() => setActiveDropdown(null)}
-                                style={{ display: "flex", alignItems: "center", gap: "10px", padding: "9px 10px", borderRadius: "9px", textDecoration: "none", transition: "background 0.15s" }}
-                                onMouseEnter={e => e.currentTarget.style.background = NAV.surface}
-                                onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                                <div style={{ width: "28px", height: "28px", borderRadius: "7px", background: sub.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                                  <Icon size={13} color={sub.color} />
-                                </div>
-                                <span style={{ fontSize: "13px", fontWeight: "600", color: NAV.text, flex: 1 }}>{sub.title}</span>
-                                <ArrowRight size={11} color={NAV.gold} style={{ opacity: 0.4 }} />
-                              </NavLink>
-                            );
-                          })}
+                if (item.hasDropdown) return (
+                  <div key={idx} style={{ position: "relative" }}
+                    onMouseEnter={() => onEnter(idx)} onMouseLeave={onLeave}>
+                    <button style={{ display: "flex", alignItems: "center", gap: "5px", padding: "8px 14px", borderRadius: "10px", background: activeDropdown === idx ? hoverBg : "transparent", border: "none", cursor: "pointer", color: NAV.goldDark, fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", transition: "all 0.2s" }}>
+                      {item.title}
+                      <ChevronDown size={12} style={{ transition: "transform 0.25s", transform: activeDropdown === idx ? "rotate(180deg)" : "none" }} />
+                    </button>
+                    {activeDropdown === idx && (
+                      <div style={{ position: "absolute", top: "calc(100% + 10px)", left: "50%", transform: "translateX(-50%)", width: "200px", zIndex: 200 }}
+                        onMouseEnter={() => onEnter(idx)} onMouseLeave={onLeave}>
+                        <div style={{ position: "absolute", top: "-5px", left: "50%", transform: "translateX(-50%) rotate(45deg)", width: "10px", height: "10px", background: "#FFFFFF", border: `1px solid ${NAV.border}`, borderBottom: "none", borderRight: "none" }} />
+                        <div style={{ background: "#FFFFFF", border: `1px solid ${NAV.border}`, borderRadius: "14px", overflow: "hidden", boxShadow: "0 16px 40px rgba(201,168,76,0.14)" }}>
+                          <div style={{ height: "2px", background: "linear-gradient(90deg, #8A6A20, #C9A84C, #E8C96A)" }} />
+                          <div style={{ padding: "6px" }}>
+                            {item.subItems.map((sub, i) => {
+                              const Icon = sub.icon;
+                              return (
+                                <NavLink key={i} to={sub.path} onClick={() => setActiveDropdown(null)}
+                                  style={{ display: "flex", alignItems: "center", gap: "10px", padding: "9px 10px", borderRadius: "9px", textDecoration: "none", transition: "background 0.15s" }}
+                                  onMouseEnter={e => e.currentTarget.style.background = NAV.surface}
+                                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                                  <div style={{ width: "28px", height: "28px", borderRadius: "7px", background: sub.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                    <Icon size={13} color={sub.color} />
+                                  </div>
+                                  <span style={{ fontSize: "13px", fontWeight: "600", color: NAV.text, flex: 1 }}>{sub.title}</span>
+                                  <ArrowRight size={11} color={NAV.gold} style={{ opacity: 0.4 }} />
+                                </NavLink>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              );
+                    )}
+                  </div>
+                );
 
-              return (
-                <NavLink key={idx} to={item.path}
-                  style={({ isActive }) => ({ padding: "8px 14px", borderRadius: "10px", textDecoration: "none", color: NAV.goldDark, background: isActive ? hoverBg : "transparent", fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", transition: "all 0.2s" })}
-                  onMouseEnter={e => e.currentTarget.style.background = hoverBg}
-                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                  {item.title}
-                </NavLink>
-              );
-            })}
-          </nav>
+                return (
+                  <NavLink key={idx} to={item.path}
+                    style={({ isActive }) => ({ padding: "8px 14px", borderRadius: "10px", textDecoration: "none", color: NAV.goldDark, background: isActive ? hoverBg : "transparent", fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", transition: "all 0.2s" })}
+                    onMouseEnter={e => e.currentTarget.style.background = hoverBg}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                    {item.title}
+                  </NavLink>
+                );
+              })}
+            </nav>
+          )}
 
           {/* Actions droite */}
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <button onClick={ouvrirWA} style={{ display: "flex", alignItems: "center", gap: "7px", padding: "8px 14px", borderRadius: "10px", background: "rgba(37,211,102,0.12)", border: "1px solid rgba(37,211,102,0.3)", color: "#1A6B3C", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer", transition: "background 0.2s" }}
-              onMouseEnter={e => e.currentTarget.style.background = "rgba(37,211,102,0.22)"}
-              onMouseLeave={e => e.currentTarget.style.background = "rgba(37,211,102,0.12)"}>
-              <WAsvg size={13} color="#1A6B3C" /> WhatsApp
-            </button>
+            {/* WhatsApp - masqué sur mobile */}
+            {!isMobile && (
+              <button onClick={ouvrirWA} style={{ display: "flex", alignItems: "center", gap: "7px", padding: "8px 14px", borderRadius: "10px", background: "rgba(37,211,102,0.12)", border: "1px solid rgba(37,211,102,0.3)", color: "#1A6B3C", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer", transition: "background 0.2s" }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(37,211,102,0.22)"}
+                onMouseLeave={e => e.currentTarget.style.background = "rgba(37,211,102,0.12)"}>
+                <WAsvg size={13} color="#1A6B3C" /> WhatsApp
+              </button>
+            )}
 
-            <NavLink to="/boutique" style={({ isActive }) => ({ display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px", borderRadius: "10px", background: isActive ? "linear-gradient(135deg, #5C3D00, #8A6A20)" : "linear-gradient(135deg, #8A6A20, #C9A84C)", color: "#fff", fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em", textDecoration: "none", transition: "opacity 0.2s", boxShadow: "0 2px 10px rgba(201,168,76,0.35)" })}
+            {/* Boutique - toujours visible */}
+            <NavLink to="/boutique" style={({ isActive }) => ({ display: "flex", alignItems: "center", gap: "6px", padding: isMobile ? "7px 12px" : "8px 16px", borderRadius: "10px", background: isActive ? "linear-gradient(135deg, #5C3D00, #8A6A20)" : "linear-gradient(135deg, #8A6A20, #C9A84C)", color: "#fff", fontSize: isMobile ? "11px" : "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em", textDecoration: "none", transition: "opacity 0.2s", boxShadow: "0 2px 10px rgba(201,168,76,0.35)" })}
               onMouseEnter={e => e.currentTarget.style.opacity = "0.88"}
               onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
-              <ShoppingBag size={14} /> Boutique
+              <ShoppingBag size={14} /> {!isMobile && "Boutique"}
             </NavLink>
 
+            {/* Search */}
             <button onClick={() => setSearchOpen(true)} style={{ padding: "9px", borderRadius: "10px", cursor: "pointer", display: "flex", alignItems: "center", background: NAV.surface, border: `1px solid ${NAV.border}`, transition: "background 0.2s" }}
               onMouseEnter={e => e.currentTarget.style.background = `${NAV.gold}15`}
               onMouseLeave={e => e.currentTarget.style.background = NAV.surface}>
               <Search size={16} color={NAV.goldLight} />
             </button>
 
-            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} style={{ padding: "9px", borderRadius: "10px", cursor: "pointer", display: "none", alignItems: "center", background: NAV.surface, border: `1px solid ${NAV.border}` }} className="lg-hidden">
-              {mobileMenuOpen ? <X size={18} color={NAV.goldDark} /> : <Menu size={18} color={NAV.goldDark} />}
-            </button>
+            {/* Menu mobile */}
+            {isMobile && (
+              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} style={{ padding: "9px", borderRadius: "10px", cursor: "pointer", display: "flex", alignItems: "center", background: NAV.surface, border: `1px solid ${NAV.border}` }}>
+                {mobileMenuOpen ? <X size={18} color={NAV.goldDark} /> : <Menu size={18} color={NAV.goldDark} />}
+              </button>
+            )}
           </div>
         </div>
       </div>
 
       {/* MENU MOBILE */}
-      {mobileMenuOpen && (
-        <div style={{ margin: "8px 16px", padding: "12px", borderRadius: "18px", background: "#FFFFFF", border: `1px solid ${NAV.border}`, boxShadow: "0 8px 32px rgba(201,168,76,0.14)" }}>
+      {isMobile && mobileMenuOpen && (
+        <div style={{ margin: "8px 16px", padding: "12px", borderRadius: "18px", background: "#FFFFFF", border: `1px solid ${NAV.border}`, boxShadow: "0 8px 32px rgba(201,168,76,0.14)", position: "relative", zIndex: 99 }}>
           <NavLink to="/boutique" onClick={() => setMobileMenuOpen(false)}
             style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 14px", borderRadius: "12px", marginBottom: "6px", background: "linear-gradient(135deg, #8A6A20, #C9A84C)", color: "#fff", textDecoration: "none", fontSize: "14px", fontWeight: "700" }}>
             <ShoppingBag size={16} /> Boutique Santa'Style
@@ -254,9 +280,9 @@ const Navlinks = () => {
 
       {/* SEARCH MODAL */}
       {searchOpen && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(26,18,8,0.75)", backdropFilter: "blur(12px)", display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: "100px", zIndex: 300 }}
+        <div style={{ position: "fixed", inset: 0, background: "rgba(26,18,8,0.75)", backdropFilter: "blur(12px)", display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: isMobile ? "60px" : "100px", zIndex: 300 }}
           onClick={() => setSearchOpen(false)}>
-          <div style={{ width: "100%", maxWidth: "520px", margin: "0 16px", background: "#FFFFFF", borderRadius: "20px", padding: "24px", border: `1px solid ${NAV.border}`, boxShadow: "0 24px 64px rgba(201,168,76,0.2)", position: "relative" }}
+          <div style={{ width: "100%", maxWidth: isMobile ? "calc(100% - 32px)" : "520px", margin: "0 16px", background: "#FFFFFF", borderRadius: "20px", padding: isMobile ? "20px" : "24px", border: `1px solid ${NAV.border}`, boxShadow: "0 24px 64px rgba(201,168,76,0.2)", position: "relative" }}
             onClick={e => e.stopPropagation()}>
             <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: "linear-gradient(90deg, #8A6A20, #C9A84C, #E8C96A, #C9A84C, #8A6A20)", borderRadius: "20px 20px 0 0" }} />
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>

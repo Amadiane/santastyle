@@ -7,6 +7,29 @@ import {
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 
+// Hook responsive
+const useResponsive = () => {
+  const [viewport, setViewport] = useState({
+    isMobile: window.innerWidth < 768,
+    isTablet: window.innerWidth >= 768 && window.innerWidth < 1024,
+    isDesktop: window.innerWidth >= 1024,
+  });
+  
+  useEffect(() => {
+    const handleResize = () => {
+      setViewport({
+        isMobile: window.innerWidth < 768,
+        isTablet: window.innerWidth >= 768 && window.innerWidth < 1024,
+        isDesktop: window.innerWidth >= 1024,
+      });
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+  
+  return viewport;
+};
+
 // ── Config badges action ──────────────────────────────────
 const ACTION_CONFIG = {
   create: { label: "Création",     color: "#1A6B3C", bg: "rgba(26,107,60,0.12)"  },
@@ -21,6 +44,7 @@ const VendeurDashboard = () => {
   const user     = JSON.parse(localStorage.getItem("user") || "{}");
   const { tokens: SS } = useTheme();
   const navigate = useNavigate();
+  const { isMobile, isTablet } = useResponsive();
 
   const [ventes,    setVentes]    = useState([]);
   const [stocks,    setStocks]    = useState([]);
@@ -70,13 +94,11 @@ const VendeurDashboard = () => {
   }, []);
 
   // ── Filtre mes ventes ─────────────────────────────────
-  // Teste tous les champs possibles que DRF peut retourner
   const username = (user?.username || "").toLowerCase().trim();
   const userId   = String(user?.id ?? "");
 
   const mesVentes = ventes.filter(v => {
     if (!v) return false;
-    // ✅ D'après le diagnostic : champs disponibles = vendeur_nom et vendeur (id)
     return (
       (v.vendeur_nom && String(v.vendeur_nom).toLowerCase().trim() === username) ||
       (userId        && v.vendeur && String(v.vendeur) === userId)
@@ -101,16 +123,16 @@ const VendeurDashboard = () => {
 
   // ── Card stats ────────────────────────────────────────
   const card = (titre, valeur, icon, couleur, sous = null) => (
-    <div style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "16px", padding: "20px 24px" }}>
+    <div style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "16px", padding: isMobile ? "16px 18px" : "20px 24px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-        <span style={{ fontSize: "12px", color: SS.textMuted, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+        <span style={{ fontSize: isMobile ? "11px" : "12px", color: SS.textMuted, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em" }}>
           {titre}
         </span>
-        <div style={{ width: "34px", height: "34px", borderRadius: "9px", background: `${couleur}20`, display: "flex", alignItems: "center", justifyContent: "center", color: couleur }}>
+        <div style={{ width: isMobile ? "30px" : "34px", height: isMobile ? "30px" : "34px", borderRadius: "9px", background: `${couleur}20`, display: "flex", alignItems: "center", justifyContent: "center", color: couleur }}>
           {icon}
         </div>
       </div>
-      <div style={{ fontSize: "32px", fontWeight: "800", color: SS.text, lineHeight: 1 }}>{valeur}</div>
+      <div style={{ fontSize: isMobile ? "26px" : "32px", fontWeight: "800", color: SS.text, lineHeight: 1 }}>{valeur}</div>
       {sous && <div style={{ fontSize: "12px", color: SS.textDim, marginTop: "6px" }}>{sous}</div>}
     </div>
   );
@@ -120,24 +142,23 @@ const VendeurDashboard = () => {
     <div style={{ color: SS.text, fontFamily: "var(--font-sans, sans-serif)" }}>
 
       {/* ── Header ── */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "28px", flexWrap: "wrap", gap: "12px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+      <div style={{ display: "flex", alignItems: isMobile ? "flex-start" : "center", justifyContent: "space-between", marginBottom: "28px", flexWrap: "wrap", gap: "12px", flexDirection: isMobile ? "column" : "row" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "14px", width: isMobile ? "100%" : "auto" }}>
           {/* Avatar initiales */}
           <div style={{
-            width: "52px", height: "52px", borderRadius: "14px",
+            width: isMobile ? "46px" : "52px", height: isMobile ? "46px" : "52px", borderRadius: "14px",
             background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "20px", fontWeight: "800", color: "#fff",
+            fontSize: isMobile ? "18px" : "20px", fontWeight: "800", color: "#fff",
             boxShadow: `0 4px 18px ${SS.gold}40`, flexShrink: 0,
           }}>
             {initiales()}
           </div>
-          <div>
-            {/* ✅ Nom complet */}
-            <h1 style={{ fontSize: "22px", fontWeight: "800", color: SS.goldDark, margin: 0, lineHeight: 1.2 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h1 style={{ fontSize: isMobile ? "20px" : "22px", fontWeight: "800", color: SS.goldDark, margin: 0, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {nomAffiche}
             </h1>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "3px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "3px", flexWrap: "wrap" }}>
               <span style={{ fontSize: "12px", color: SS.textDim }}>Espace vendeur · Santa'Style</span>
               <span style={{
                 padding: "2px 8px", borderRadius: "20px", fontSize: "10px", fontWeight: "700",
@@ -149,10 +170,10 @@ const VendeurDashboard = () => {
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: "8px" }}>
+        <div style={{ display: "flex", gap: "8px", width: isMobile ? "100%" : "auto" }}>
           <button onClick={() => navigate("/ventes")}
-            style={{ padding: "9px 18px", borderRadius: "10px", background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`, border: "none", color: "#fff", fontSize: "13px", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", boxShadow: `0 2px 10px ${SS.gold}35` }}>
-            <Plus size={15} /> Nouvelle vente
+            style={{ padding: "9px 18px", borderRadius: "10px", background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`, border: "none", color: "#fff", fontSize: "13px", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", boxShadow: `0 2px 10px ${SS.gold}35`, flex: isMobile ? 1 : "none", justifyContent: "center" }}>
+            <Plus size={15} /> {!isMobile && "Nouvelle vente"}
           </button>
           <button onClick={() => setRefresh(r => r + 1)}
             style={{ padding: "9px", borderRadius: "10px", background: SS.surface, border: `1px solid ${SS.border}`, cursor: "pointer", display: "flex", alignItems: "center" }}
@@ -170,7 +191,7 @@ const VendeurDashboard = () => {
           display: "flex", gap: "12px", alignItems: "flex-start",
         }}>
           <AlertCircle size={18} color="#E65100" style={{ flexShrink: 0, marginTop: "1px" }} />
-          <div style={{ fontSize: "12px", color: "#5D4037", lineHeight: 1.8 }}>
+          <div style={{ fontSize: isMobile ? "11px" : "12px", color: "#5D4037", lineHeight: 1.8 }}>
             <strong>Diagnostic filtre vendeur</strong><br />
             {ventes.length} vente(s) totales — aucune ne correspond à votre compte.<br />
             <strong>Votre username :</strong>{" "}
@@ -198,7 +219,7 @@ const VendeurDashboard = () => {
       )}
 
       {/* ── Métriques ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "16px", marginBottom: "24px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : isTablet ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(200px, 1fr))", gap: "16px", marginBottom: "24px" }}>
         {card("Mes ventes",       mesVentes.length,                         <ShoppingBag size={17} />, SS.gold,      "Transactions enregistrées")}
         {card("Mon CA",           `${totalCA.toLocaleString("fr-FR")} GNF`, <DollarSign  size={17} />, SS.goldLight, "Chiffre d'affaires total")}
         {card("Unités vendues",   totalUnites,                              <Package     size={17} />, SS.success,   "Articles vendus")}
@@ -206,7 +227,7 @@ const VendeurDashboard = () => {
       </div>
 
       {/* ── Accès rapides ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "12px", marginBottom: "28px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(150px, 1fr))", gap: "12px", marginBottom: "28px" }}>
         {[
           { label: "Ventes",     path: "/ventes",     icon: <ShoppingBag size={20} />, color: SS.gold    },
           { label: "Produits",   path: "/produits",   icon: <Package     size={20} />, color: "#1d4ed8"  },
@@ -214,23 +235,23 @@ const VendeurDashboard = () => {
           { label: "Catégories", path: "/categories", icon: <Tag         size={20} />, color: "#7c3aed"  },
         ].map((item, i) => (
           <button key={i} onClick={() => navigate(item.path)}
-            style={{ padding: "18px 14px", borderRadius: "14px", background: SS.surface, border: `1px solid ${SS.border}`, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", transition: "all 0.15s" }}
+            style={{ padding: isMobile ? "16px 12px" : "18px 14px", borderRadius: "14px", background: SS.surface, border: `1px solid ${SS.border}`, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", transition: "all 0.15s" }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = item.color; e.currentTarget.style.boxShadow = `0 4px 16px ${item.color}20`; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = SS.border;  e.currentTarget.style.boxShadow = "none"; }}>
             <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: `${item.color}15`, display: "flex", alignItems: "center", justifyContent: "center", color: item.color }}>
               {item.icon}
             </div>
-            <span style={{ fontSize: "13px", fontWeight: "700", color: SS.text }}>{item.label}</span>
+            <span style={{ fontSize: isMobile ? "12px" : "13px", fontWeight: "700", color: SS.text }}>{item.label}</span>
           </button>
         ))}
       </div>
 
       {/* ── Deux colonnes : mes ventes + activité équipe ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "20px" }}>
 
         {/* Mes dernières ventes */}
-        <div style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "16px", padding: "20px" }}>
-          <div style={{ fontSize: "13px", fontWeight: "700", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "16px", padding: isMobile ? "16px" : "20px" }}>
+          <div style={{ fontSize: isMobile ? "12px" : "13px", fontWeight: "700", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             Mes dernières ventes
             <button onClick={() => navigate("/ventes")}
               style={{ fontSize: "11px", color: SS.gold, background: "none", border: "none", cursor: "pointer", fontWeight: "600" }}>
@@ -252,14 +273,14 @@ const VendeurDashboard = () => {
                     <ShoppingBag size={14} color={SS.gold} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: "13px", fontWeight: "600", color: SS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <div style={{ fontSize: isMobile ? "12px" : "13px", fontWeight: "600", color: SS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {v.produit_nom || `Produit #${v.produit}`}
                     </div>
                     <div style={{ fontSize: "11px", color: SS.textMuted }}>
                       {[v.taille, v.couleur, `qté ${v.quantite}`].filter(Boolean).join(" · ")}
                     </div>
                   </div>
-                  <div style={{ fontSize: "12px", fontWeight: "700", color: SS.goldLight, flexShrink: 0 }}>
+                  <div style={{ fontSize: isMobile ? "11px" : "12px", fontWeight: "700", color: SS.goldLight, flexShrink: 0, textAlign: "right" }}>
                     {Number(v.prix_total || 0).toLocaleString("fr-FR")} GNF
                   </div>
                 </div>
@@ -269,8 +290,8 @@ const VendeurDashboard = () => {
         </div>
 
         {/* Activité récente de l'équipe */}
-        <div style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "16px", padding: "20px" }}>
-          <div style={{ fontSize: "13px", fontWeight: "700", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "16px", display: "flex", alignItems: "center", gap: "6px" }}>
+        <div style={{ background: SS.surface, border: `1px solid ${SS.border}`, borderRadius: "16px", padding: isMobile ? "16px" : "20px" }}>
+          <div style={{ fontSize: isMobile ? "12px" : "13px", fontWeight: "700", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "16px", display: "flex", alignItems: "center", gap: "6px" }}>
             <Clock size={14} color={SS.gold} />
             Activité récente — équipe
           </div>
@@ -280,7 +301,7 @@ const VendeurDashboard = () => {
           ) : logs.length === 0 ? (
             <div style={{ color: SS.textDim, fontSize: "13px", textAlign: "center", padding: "2rem" }}>Aucune activité</div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "300px", overflowY: "auto" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: isMobile ? "250px" : "300px", overflowY: "auto" }}>
               {logs.slice(0, 12).map((log, i) => {
                 const cfg    = ACTION_CONFIG[log.action] || { label: log.action, color: SS.textMuted, bg: SS.card };
                 const isMine = log.user_username === user?.username;
@@ -295,7 +316,7 @@ const VendeurDashboard = () => {
                       <ShoppingBag size={12} color={cfg.color} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: "12px", color: SS.text, fontWeight: "500", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <div style={{ fontSize: isMobile ? "11px" : "12px", color: SS.text, fontWeight: "500", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {log.description || "—"}
                       </div>
                       <div style={{ fontSize: "10px", color: SS.textDim, marginTop: "2px", display: "flex", gap: "6px" }}>
