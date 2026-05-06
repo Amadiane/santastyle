@@ -2,11 +2,25 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Plus, Pencil, Trash2, X, Check,
-  Layers, Search, ChevronDown, Package,
-  AlertCircle, Eye
+  Layers, Search, ChevronDown, Package, AlertCircle
 } from "lucide-react";
 import CONFIG from "../../config/config";
 import { useTheme } from "../../context/ThemeContext";
+
+// ── Config taille selon type_produit ─────────────────────────────
+const TAILLE_CONFIG = {
+  vetement:  { requis: true,  label: "Taille",   placeholder: "XS, S, M, L, XL…" },
+  chaussure: { requis: true,  label: "Pointure",  placeholder: "36, 37, 38, 39, 40…" },
+  sac:       { requis: false, label: null,        placeholder: null },
+  parfum:    { requis: false, label: "Volume",    placeholder: "30ml, 50ml, 100ml…" },
+  bijou:     { requis: false, label: "Taille",    placeholder: "Unique, S, M…" },
+  autre:     { requis: false, label: "Variante",  placeholder: "Optionnel…" },
+};
+
+const TYPE_ICONS = {
+  vetement: "👗", chaussure: "👟", sac: "👜",
+  parfum: "🧴", bijou: "💍", autre: "📦",
+};
 
 const Stocks = () => {
   const navigate = useNavigate();
@@ -22,7 +36,7 @@ const Stocks = () => {
   const [showForm, setShowForm] = useState(false);
 
   const emptyForm = { produit: "", taille: "", couleur: "", quantite: "1" };
-  const [form, setForm]           = useState(emptyForm);
+  const [form, setForm]             = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId]   = useState(null);
   const [editQte, setEditQte]       = useState("");
@@ -30,8 +44,7 @@ const Stocks = () => {
   const [deletingId, setDeletingId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
-  // Produit sélectionné dans le formulaire
-  const [produitChoisi, setProduitChoisi]     = useState(null);
+  const [produitChoisi, setProduitChoisi]         = useState(null);
   const [variantesExistantes, setVariantesExistantes] = useState([]);
 
   const token   = localStorage.getItem("access");
@@ -41,8 +54,8 @@ const Stocks = () => {
     setLoading(true);
     try {
       const [rS, rP] = await Promise.all([
-        fetch(`${CONFIG.BASE_URL}/api/stocks/`, { headers }),
-        fetch(CONFIG.API_PRODUIT,               { headers }),
+        fetch(CONFIG.API_STOCK,   { headers }),
+        fetch(CONFIG.API_PRODUIT, { headers }),
       ]);
       const [dS, dP] = await Promise.all([rS.json(), rP.json()]);
       if (rS.ok) setStocks(Array.isArray(dS) ? dS : []);
@@ -53,7 +66,6 @@ const Stocks = () => {
 
   useEffect(() => { fetchAll(); }, []);
 
-  // Quand on choisit un produit → afficher ses variantes existantes
   const handleSelectProduit = (produitId) => {
     setForm({ ...emptyForm, produit: produitId });
     if (!produitId) { setProduitChoisi(null); setVariantesExistantes([]); return; }
@@ -62,15 +74,21 @@ const Stocks = () => {
     setVariantesExistantes(stocks.filter(s => String(s.produit) === String(produitId)));
   };
 
+  // ── Config du produit sélectionné ────────────────────────────
+  const tc = produitChoisi
+    ? (TAILLE_CONFIG[produitChoisi.type_produit] || TAILLE_CONFIG.autre)
+    : TAILLE_CONFIG.vetement;
+
   const handleCreate = async (e) => {
     e.preventDefault();
-    if (!form.produit || !form.taille || !form.couleur) {
-      setError("Sélectionnez un produit, une taille et une couleur.");
+    if (!form.produit) { setError("Sélectionnez un produit."); return; }
+    if (tc.requis && !form.taille.trim()) {
+      setError(`La ${tc.label?.toLowerCase() || "taille"} est obligatoire pour ce type de produit.`);
       return;
     }
     setSubmitting(true); setError(""); setSuccess("");
     try {
-      const res  = await fetch(`${CONFIG.BASE_URL}/api/stocks/`, {
+      const res = await fetch(CONFIG.API_STOCK, {
         method: "POST", headers,
         body: JSON.stringify({
           produit:  form.produit,
@@ -83,12 +101,13 @@ const Stocks = () => {
       if (res.ok) {
         setStocks(prev => [data, ...prev]);
         const nom = produits.find(p => String(p.id) === String(form.produit))?.nom || "";
-        setSuccess(`✅ ${nom} · ${form.taille} · ${form.couleur} · ${form.quantite} pcs — visible en boutique !`);
+        const tailleStr = form.taille ? ` · ${form.taille}` : "";
+        const couleurStr = form.couleur ? ` · ${form.couleur}` : "";
+        setSuccess(`✅ ${nom}${tailleStr}${couleurStr} · ${form.quantite} pcs — ajouté !`);
         setForm(emptyForm); setProduitChoisi(null); setVariantesExistantes([]); setShowForm(false);
         setTimeout(() => setSuccess(""), 4000);
       } else {
-        setError(Object.entries(data).map(([k, v]) =>
-          `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join(" | ") || "Erreur");
+        setError(Object.entries(data).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join(" | ") || "Erreur");
       }
     } catch { setError("Erreur serveur"); }
     finally { setSubmitting(false); }
@@ -97,7 +116,7 @@ const Stocks = () => {
   const handleUpdate = async (id) => {
     setUpdating(true); setError(""); setSuccess("");
     try {
-      const res  = await fetch(`${CONFIG.BASE_URL}/api/stocks/${id}/`, {
+      const res  = await fetch(`${CONFIG.API_STOCK}${id}/`, {
         method: "PATCH", headers,
         body: JSON.stringify({ quantite: parseInt(editQte) }),
       });
@@ -115,7 +134,7 @@ const Stocks = () => {
   const handleDelete = async (id) => {
     setDeletingId(id);
     try {
-      const res = await fetch(`${CONFIG.BASE_URL}/api/stocks/${id}/`, { method: "DELETE", headers });
+      const res = await fetch(`${CONFIG.API_STOCK}${id}/`, { method: "DELETE", headers });
       if (res.ok || res.status === 204) {
         setStocks(prev => prev.filter(s => s.id !== id));
         setConfirmDeleteId(null);
@@ -134,7 +153,6 @@ const Stocks = () => {
     return ms && mp;
   });
 
-  // Grouper par produit
   const grouped = filtered.reduce((acc, s) => {
     const key = String(s.produit);
     if (!acc[key]) acc[key] = { nom: s.produit_nom, id: s.produit, items: [] };
@@ -143,6 +161,14 @@ const Stocks = () => {
   }, {});
 
   const inputStyle = { width: "100%", padding: "10px 14px", borderRadius: "8px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.text, fontSize: "14px", outline: "none" };
+
+  // ── Résumé variante (taille optionnelle) ─────────────────────
+  const labelVariante = (stock) => {
+    const parts = [];
+    if (stock.taille)  parts.push(stock.taille);
+    if (stock.couleur) parts.push(stock.couleur);
+    return parts.join(" · ") || "—";
+  };
 
   return (
     <div style={{ minHeight: "100vh", background: SS.bg, padding: "2rem", color: SS.text, fontFamily: "var(--font-sans, sans-serif)" }}>
@@ -174,8 +200,7 @@ const Stocks = () => {
           </div>
           <button onClick={() => { setShowForm(!showForm); setError(""); setForm(emptyForm); setProduitChoisi(null); }}
             style={{ background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`, border: "none", borderRadius: "8px", padding: "10px 20px", color: "#1A1208", fontWeight: "600", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", boxShadow: `0 2px 12px ${SS.gold}30` }}>
-            <Plus size={16} />
-            Ajouter un stock
+            <Plus size={16} /> Ajouter un stock
           </button>
         </div>
 
@@ -198,13 +223,12 @@ const Stocks = () => {
           <div style={{ background: SS.surface, border: `1px solid ${SS.gold}50`, borderRadius: "16px", padding: "24px", marginBottom: "24px", boxShadow: `0 4px 24px ${SS.gold}10` }}>
             <div style={{ height: "3px", background: `linear-gradient(90deg, ${SS.goldDark}, ${SS.gold})`, borderRadius: "2px", marginBottom: "20px" }} />
             <div style={{ fontSize: "16px", fontWeight: "700", color: SS.goldLight, marginBottom: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
-              <Layers size={18} color={SS.gold} />
-              Ajouter un stock
+              <Layers size={18} color={SS.gold} /> Ajouter un stock
             </div>
 
             <form onSubmit={handleCreate}>
 
-              {/* Étape 1 : Choisir le produit */}
+              {/* Étape 1 : Produit */}
               <div style={{ marginBottom: "20px" }}>
                 <div style={{ fontSize: "12px", fontWeight: "700", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "10px" }}>
                   1. Choisissez le produit
@@ -214,56 +238,72 @@ const Stocks = () => {
                   <option value="">— Sélectionnez un produit —</option>
                   {produits.map(p => {
                     const total = stocks.filter(s => String(s.produit) === String(p.id)).reduce((a, s) => a + s.quantite, 0);
+                    const icon  = TYPE_ICONS[p.type_produit] || "📦";
                     return (
                       <option key={p.id} value={p.id}>
-                        {p.nom} — {total === 0 ? "⚠️ Aucun stock" : `${total} pcs en stock`}
+                        {icon} {p.nom} — {total === 0 ? "⚠️ Aucun stock" : `${total} pcs en stock`}
                       </option>
                     );
                   })}
                 </select>
+
+                {/* Info type produit sélectionné */}
+                {produitChoisi && (
+                  <div style={{ marginTop: "8px", padding: "8px 12px", borderRadius: "8px", background: `${SS.gold}10`, border: `1px solid ${SS.gold}30`, fontSize: "12px", color: SS.goldLight, display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "16px" }}>{TYPE_ICONS[produitChoisi.type_produit] || "📦"}</span>
+                    <span>
+                      {produitChoisi.type_produit === "sac"
+                        ? "Sac — pas de taille nécessaire, seulement couleur et quantité."
+                        : tc.requis
+                          ? `${tc.label} obligatoire pour ce type de produit.`
+                          : tc.label
+                            ? `${tc.label} optionnelle.`
+                            : "Pas de taille pour ce produit."}
+                    </span>
+                  </div>
+                )}
               </div>
 
-              {/* Variantes déjà existantes pour ce produit */}
+              {/* Variantes existantes */}
               {produitChoisi && variantesExistantes.length > 0 && (
                 <div style={{ marginBottom: "20px", padding: "14px", borderRadius: "10px", background: SS.bg, border: `1px solid ${SS.border}` }}>
                   <div style={{ fontSize: "12px", fontWeight: "700", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "10px" }}>
-                    Variantes déjà enregistrées pour <span style={{ color: SS.gold }}>{produitChoisi.nom}</span>
+                    Variantes existantes — <span style={{ color: SS.gold }}>{produitChoisi.nom}</span>
                   </div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
                     {variantesExistantes.map(v => (
-                      <div key={v.id} style={{
-                        padding: "6px 12px", borderRadius: "8px",
-                        background: v.quantite === 0 ? SS.dangerBg : SS.successBg,
-                        border: `1px solid ${(v.quantite === 0 ? SS.danger : SS.success)}40`,
-                        fontSize: "12px", fontWeight: "600",
-                        color: v.quantite === 0 ? SS.danger : SS.success,
-                      }}>
-                        {v.taille} · {v.couleur} · {v.quantite} pcs
+                      <div key={v.id} style={{ padding: "6px 12px", borderRadius: "8px", background: v.quantite === 0 ? SS.dangerBg : SS.successBg, border: `1px solid ${(v.quantite === 0 ? SS.danger : SS.success)}40`, fontSize: "12px", fontWeight: "600", color: v.quantite === 0 ? SS.danger : SS.success }}>
+                        {labelVariante(v)} · {v.quantite} pcs
                       </div>
                     ))}
-                  </div>
-                  <div style={{ fontSize: "12px", color: SS.textDim, marginTop: "10px" }}>
-                    Vous pouvez ajouter une nouvelle variante ci-dessous, ou modifier les quantités dans le tableau.
                   </div>
                 </div>
               )}
 
-              {/* Étape 2 : Définir la variante */}
+              {/* Étape 2 : Variante adaptative */}
               {form.produit && (
                 <div style={{ marginBottom: "20px" }}>
                   <div style={{ fontSize: "12px", fontWeight: "700", color: SS.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "10px" }}>
                     2. Définissez la variante
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 100px", gap: "12px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: tc.label ? "1fr 1fr 100px" : "1fr 100px", gap: "12px" }}>
+                    {/* ✅ Taille uniquement si le type le permet */}
+                    {tc.label && (
+                      <div>
+                        <div style={{ fontSize: "11px", color: SS.textMuted, marginBottom: "5px" }}>
+                          {tc.label} {tc.requis
+                            ? <span style={{ color: SS.danger }}>*</span>
+                            : <span style={{ color: SS.textDim }}>(optionnel)</span>}
+                        </div>
+                        <input type="text" placeholder={tc.placeholder} style={inputStyle}
+                          value={form.taille} onChange={e => setForm({ ...form, taille: e.target.value })
+                          } required={tc.requis} />
+                      </div>
+                    )}
                     <div>
-                      <div style={{ fontSize: "11px", color: SS.textMuted, marginBottom: "5px" }}>Taille *</div>
-                      <input type="text" placeholder="S, M, L, XL, 38, 40..." style={inputStyle}
-                        value={form.taille} onChange={e => setForm({ ...form, taille: e.target.value })} required />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: "11px", color: SS.textMuted, marginBottom: "5px" }}>Couleur *</div>
-                      <input type="text" placeholder="Noir, Rouge, Blanc..." style={inputStyle}
-                        value={form.couleur} onChange={e => setForm({ ...form, couleur: e.target.value })} required />
+                      <div style={{ fontSize: "11px", color: SS.textMuted, marginBottom: "5px" }}>Couleur</div>
+                      <input type="text" placeholder="Noir, Beige, Rouge…" style={inputStyle}
+                        value={form.couleur} onChange={e => setForm({ ...form, couleur: e.target.value })} />
                     </div>
                     <div>
                       <div style={{ fontSize: "11px", color: SS.textMuted, marginBottom: "5px" }}>Quantité *</div>
@@ -275,11 +315,14 @@ const Stocks = () => {
               )}
 
               {/* Résumé */}
-              {form.produit && form.taille && form.couleur && (
+              {form.produit && form.quantite && (
                 <div style={{ padding: "12px 16px", borderRadius: "10px", background: SS.successBg, border: `1px solid ${SS.success}40`, marginBottom: "16px", display: "flex", alignItems: "center", gap: "10px" }}>
                   <Check size={16} color={SS.success} />
                   <span style={{ fontSize: "13px", color: SS.success }}>
-                    <strong>{produitChoisi?.nom}</strong> · {form.taille} · {form.couleur} · <strong>{form.quantite} pcs</strong> sera visible en boutique
+                    <strong>{produitChoisi?.nom}</strong>
+                    {form.taille  ? ` · ${form.taille}`  : ""}
+                    {form.couleur ? ` · ${form.couleur}` : ""}
+                    {" · "}<strong>{form.quantite} pcs</strong> sera visible en boutique
                   </span>
                 </div>
               )}
@@ -297,8 +340,8 @@ const Stocks = () => {
                   style={{ padding: "10px 20px", borderRadius: "8px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.textMuted, cursor: "pointer", fontSize: "14px" }}>
                   Annuler
                 </button>
-                <button type="submit" disabled={submitting || !form.produit || !form.taille || !form.couleur}
-                  style={{ padding: "10px 24px", borderRadius: "8px", background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`, border: "none", color: "#1A1208", fontWeight: "700", fontSize: "14px", cursor: "pointer", opacity: submitting || !form.produit || !form.taille || !form.couleur ? 0.5 : 1, display: "flex", alignItems: "center", gap: "6px" }}>
+                <button type="submit" disabled={submitting || !form.produit}
+                  style={{ padding: "10px 24px", borderRadius: "8px", background: `linear-gradient(135deg, ${SS.goldDark}, ${SS.gold})`, border: "none", color: "#1A1208", fontWeight: "700", fontSize: "14px", cursor: "pointer", opacity: submitting || !form.produit ? 0.5 : 1, display: "flex", alignItems: "center", gap: "6px" }}>
                   <Layers size={15} />
                   {submitting ? "Enregistrement..." : "Enregistrer le stock"}
                 </button>
@@ -320,27 +363,27 @@ const Stocks = () => {
             <select style={{ background: "none", border: "none", outline: "none", color: SS.text, fontSize: "14px", padding: "10px 0" }}
               value={filterProduit} onChange={e => setFilterProduit(e.target.value)}>
               <option value="">Tous les produits</option>
-              {produits.map(p => <option key={p.id} value={String(p.id)}>{p.nom}</option>)}
+              {produits.map(p => <option key={p.id} value={String(p.id)}>{TYPE_ICONS[p.type_produit] || "📦"} {p.nom}</option>)}
             </select>
           </div>
         </div>
 
-        {/* ── Tableau groupé par produit ── */}
+        {/* ── Tableau groupé ── */}
         {loading ? (
           <div style={{ textAlign: "center", padding: "4rem", color: SS.textDim }}>Chargement...</div>
         ) : Object.keys(grouped).length === 0 ? (
           <div style={{ textAlign: "center", padding: "4rem", color: SS.textDim }}>
             <Layers size={40} color={`${SS.gold}40`} style={{ marginBottom: "12px" }} />
             <div>Aucun stock enregistré</div>
-            <div style={{ fontSize: "13px", marginTop: "8px", color: SS.textDim }}>
-              Créez d'abord des produits, puis ajoutez leurs stocks ici
-            </div>
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
             {Object.values(grouped).map(group => {
-              const totalQte = group.items.reduce((a, s) => a + s.quantite, 0);
-              const prodImg  = produits.find(p => String(p.id) === String(group.id))?.image_url;
+              const totalQte  = group.items.reduce((a, s) => a + s.quantite, 0);
+              const prodInfo  = produits.find(p => String(p.id) === String(group.id));
+              const prodImg   = prodInfo?.image_url;
+              const typeProd  = prodInfo?.type_produit || "vetement";
+              const hasTaille = TAILLE_CONFIG[typeProd]?.label !== null;
 
               return (
                 <div key={group.id} style={{ background: SS.surface, border: `1px solid ${totalQte === 0 ? SS.danger + "50" : SS.border}`, borderRadius: "14px", overflow: "hidden" }}>
@@ -350,39 +393,45 @@ const Stocks = () => {
                     {prodImg ? (
                       <img src={prodImg} alt={group.nom} style={{ width: "38px", height: "38px", borderRadius: "8px", objectFit: "cover", flexShrink: 0 }} />
                     ) : (
-                      <div style={{ width: "38px", height: "38px", borderRadius: "8px", background: SS.border, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <Package size={16} color={`${SS.gold}60`} />
+                      <div style={{ width: "38px", height: "38px", borderRadius: "8px", background: SS.border, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: "20px" }}>
+                        {TYPE_ICONS[typeProd] || "📦"}
                       </div>
                     )}
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: "15px", fontWeight: "700", color: SS.text }}>{group.nom}</div>
-                      <div style={{ fontSize: "12px", color: SS.textDim }}>{group.items.length} variante{group.items.length > 1 ? "s" : ""}</div>
+                      <div style={{ fontSize: "12px", color: SS.textDim }}>
+                        {group.items.length} variante{group.items.length > 1 ? "s" : ""}
+                        {!hasTaille && <span style={{ marginLeft: "6px", color: SS.gold }}>· pas de taille</span>}
+                      </div>
                     </div>
                     <span style={{ padding: "4px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: "700", background: totalQte === 0 ? SS.dangerBg : SS.successBg, color: totalQte === 0 ? SS.danger : SS.success }}>
                       {totalQte === 0 ? "Épuisé" : `${totalQte} pcs`}
                     </span>
                   </div>
 
-                  {/* Entêtes colonnes */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: "12px", padding: "8px 20px", background: SS.bg }}>
-                    {["Taille", "Couleur", "Quantité", "Actions"].map((h, i) => (
-                      <div key={i} style={{ fontSize: "10px", color: SS.textDim, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.07em", textAlign: i === 3 ? "right" : "left" }}>
-                        {h}
+                  {/* Entêtes colonnes — adaptatives */}
+                  <div style={{ display: "grid", gridTemplateColumns: hasTaille ? "1fr 1fr 1fr auto" : "1fr 1fr auto", gap: "12px", padding: "8px 20px", background: SS.bg }}>
+                    {hasTaille && (
+                      <div style={{ fontSize: "10px", color: SS.textDim, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.07em" }}>
+                        {TAILLE_CONFIG[typeProd]?.label || "Taille"}
                       </div>
-                    ))}
+                    )}
+                    <div style={{ fontSize: "10px", color: SS.textDim, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.07em" }}>Couleur</div>
+                    <div style={{ fontSize: "10px", color: SS.textDim, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.07em" }}>Quantité</div>
+                    <div style={{ fontSize: "10px", color: SS.textDim, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.07em", textAlign: "right" }}>Actions</div>
                   </div>
 
                   {/* Lignes variantes */}
-                  {group.items.map((stock, i) => (
+                  {group.items.map(stock => (
                     <div key={stock.id}
                       style={{ borderTop: `1px solid ${SS.border}`, transition: "background 0.15s" }}
                       onMouseEnter={e => { if (editingId !== stock.id) e.currentTarget.style.background = SS.card; }}
                       onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
 
                       {editingId === stock.id ? (
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: "12px", padding: "10px 20px", alignItems: "center" }}>
-                          <span style={{ fontSize: "13px", fontWeight: "600", color: SS.text }}>{stock.taille}</span>
-                          <span style={{ fontSize: "13px", color: SS.textMuted }}>{stock.couleur}</span>
+                        <div style={{ display: "grid", gridTemplateColumns: hasTaille ? "1fr 1fr 1fr auto" : "1fr 1fr auto", gap: "12px", padding: "10px 20px", alignItems: "center" }}>
+                          {hasTaille && <span style={{ fontSize: "13px", fontWeight: "600", color: SS.text }}>{stock.taille || "—"}</span>}
+                          <span style={{ fontSize: "13px", color: SS.textMuted }}>{stock.couleur || "—"}</span>
                           <input type="number" min="0" value={editQte}
                             onChange={e => setEditQte(e.target.value)}
                             style={{ padding: "7px 10px", borderRadius: "7px", background: SS.card, border: `1px solid ${SS.gold}`, color: SS.text, fontSize: "14px", fontWeight: "700", outline: "none", textAlign: "center", width: "100%" }}
@@ -399,11 +448,13 @@ const Stocks = () => {
                           </div>
                         </div>
                       ) : (
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: "12px", padding: "12px 20px", alignItems: "center" }}>
-                          <span style={{ padding: "3px 10px", borderRadius: "6px", background: `${SS.gold}18`, border: `1px solid ${SS.gold}35`, fontSize: "13px", color: SS.gold, fontWeight: "600", display: "inline-block" }}>
-                            {stock.taille}
-                          </span>
-                          <span style={{ fontSize: "13px", color: SS.textMuted }}>{stock.couleur}</span>
+                        <div style={{ display: "grid", gridTemplateColumns: hasTaille ? "1fr 1fr 1fr auto" : "1fr 1fr auto", gap: "12px", padding: "12px 20px", alignItems: "center" }}>
+                          {hasTaille && (
+                            <span style={{ padding: "3px 10px", borderRadius: "6px", background: `${SS.gold}18`, border: `1px solid ${SS.gold}35`, fontSize: "13px", color: SS.gold, fontWeight: "600", display: "inline-block" }}>
+                              {stock.taille || "—"}
+                            </span>
+                          )}
+                          <span style={{ fontSize: "13px", color: SS.textMuted }}>{stock.couleur || "—"}</span>
                           <span style={{ padding: "3px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "700", display: "inline-block", background: stock.quantite === 0 ? SS.dangerBg : stock.quantite <= 5 ? SS.warningBg : SS.successBg, color: stock.quantite === 0 ? SS.danger : stock.quantite <= 5 ? SS.warning : SS.success }}>
                             {stock.quantite} pcs
                           </span>
@@ -442,7 +493,7 @@ const Stocks = () => {
           </div>
         )}
 
-        {/* Résumé */}
+        {/* Résumé bas de page */}
         {!loading && stocks.length > 0 && (
           <div style={{ marginTop: "16px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
             {[

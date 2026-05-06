@@ -3,11 +3,30 @@ import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Plus, Pencil, Trash2, X, Check,
   Package, Search, ChevronDown, Image as ImageIcon,
-  Layers, AlertCircle, ArrowRight, Sparkles, Link as LinkIcon,
-  Play
+  Layers, AlertCircle, ArrowRight, Sparkles, Play
 } from "lucide-react";
 import CONFIG from "../../config/config";
 import { useTheme } from "../../context/ThemeContext";
+
+// ── Types de produits ─────────────────────────────────────────────
+const TYPE_OPTIONS = [
+  { value: "vetement",  label: "👗 Vêtement",          icon: "👗" },
+  { value: "chaussure", label: "👟 Chaussure",          icon: "👟" },
+  { value: "sac",       label: "👜 Sac / Maroquinerie", icon: "👜" },
+  { value: "parfum",    label: "🧴 Parfum / Beauté",    icon: "🧴" },
+  { value: "bijou",     label: "💍 Bijou / Accessoire", icon: "💍" },
+  { value: "autre",     label: "📦 Autre",              icon: "📦" },
+];
+
+// ── Config taille selon type ──────────────────────────────────────
+const TAILLE_CONFIG = {
+  vetement:  { requis: true,  label: "Taille",   placeholder: "XS, S, M, L, XL, XXL" },
+  chaussure: { requis: true,  label: "Pointure",  placeholder: "36, 37, 38, 39, 40, 41…" },
+  sac:       { requis: false, label: null,        placeholder: null },
+  parfum:    { requis: false, label: "Volume",    placeholder: "30ml, 50ml, 100ml…" },
+  bijou:     { requis: false, label: "Taille",    placeholder: "Unique, S, M, L…" },
+  autre:     { requis: false, label: "Variante",  placeholder: "Optionnel…" },
+};
 
 const GENRE_OPTIONS = [
   { value: "mixte",  label: "✨ Mixte / Accessoire" },
@@ -29,48 +48,160 @@ const TikTokIcon = ({ size = 14 }) => (
     <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.79a4.85 4.85 0 01-1.01-.1z"/>
   </svg>
 );
-
 const FacebookIcon = ({ size = 14 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
   </svg>
 );
-
 const InstagramIcon = ({ size = 14 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
     <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
   </svg>
 );
 
-// ── Champ lien vidéo ──────────────────────────────────────────────
+// ── Champ vidéo — pleine largeur, confortable ────────────────────
 const VideoLinkField = ({ label, icon, color, placeholder, value, onChange, SS }) => (
   <div>
-    <div style={{ fontSize: "11px", color: SS.textMuted, marginBottom: "5px", display: "flex", alignItems: "center", gap: "5px" }}>
-      <span style={{ color }}>{icon}</span>
-      {label} <span style={{ color: SS.textDim }}>(optionnel)</span>
-    </div>
-    <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "0 12px", borderRadius: "8px", background: SS.card, border: `1px solid ${value ? color + "60" : SS.border}`, transition: "border-color 0.2s" }}>
-      <span style={{ color: value ? color : SS.textDim, display: "flex", flexShrink: 0 }}>{icon}</span>
-      <input type="url" placeholder={placeholder}
-        style={{ flex: 1, background: "none", border: "none", outline: "none", color: SS.text, fontSize: "13px", padding: "9px 0" }}
-        value={value || ""}
-        onChange={e => onChange(e.target.value)} />
+    {/* Label avec icône réseau */}
+    <div style={{ fontSize: "12px", fontWeight: "600", color: SS.textMuted, marginBottom: "6px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <span style={{ color }}>{icon}</span>
+        {label}
+        <span style={{ fontSize: "11px", color: SS.textDim, fontWeight: "400" }}>(optionnel)</span>
+      </span>
+      {/* Bouton tester le lien si renseigné */}
       {value && (
         <button type="button" onClick={() => window.open(value, "_blank")}
-          title="Tester le lien"
-          style={{ background: "none", border: "none", cursor: "pointer", color, display: "flex", padding: 0 }}>
-          <Play size={13} />
+          style={{ display: "flex", alignItems: "center", gap: "4px", background: `${color}15`, border: `1px solid ${color}40`, borderRadius: "6px", padding: "2px 8px", cursor: "pointer", color, fontSize: "11px", fontWeight: "600" }}>
+          <Play size={11} /> Tester
         </button>
       )}
+    </div>
+    {/* Input pleine largeur */}
+    <div style={{ position: "relative" }}>
+      <input
+        type="text"
+        placeholder={placeholder}
+        value={value || ""}
+        onChange={e => onChange(e.target.value)}
+        style={{
+          width: "100%",
+          padding: "10px 36px 10px 14px",
+          borderRadius: "8px",
+          background: SS.card,
+          border: `2px solid ${value ? color + "80" : SS.border}`,
+          color: SS.text,
+          fontSize: "13px",
+          outline: "none",
+          boxSizing: "border-box",
+          transition: "border-color 0.2s",
+        }}
+        onFocus={e => e.target.style.borderColor = color}
+        onBlur={e  => e.target.style.borderColor = value ? color + "80" : SS.border}
+      />
+      {/* Bouton effacer */}
       {value && (
         <button type="button" onClick={() => onChange("")}
-          style={{ background: "none", border: "none", cursor: "pointer", color: SS.textDim, display: "flex", padding: 0 }}>
-          <X size={12} />
+          style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: SS.textDim, display: "flex", padding: 0 }}>
+          <X size={14} />
         </button>
       )}
+    </div>
+    {/* Aperçu du domaine si lien renseigné */}
+    {value && (
+      <div style={{ marginTop: "4px", fontSize: "11px", color: color, display: "flex", alignItems: "center", gap: "4px" }}>
+        <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: color, display: "inline-block", flexShrink: 0 }} />
+        {(() => { try { return new URL(value).hostname; } catch { return value.slice(0, 40); } })()}
+      </div>
+    )}
+  </div>
+);
+
+
+// ── Composants extraits hors du composant parent (évite perte de focus) ──────
+
+const Toggle = ({ value, onChange, SS }) => (
+  <button type="button" onClick={onChange}
+    style={{ width: "44px", height: "24px", borderRadius: "12px", border: "none", cursor: "pointer", background: value ? SS.gold : SS.border, position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
+    <div style={{ width: "18px", height: "18px", borderRadius: "50%", background: "#fff", position: "absolute", top: "3px", left: value ? "23px" : "3px", transition: "left 0.2s" }} />
+  </button>
+);
+
+const GenreBadge = ({ genre }) => {
+  if (!genre || genre === "mixte") return null;
+  const s = GENRE_STYLE[genre] || GENRE_STYLE.mixte;
+  const labels = { homme: "👔 Homme", femme: "👗 Femme", enfant: "🧒 Enfant" };
+  return <span style={{ padding: "2px 10px", borderRadius: "20px", background: s.bg, border: `1px solid ${s.border}`, fontSize: "11px", color: s.color, fontWeight: "600" }}>{labels[genre]}</span>;
+};
+
+const VideoBadges = ({ produit }) => {
+  const links = [
+    produit.video_tiktok    && { icon: <TikTokIcon size={11} />,    color: "#010101", url: produit.video_tiktok,    label: "TikTok" },
+    produit.video_instagram && { icon: <InstagramIcon size={11} />, color: "#E1306C", url: produit.video_instagram, label: "Reels" },
+    produit.video_facebook  && { icon: <FacebookIcon size={11} />,  color: "#1877F2", url: produit.video_facebook,  label: "Facebook" },
+  ].filter(Boolean);
+  if (links.length === 0) return null;
+  return (
+    <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginBottom: "6px" }}>
+      {links.map((l, i) => (
+        <a key={i} href={l.url} target="_blank" rel="noopener noreferrer"
+          style={{ display: "flex", alignItems: "center", gap: "4px", padding: "2px 8px", borderRadius: "20px", background: l.color + "15", border: `1px solid ${l.color}40`, fontSize: "10px", fontWeight: "700", color: l.color, textDecoration: "none" }}>
+          {l.icon} {l.label}
+        </a>
+      ))}
+    </div>
+  );
+};
+
+const VideoSection = ({ values, onChange, SS }) => (
+  <div style={{ padding: "14px 16px", borderRadius: "10px", background: SS.bg, border: `1px solid ${SS.border}`, marginBottom: "16px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+      <Play size={14} color={SS.gold} />
+      <span style={{ fontSize: "12px", fontWeight: "700", color: SS.goldLight, textTransform: "uppercase", letterSpacing: "0.07em" }}>Liens vidéos réseaux</span>
+      <span style={{ fontSize: "10px", color: SS.textDim }}>— optionnels</span>
+    </div>
+    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+      <VideoLinkField label="TikTok" icon={<TikTokIcon size={14} />} color="#010101"
+        placeholder="https://www.tiktok.com/@santastyle/video/..."
+        value={values.video_tiktok} onChange={v => onChange("video_tiktok", v)} SS={SS} />
+      <VideoLinkField label="Instagram / Reels" icon={<InstagramIcon size={14} />} color="#E1306C"
+        placeholder="https://www.instagram.com/reel/..."
+        value={values.video_instagram} onChange={v => onChange("video_instagram", v)} SS={SS} />
+      <VideoLinkField label="Facebook" icon={<FacebookIcon size={14} />} color="#1877F2"
+        placeholder="https://www.facebook.com/santastyle/videos/..."
+        value={values.video_facebook} onChange={v => onChange("video_facebook", v)} SS={SS} />
     </div>
   </div>
 );
+
+const StockSection = ({ typeProduit, values, onChange, SS }) => {
+  const tc = TAILLE_CONFIG[typeProduit] || TAILLE_CONFIG.autre;
+  const hasTaille = tc.label !== null;
+  const inputStyle = { width: "100%", padding: "10px 14px", borderRadius: "8px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.text, fontSize: "14px", outline: "none" };
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: hasTaille ? "1fr 1fr 100px" : "1fr 100px", gap: "12px" }}>
+      {hasTaille && (
+        <div>
+          <div style={{ fontSize: "11px", color: SS.textMuted, marginBottom: "5px" }}>
+            {tc.label} {tc.requis ? <span style={{ color: SS.danger }}>*</span> : <span style={{ color: SS.textDim }}>(optionnel)</span>}
+          </div>
+          <input type="text" placeholder={tc.placeholder} style={inputStyle}
+            value={values.taille} onChange={e => onChange({ ...values, taille: e.target.value })} />
+        </div>
+      )}
+      <div>
+        <div style={{ fontSize: "11px", color: SS.textMuted, marginBottom: "5px" }}>Couleur</div>
+        <input type="text" placeholder="Noir, Rouge, Beige…" style={inputStyle}
+          value={values.couleur} onChange={e => onChange({ ...values, couleur: e.target.value })} />
+      </div>
+      <div>
+        <div style={{ fontSize: "11px", color: SS.textMuted, marginBottom: "5px" }}>Quantité</div>
+        <input type="number" min="1" style={inputStyle}
+          value={values.quantite} onChange={e => onChange({ ...values, quantite: e.target.value })} />
+      </div>
+    </div>
+  );
+};
 
 const Produits = () => {
   const navigate = useNavigate();
@@ -89,6 +220,7 @@ const Produits = () => {
   const emptyForm = {
     nom: "", description: "", prix: "", categorie: "",
     image: null, est_nouveau: false, genre: "mixte",
+    type_produit: "vetement",
     video_tiktok: "", video_instagram: "", video_facebook: "",
   };
   const emptyStock = { taille: "", couleur: "", quantite: "1" };
@@ -98,13 +230,12 @@ const Produits = () => {
   const [ajouterStock, setAjouterStock] = useState(true);
   const [imagePreview, setImagePreview] = useState(null);
   const [submitting, setSubmitting]     = useState(false);
-
-  const [editingId, setEditingId]               = useState(null);
-  const [editForm, setEditForm]                 = useState({});
+  const [editingId, setEditingId]       = useState(null);
+  const [editForm, setEditForm]         = useState({});
   const [editImagePreview, setEditImagePreview] = useState(null);
-  const [updating, setUpdating]                 = useState(false);
-  const [deletingId, setDeletingId]             = useState(null);
-  const [confirmDeleteId, setConfirmDeleteId]   = useState(null);
+  const [updating, setUpdating]         = useState(false);
+  const [deletingId, setDeletingId]     = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const token   = localStorage.getItem("access");
   const headers = { Authorization: `Bearer ${token}` };
@@ -113,9 +244,9 @@ const Produits = () => {
     setLoading(true);
     try {
       const [rP, rC, rS] = await Promise.all([
-        fetch(CONFIG.API_PRODUIT,               { headers }),
-        fetch(CONFIG.API_CATEGORIE,             { headers }),
-        fetch(CONFIG.API_STOCK,                 { headers }),
+        fetch(CONFIG.API_PRODUIT,   { headers }),
+        fetch(CONFIG.API_CATEGORIE, { headers }),
+        fetch(CONFIG.API_STOCK,     { headers }),
       ]);
       const [dP, dC, dS] = await Promise.all([rP.json(), rC.json(), rS.json()]);
       if (rP.ok) setProduits(Array.isArray(dP) ? dP : []);
@@ -138,7 +269,6 @@ const Produits = () => {
     return data.secure_url;
   };
 
-  // ── Corps commun produit (création + édition) ─────────────────
   const buildBody = (f, imageUrl) => ({
     nom:             f.nom,
     description:     f.description || "",
@@ -146,6 +276,7 @@ const Produits = () => {
     categorie:       f.categorie || null,
     est_nouveau:     f.est_nouveau,
     genre:           f.genre,
+    type_produit:    f.type_produit || "vetement",
     video_tiktok:    f.video_tiktok    || null,
     video_instagram: f.video_instagram || null,
     video_facebook:  f.video_facebook  || null,
@@ -167,20 +298,26 @@ const Produits = () => {
 
       if (!resProduit.ok) {
         const txt = await resProduit.text();
-        try {
-          const json = JSON.parse(txt);
-          setError(Object.entries(json).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join(" | "));
-        } catch { setError(`Erreur ${resProduit.status}`); }
+        try { const json = JSON.parse(txt); setError(Object.entries(json).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join(" | ")); }
+        catch { setError(`Erreur ${resProduit.status}`); }
         return;
       }
 
       const produit = await resProduit.json();
       let stockCree = false;
-      if (ajouterStock && stockForm.taille && stockForm.couleur) {
+      const tc = TAILLE_CONFIG[form.type_produit] || TAILLE_CONFIG.autre;
+      const tailleValide = tc.requis ? stockForm.taille.trim() !== "" : true;
+
+      if (ajouterStock && stockForm.couleur && tailleValide) {
         const resStock = await fetch(CONFIG.API_STOCK, {
           method: "POST",
           headers: { ...headers, "Content-Type": "application/json" },
-          body: JSON.stringify({ produit: produit.id, taille: stockForm.taille.trim(), couleur: stockForm.couleur.trim(), quantite: parseInt(stockForm.quantite) || 1 }),
+          body: JSON.stringify({
+            produit:  produit.id,
+            taille:   stockForm.taille.trim(),
+            couleur:  stockForm.couleur.trim(),
+            quantite: parseInt(stockForm.quantite) || 1,
+          }),
         });
         if (resStock.ok) {
           const stockData = await resStock.json();
@@ -203,20 +340,17 @@ const Produits = () => {
     try {
       let imageUrl = editForm.imageUrl || null;
       if (editForm.image instanceof File) imageUrl = await uploadToCloudinary(editForm.image);
-
       const res = await fetch(`${CONFIG.API_PRODUIT}${id}/`, {
         method: "PUT",
         headers: { ...headers, "Content-Type": "application/json" },
         body: JSON.stringify(buildBody(editForm, imageUrl)),
       });
-
       if (!res.ok) {
         const txt = await res.text();
         try { const json = JSON.parse(txt); setError(Object.entries(json).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join(" | ")); }
         catch { setError(`Erreur ${res.status}`); }
         return;
       }
-
       const data = await res.json();
       setProduits(prev => prev.map(p => p.id === id ? data : p));
       setEditingId(null); setEditImagePreview(null);
@@ -250,73 +384,10 @@ const Produits = () => {
   const getCatNom   = id => categories.find(c => c.id === id)?.nom || "—";
   const getStocks   = id => stocks.filter(s => String(s.produit) === String(id));
   const getTotalQte = id => getStocks(id).reduce((a, s) => a + s.quantite, 0);
+  const getTypeLabel = type => TYPE_OPTIONS.find(t => t.value === type)?.label || type;
 
   const inputStyle   = { width: "100%", padding: "10px 14px", borderRadius: "8px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.text, fontSize: "14px", outline: "none" };
   const inputSmStyle = { width: "100%", padding: "7px 10px", borderRadius: "7px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.text, fontSize: "13px", outline: "none" };
-
-  const Toggle = ({ value, onChange }) => (
-    <button type="button" onClick={onChange}
-      style={{ width: "44px", height: "24px", borderRadius: "12px", border: "none", cursor: "pointer", background: value ? SS.gold : SS.border, position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
-      <div style={{ width: "18px", height: "18px", borderRadius: "50%", background: "#fff", position: "absolute", top: "3px", left: value ? "23px" : "3px", transition: "left 0.2s" }} />
-    </button>
-  );
-
-  const GenreBadge = ({ genre }) => {
-    if (!genre || genre === "mixte") return null;
-    const s = GENRE_STYLE[genre] || GENRE_STYLE.mixte;
-    const labels = { homme: "👔 Homme", femme: "👗 Femme", enfant: "🧒 Enfant" };
-    return <span style={{ padding: "2px 10px", borderRadius: "20px", background: s.bg, border: `1px solid ${s.border}`, fontSize: "11px", color: s.color, fontWeight: "600" }}>{labels[genre]}</span>;
-  };
-
-  // ── Badges vidéo sur la card produit ─────────────────────────
-  const VideoBadges = ({ produit }) => {
-    const links = [
-      produit.video_tiktok    && { icon: <TikTokIcon size={11} />,    color: "#010101", url: produit.video_tiktok,    label: "TikTok" },
-      produit.video_instagram && { icon: <InstagramIcon size={11} />, color: "#E1306C", url: produit.video_instagram, label: "Reels" },
-      produit.video_facebook  && { icon: <FacebookIcon size={11} />,  color: "#1877F2", url: produit.video_facebook,  label: "Facebook" },
-    ].filter(Boolean);
-    if (links.length === 0) return null;
-    return (
-      <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginBottom: "6px" }}>
-        {links.map((l, i) => (
-          <a key={i} href={l.url} target="_blank" rel="noopener noreferrer"
-            style={{ display: "flex", alignItems: "center", gap: "4px", padding: "2px 8px", borderRadius: "20px", background: l.color + "15", border: `1px solid ${l.color}40`, fontSize: "10px", fontWeight: "700", color: l.color, textDecoration: "none" }}>
-            {l.icon} {l.label}
-          </a>
-        ))}
-      </div>
-    );
-  };
-
-  // ── Section liens vidéo (formulaire) ─────────────────────────
-  const VideoSection = ({ values, onChange }) => (
-    <div style={{ padding: "14px 16px", borderRadius: "10px", background: SS.bg, border: `1px solid ${SS.border}`, marginBottom: "16px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-        <Play size={14} color={SS.gold} />
-        <span style={{ fontSize: "12px", fontWeight: "700", color: SS.goldLight, textTransform: "uppercase", letterSpacing: "0.07em" }}>
-          Liens vidéos réseaux sociaux
-        </span>
-        <span style={{ fontSize: "10px", color: SS.textDim }}>— tous optionnels</span>
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-        <VideoLinkField
-          label="TikTok" icon={<TikTokIcon size={14} />} color="#010101"
-          placeholder="https://www.tiktok.com/@santastyle/video/..."
-          value={values.video_tiktok}
-          onChange={v => onChange("video_tiktok", v)} SS={SS} />
-        <VideoLinkField
-          label="Instagram / Reels" icon={<InstagramIcon size={14} />} color="#E1306C"
-          placeholder="https://www.instagram.com/reel/..."
-          value={values.video_instagram}
-          onChange={v => onChange("video_instagram", v)} SS={SS} />
-        <VideoLinkField
-          label="Facebook" icon={<FacebookIcon size={14} />} color="#1877F2"
-          placeholder="https://www.facebook.com/santastyle/videos/..."
-          value={values.video_facebook}
-          onChange={v => onChange("video_facebook", v)} SS={SS} />
-      </div>
-    </div>
-  );
 
   return (
     <div style={{ minHeight: "100vh", background: SS.bg, padding: "2rem", color: SS.text, fontFamily: "var(--font-sans, sans-serif)" }}>
@@ -358,7 +429,7 @@ const Produits = () => {
           </button>
         </div>
 
-        {/* Rappel flux */}
+        {/* Flux */}
         <div style={{ padding: "10px 16px", borderRadius: "10px", background: `${SS.gold}10`, border: `1px solid ${SS.gold}30`, marginBottom: "20px", display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: SS.goldLight }}><Package size={13} color={SS.gold} /><strong>1. Produit</strong></div>
           <ArrowRight size={12} color={SS.textDim} />
@@ -389,6 +460,33 @@ const Produits = () => {
               <Package size={18} color={SS.gold} /> Nouveau produit
             </div>
             <form onSubmit={handleCreate}>
+
+              {/* ✅ Sélecteur type de produit en premier */}
+              <div style={{ marginBottom: "16px" }}>
+                <div style={{ fontSize: "11px", fontWeight: "700", color: SS.textDim, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "10px" }}>
+                  Type de produit
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "8px" }}>
+                  {TYPE_OPTIONS.map(t => (
+                    <button key={t.value} type="button"
+                      onClick={() => setForm({ ...form, type_produit: t.value })}
+                      style={{ padding: "10px 12px", borderRadius: "10px", border: `2px solid ${form.type_produit === t.value ? SS.gold : SS.border}`, background: form.type_produit === t.value ? `${SS.gold}15` : SS.card, color: form.type_produit === t.value ? SS.goldDark : SS.textMuted, fontSize: "13px", fontWeight: form.type_produit === t.value ? "700" : "400", cursor: "pointer", transition: "all 0.15s", textAlign: "left" }}>
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+                {/* Message contextuel selon le type */}
+                {form.type_produit === "sac" && (
+                  <div style={{ marginTop: "10px", padding: "8px 12px", borderRadius: "8px", background: `${SS.gold}10`, border: `1px solid ${SS.gold}30`, fontSize: "12px", color: SS.goldLight }}>
+                    💡 Les sacs n'ont pas de taille — seule la couleur et la quantité seront demandées pour le stock.
+                  </div>
+                )}
+                {(form.type_produit === "parfum" || form.type_produit === "bijou") && (
+                  <div style={{ marginTop: "10px", padding: "8px 12px", borderRadius: "8px", background: `${SS.gold}10`, border: `1px solid ${SS.gold}30`, fontSize: "12px", color: SS.goldLight }}>
+                    💡 La {TAILLE_CONFIG[form.type_produit].label?.toLowerCase()} est optionnelle pour ce type de produit.
+                  </div>
+                )}
+              </div>
 
               {/* Infos produit */}
               <div style={{ marginBottom: "16px", padding: "16px", borderRadius: "10px", background: SS.bg, border: `1px solid ${SS.border}` }}>
@@ -429,10 +527,10 @@ const Produits = () => {
                 )}
               </div>
 
-              {/* ✅ Liens vidéos réseaux sociaux */}
+              {/* Liens vidéos */}
               <VideoSection
                 values={{ video_tiktok: form.video_tiktok, video_instagram: form.video_instagram, video_facebook: form.video_facebook }}
-                onChange={(field, value) => setForm({ ...form, [field]: value })} />
+                onChange={(field, value) => setForm({ ...form, [field]: value })} SS={SS} />
 
               {/* Badge Nouveau */}
               <div style={{ marginBottom: "16px", padding: "14px 16px", borderRadius: "10px", background: SS.bg, border: `1px solid ${form.est_nouveau ? SS.gold + "60" : SS.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -445,10 +543,10 @@ const Produits = () => {
                     <div style={{ fontSize: "11px", color: SS.textDim }}>Affiché sur la carte en boutique</div>
                   </div>
                 </div>
-                <Toggle value={form.est_nouveau} onChange={() => setForm({ ...form, est_nouveau: !form.est_nouveau })} />
+                <Toggle value={form.est_nouveau} SS={SS} onChange={() => setForm({ ...form, est_nouveau: !form.est_nouveau })} />
               </div>
 
-              {/* Stock initial */}
+              {/* ✅ Stock initial — adaptatif selon type */}
               <div style={{ marginBottom: "16px", padding: "16px", borderRadius: "10px", background: SS.bg, border: `1px solid ${ajouterStock ? SS.gold + "50" : SS.border}` }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: ajouterStock ? "14px" : "0" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -456,26 +554,13 @@ const Produits = () => {
                     <span style={{ fontSize: "13px", fontWeight: "700", color: SS.goldLight }}>Stock initial</span>
                     <span style={{ fontSize: "11px", color: SS.textDim }}>(sinon "Épuisé")</span>
                   </div>
-                  <Toggle value={ajouterStock} onChange={() => setAjouterStock(!ajouterStock)} />
+                  <Toggle value={ajouterStock} SS={SS} onChange={() => setAjouterStock(!ajouterStock)} />
                 </div>
                 {ajouterStock && (
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 100px", gap: "12px" }}>
-                    <div>
-                      <div style={{ fontSize: "11px", color: SS.textMuted, marginBottom: "5px" }}>Taille</div>
-                      <input type="text" placeholder="S, M, L, XL..." style={inputStyle}
-                        value={stockForm.taille} onChange={e => setStockForm({ ...stockForm, taille: e.target.value })} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: "11px", color: SS.textMuted, marginBottom: "5px" }}>Couleur</div>
-                      <input type="text" placeholder="Noir, Rouge..." style={inputStyle}
-                        value={stockForm.couleur} onChange={e => setStockForm({ ...stockForm, couleur: e.target.value })} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: "11px", color: SS.textMuted, marginBottom: "5px" }}>Quantité</div>
-                      <input type="number" min="1" style={inputStyle}
-                        value={stockForm.quantite} onChange={e => setStockForm({ ...stockForm, quantite: e.target.value })} />
-                    </div>
-                  </div>
+                  <StockSection
+                    typeProduit={form.type_produit}
+                    values={stockForm}
+                    onChange={setStockForm} SS={SS} />
                 )}
                 {!ajouterStock && (
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "10px", padding: "8px 12px", borderRadius: "8px", background: SS.warningBg, border: `1px solid ${SS.warning}40` }}>
@@ -516,7 +601,7 @@ const Produits = () => {
           </div>
         </div>
 
-        {/* ── Grille produits ── */}
+        {/* Grille produits */}
         {loading ? (
           <div style={{ textAlign: "center", padding: "4rem", color: SS.textDim }}>Chargement...</div>
         ) : filtered.length === 0 ? (
@@ -535,18 +620,13 @@ const Produits = () => {
                   onMouseLeave={e => e.currentTarget.style.borderColor = sanStock ? SS.danger + "50" : SS.border}>
 
                   {editingId === produit.id ? (
-                    // ── Mode édition ──
                     <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
                       <div style={{ fontSize: "13px", fontWeight: "700", color: SS.goldLight }}>Modifier — {produit.nom}</div>
 
-                      {/* Image actuelle */}
                       <div>
-                        <div style={{ fontSize: "11px", color: SS.textMuted, marginBottom: "6px" }}>Image</div>
                         {editImagePreview || editForm.imageUrl ? (
-                          <div style={{ position: "relative", display: "inline-block" }}>
-                            <img src={editImagePreview || editForm.imageUrl} alt="current"
-                              style={{ width: "80px", height: "100px", objectFit: "cover", borderRadius: "8px", border: `1px solid ${SS.border}` }} />
-                          </div>
+                          <img src={editImagePreview || editForm.imageUrl} alt="current"
+                            style={{ width: "80px", height: "100px", objectFit: "cover", borderRadius: "8px", border: `1px solid ${SS.border}` }} />
                         ) : (
                           <div style={{ width: "80px", height: "100px", borderRadius: "8px", background: SS.card, border: `1px solid ${SS.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
                             <Package size={28} color={`${SS.gold}40`} />
@@ -557,11 +637,16 @@ const Produits = () => {
                       <label style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", borderRadius: "8px", background: SS.card, border: `1px solid ${SS.border}`, color: SS.textMuted, cursor: "pointer", fontSize: "12px" }}>
                         <ImageIcon size={13} color={SS.gold} />
                         <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {editForm.image instanceof File ? `✓ ${editForm.image.name}` : "Changer l'image (optionnel)"}
+                          {editForm.image instanceof File ? `✓ ${editForm.image.name}` : "Changer l'image"}
                         </span>
                         <input type="file" accept="image/*" style={{ display: "none" }}
                           onChange={e => { const f = e.target.files[0]; if (f) { setEditForm({ ...editForm, image: f }); setEditImagePreview(URL.createObjectURL(f)); } }} />
                       </label>
+
+                      {/* ✅ Type produit en édition */}
+                      <select style={inputSmStyle} value={editForm.type_produit || "vetement"} onChange={e => setEditForm({ ...editForm, type_produit: e.target.value })}>
+                        {TYPE_OPTIONS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                      </select>
 
                       <input type="text" style={inputSmStyle} placeholder="Nom"
                         value={editForm.nom} onChange={e => setEditForm({ ...editForm, nom: e.target.value })} />
@@ -577,7 +662,6 @@ const Produits = () => {
                         {GENRE_OPTIONS.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}
                       </select>
 
-                      {/* ✅ Liens vidéos en édition */}
                       <div style={{ padding: "12px", borderRadius: "8px", background: SS.bg, border: `1px solid ${SS.border}` }}>
                         <div style={{ fontSize: "11px", fontWeight: "700", color: SS.textDim, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "5px" }}>
                           <Play size={11} color={SS.gold} /> Vidéos réseaux
@@ -595,13 +679,12 @@ const Produits = () => {
                         </div>
                       </div>
 
-                      {/* Toggle Nouveau */}
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", borderRadius: "8px", background: SS.bg, border: `1px solid ${editForm.est_nouveau ? SS.gold + "50" : SS.border}` }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
                           <Sparkles size={13} color={SS.gold} />
                           <span style={{ fontSize: "12px", fontWeight: "600", color: SS.text }}>Badge "Nouveau"</span>
                         </div>
-                        <Toggle value={editForm.est_nouveau} onChange={() => setEditForm({ ...editForm, est_nouveau: !editForm.est_nouveau })} />
+                        <Toggle value={editForm.est_nouveau} SS={SS} onChange={() => setEditForm({ ...editForm, est_nouveau: !editForm.est_nouveau })} />
                       </div>
 
                       <div style={{ display: "flex", gap: "8px" }}>
@@ -616,7 +699,6 @@ const Produits = () => {
                       </div>
                     </div>
                   ) : (
-                    // ── Mode affichage ──
                     <>
                       <div style={{ position: "relative", paddingBottom: "125%", background: `linear-gradient(135deg, ${SS.card}, ${SS.surface})`, overflow: "hidden" }}>
                         {produit.image_url ? (
@@ -625,7 +707,7 @@ const Produits = () => {
                             onError={e => { e.target.style.display = "none"; }} />
                         ) : (
                           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "6px" }}>
-                            <Package size={36} color={`${SS.gold}40`} />
+                            <span style={{ fontSize: "36px" }}>{TYPE_OPTIONS.find(t => t.value === produit.type_produit)?.icon || "📦"}</span>
                             <span style={{ fontSize: "10px", color: SS.textDim }}>Pas d'image</span>
                           </div>
                         )}
@@ -656,23 +738,26 @@ const Produits = () => {
                         <div style={{ fontSize: "15px", fontWeight: "700", color: SS.goldLight, marginBottom: "6px" }}>
                           {Number(produit.prix).toLocaleString("fr-FR")} GNF
                         </div>
-
-                        {/* Badges catégorie + genre */}
                         <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px", flexWrap: "wrap" }}>
+                          {/* ✅ Badge type produit */}
+                          {produit.type_produit && produit.type_produit !== "vetement" && (
+                            <span style={{ padding: "2px 8px", borderRadius: "20px", background: `${SS.gold}10`, border: `1px solid ${SS.gold}30`, fontSize: "10px", color: SS.goldLight }}>
+                              {getTypeLabel(produit.type_produit)}
+                            </span>
+                          )}
                           <span style={{ padding: "2px 10px", borderRadius: "20px", background: `${SS.gold}18`, border: `1px solid ${SS.gold}35`, fontSize: "11px", color: SS.gold }}>
                             {getCatNom(produit.categorie)}
                           </span>
                           <GenreBadge genre={produit.genre} />
                         </div>
 
-                        {/* ✅ Badges vidéos */}
                         <VideoBadges produit={produit} />
 
                         {stocksList.length > 0 && (
                           <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "10px" }}>
                             {stocksList.slice(0, 3).map(s => (
                               <span key={s.id} style={{ padding: "2px 8px", borderRadius: "5px", fontSize: "10px", fontWeight: "600", background: s.quantite === 0 ? SS.dangerBg : SS.successBg, color: s.quantite === 0 ? SS.danger : SS.success }}>
-                                {s.taille} · {s.couleur} ({s.quantite})
+                                {s.taille ? `${s.taille} · ` : ""}{s.couleur} ({s.quantite})
                               </span>
                             ))}
                             {stocksList.length > 3 && <span style={{ padding: "2px 8px", borderRadius: "5px", fontSize: "10px", color: SS.textDim, background: SS.card }}>+{stocksList.length - 3}</span>}
@@ -703,6 +788,7 @@ const Produits = () => {
                                 image:           null,
                                 est_nouveau:     produit.est_nouveau ?? false,
                                 genre:           produit.genre || "mixte",
+                                type_produit:    produit.type_produit || "vetement",
                                 video_tiktok:    produit.video_tiktok    || "",
                                 video_instagram: produit.video_instagram || "",
                                 video_facebook:  produit.video_facebook  || "",

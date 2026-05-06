@@ -46,6 +46,37 @@ class Categorie(models.Model):
         return self.nom
 
 
+# class Produit(models.Model):
+
+#     GENRE_CHOICES = [
+#         ("homme",  "Homme"),
+#         ("femme",  "Femme"),
+#         ("enfant", "Enfant"),
+#         ("mixte",  "Mixte"),
+#     ]
+
+#     nom           = models.CharField(max_length=100)
+#     description   = models.TextField(blank=True, null=True)
+#     prix          = models.DecimalField(max_digits=10, decimal_places=2)
+#     categorie     = models.ForeignKey(Categorie, on_delete=models.SET_NULL, null=True, related_name="produits")
+#     image         = CloudinaryField('Image', folder='produits', blank=True, null=True)
+#     est_nouveau   = models.BooleanField(default=False)
+#     genre         = models.CharField(max_length=10, choices=GENRE_CHOICES, default="mixte")
+#     date_creation = models.DateTimeField(auto_now_add=True)
+
+#     # ✅ Liens réseaux sociaux — tous facultatifs
+#     video_tiktok    = models.URLField(blank=True, null=True, verbose_name="Vidéo TikTok")
+#     video_instagram = models.URLField(blank=True, null=True, verbose_name="Vidéo Instagram / Reels")
+#     video_facebook  = models.URLField(blank=True, null=True, verbose_name="Vidéo Facebook")
+
+#     def __str__(self):
+#         return self.nom
+
+#     @property
+#     def has_video(self):
+#         """True si au moins un lien vidéo est renseigné."""
+#         return any([self.video_tiktok, self.video_instagram, self.video_facebook])
+
 class Produit(models.Model):
 
     GENRE_CHOICES = [
@@ -55,6 +86,16 @@ class Produit(models.Model):
         ("mixte",  "Mixte"),
     ]
 
+    # ✅ Type de produit — détermine si taille est requise
+    TYPE_CHOICES = [
+        ("vetement",   "Vêtement"),      # taille requise : S, M, L, XL
+        ("chaussure",  "Chaussure"),     # taille requise : 36, 37, 38...
+        ("sac",        "Sac"),           # pas de taille
+        ("parfum",     "Parfum"),        # taille optionnelle : 30ml, 50ml...
+        ("bijou",      "Bijou"),         # taille optionnelle
+        ("autre",      "Autre"),         # taille optionnelle
+    ]
+
     nom           = models.CharField(max_length=100)
     description   = models.TextField(blank=True, null=True)
     prix          = models.DecimalField(max_digits=10, decimal_places=2)
@@ -62,19 +103,19 @@ class Produit(models.Model):
     image         = CloudinaryField('Image', folder='produits', blank=True, null=True)
     est_nouveau   = models.BooleanField(default=False)
     genre         = models.CharField(max_length=10, choices=GENRE_CHOICES, default="mixte")
+    # ✅ Nouveau champ
+    type_produit  = models.CharField(max_length=20, choices=TYPE_CHOICES, default="vetement")
     date_creation = models.DateTimeField(auto_now_add=True)
 
-    # ✅ Liens réseaux sociaux — tous facultatifs
-    video_tiktok    = models.URLField(blank=True, null=True, verbose_name="Vidéo TikTok")
-    video_instagram = models.URLField(blank=True, null=True, verbose_name="Vidéo Instagram / Reels")
-    video_facebook  = models.URLField(blank=True, null=True, verbose_name="Vidéo Facebook")
+    video_tiktok    = models.URLField(blank=True, null=True)
+    video_instagram = models.URLField(blank=True, null=True)
+    video_facebook  = models.URLField(blank=True, null=True)
 
     def __str__(self):
         return self.nom
 
     @property
     def has_video(self):
-        """True si au moins un lien vidéo est renseigné."""
         return any([self.video_tiktok, self.video_instagram, self.video_facebook])
 
 
@@ -84,8 +125,8 @@ class Stock (models.Model):
         on_delete=models.CASCADE,
         related_name="stocks"
     )
-    taille = models.CharField(max_length=10)
-    couleur = models.CharField(max_length=30)
+    taille = models.CharField(max_length=20, blank=True, default="")
+    couleur = models.CharField(max_length=50, blank=True, default="")
     quantite = models.IntegerField(default=0)
 
     class Meta:
